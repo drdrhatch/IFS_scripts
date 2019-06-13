@@ -12,47 +12,26 @@ from finite_differences import *
 #mode = 'TiTe': increase Te by alpha, decrease Ti by alpha
 #mode = 'omnz': increase omnz (i.e. impurity density gradient) by alpha and decrease omni 
 #mode = 'omte': increase omte without compensation
+#mode = 'omti': increase omti without compensation
 
 mode = 'omte'
-alpha = 0.5
-target_factor = 0.5
+alpha = 0.9
+target_factor = 0.9
+#Set this to True if you want to pin the separatrix electron temperature
+set_Tesep = True
+Tesep_target = 80  #Separatrix electron temperature in eV
+x0_Tsep = 0.993 #radial location at which to send Tsep to target
+lambda_Tsep = 0.016
 
 #===========================================================
 #===========================================================
 #===========================================================
 
-fileName = 'jet78697.51005_hager_Z6.0Zeff2.35__negom.iterdb'
+fileName = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96.iterdb'
 profilesName = 'gene_profiles_e_jet78697'
-file_out_base = 'jet78697.51005_hager_Z6.0Zeff2.35__negom'
+file_out_base = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96'
 base_number = '78697'
 rhotMidPed = 0.97
-
-
-
-#fileName = 'geqdsk_89454_Z4.0_negom.iterdb'
-#profilesName = 'gene_profiles_e_89454'
-#file_out_base = 'geqdsk_89454_Z4.0_negom'
-#base_number = '89454'
-#rhotMidPed = 0.96
-
-
-#fileName = 'jet92432.49152_hager_Be_Z6.0Zeff1.03__negom.iterdb'
-#profilesName = 'gene_profiles_e_jet92432'
-#file_out_base = 'jet92432.49152_hager_Be_Z6.0Zeff1.03__negom'
-#base_number = '92432'
-#rhotMidPed = 0.975
-
-#fileName = 'jet92432.49152_hager_Be_Z4.0Zeff1.8__negom.iterdb'
-#profilesName = 'gene_profiles_e_jet92432.49152_hager_Be'
-#file_out_base = 'jet92432.49152_hager_Be_Z4.0Zeff1.8__negom'
-#base_number = '92432'
-#rhotMidPed = 0.97
-
-#fileName = "jet92300.51580_hager.eq_Z4.0Zeff1.4_.iterdb"
-#profilesName = 'gene_profiles_e_jet92300'
-#file_out_base = 'jet92300.51580_hager.eq_Z4.0Zeff1.4'
-#rhotMidPed = 0.97
-#alpha = 0.95
 
 rhot, te, ti, ne, ni, nz, omega_tor = read_iterdb_file(fileName)
 data = np.genfromtxt(profilesName)
@@ -141,6 +120,37 @@ if mode == 'omte':
     plt.legend()
     plt.show()
 
+if mode == 'omti':
+    midPedIndex = np.argmin(abs(rhot - rhotMidPed))
+    tiMidPed = ti[midPedIndex]
+    print 'rhot =', rhotMidPed
+    print 'ti =', tiMidPed
+
+    newTi = tiMidPed*np.power(ti/tiMidPed,alpha)
+    newTe = te
+
+    newNe = ne
+    newNi = ni
+    newNz = nz
+    
+    #total pressure with new density and tempeturate profiles
+    newPtot = newNe * newTe + newTi * (newNi + newNz)
+
+    newomti = -1.0/newTi*fd_d1_o4_uneven(newTi,rhot)
+    omti0 = -1.0/ti*fd_d1_o4_uneven(ti,rhot)
+    #plt.plot(omte0)
+    #plt.show()
+
+    plt.title('alpha='+str(alpha))
+    plt.plot(rhot,omti0,label='omti old')
+    plt.plot(rhot,target_factor*omti0,'--',color='black',label='target')
+    plt.plot(rhot,newomti,label='omti new')
+    ax = plt.axis()
+    print "ax",ax
+    plt.axis([0.9,1.0,0.0,ax[3]])
+    plt.legend()
+    plt.show()
+
 if mode == 'etaTe':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
@@ -222,6 +232,19 @@ if mode == 'TiTe':
     plt.legend()
     plt.show()
 
+if set_Tesep:
+    ix_Ts = np.argmin(abs(rhot-x0_Tsep)) 
+    print "ix_Ts",ix_Ts
+    dtedx_ts = fd_d1_o4_uneven(newTe,rhot)
+    dtedx0 = dtedx_ts[ix_Ts]
+    c0 = newTe[ix_Ts] - lambda_Tsep * abs(dtedx0)
+    for i in range(len(newTe)-ix_Ts):
+       #print "i",i
+       #print "rhot[ix_Ts+i]",rhot[ix_Ts+i]
+       newTe[ix_Ts+i] = lambda_Tsep*abs(dtedx0)*np.e**((x0_Tsep-rhot[ix_Ts+i])/lambda_Tsep) + c0
+    plt.plot(rhot[ix_Ts:],newTe[ix_Ts:])
+    plt.show()
+
 if 1 == 1:
     plt.plot(rhot,ne,label='ne')
     plt.plot(rhot,newNe,label='new ne')
@@ -245,13 +268,14 @@ if 1 == 1:
 
 if 1 == 1:
     time_str = '9999'
-    output_iterdb(rhot,rhop,newNe*1.E-19,newTe*1.E-3,newNi*1.E-19,newTi*1.E-3,file_out_base+'_alpha'+str(alpha)+'_'+mode,base_number,time_str,vrot=omega_tor,nimp=newNz*1.E-19)
-    f=open('gene_profiles_i'+file_out_base+'_alpha'+str(alpha)+'_'+mode,'w')
+    add_string = '_alpha'+str(alpha)+'_'+mode+'_x0_'+str(rhotMidPed)
+    output_iterdb(rhot,rhop,newNe*1.E-19,newTe*1.E-3,newNi*1.E-19,newTi*1.E-3,file_out_base+add_string,base_number,time_str,vrot=omega_tor,nimp=newNz*1.E-19)
+    f=open('gene_profiles_i'+file_out_base+add_string,'w')
     np.savetxt(f,np.column_stack((rhot,rhop,newTi*1.0e-3,newNi*1.0e-19)))
     f.close()
-    f=open('gene_profiles_e'+file_out_base+'_alpha'+str(alpha)+'_'+mode,'w')
+    f=open('gene_profiles_e'+file_out_base+add_string,'w')
     np.savetxt(f,np.column_stack((rhot,rhop,newTe*1.0e-3,newNe*1.0e-19)))
     f.close()
-    f=open('gene_profiles_z'+file_out_base+'_alpha'+str(alpha)+'_'+mode,'w')
+    f=open('gene_profiles_z'+file_out_base+add_string,'w')
     np.savetxt(f,np.column_stack((rhot,rhop,newTi*1.0e-3,newNz*1.0e-19)))
     f.close()
