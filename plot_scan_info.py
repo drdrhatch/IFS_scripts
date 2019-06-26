@@ -133,7 +133,7 @@ def get_grids(data_in):
         kyind = np.argmin(abs(data_in[i,0]-ky_array))
         if data_in[i,2] not in kxc_array[kyind,:]:
             fill_index[kyind] += 1
-            kxc_array[kyind,fill_index[kyind]] = data_in[i,2]
+            kxc_array[kyind,int(fill_index[kyind])] = data_in[i,2]
 
     print 'fill_index',fill_index
     return ky_array, x0_array, kxc_array
