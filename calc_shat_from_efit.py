@@ -37,7 +37,7 @@ def calc_shat_wpsi(qin,psiin,rhot,rhop,rhot_range=[0.8,1.0]):
     #print len(rhot0)
     #plt.plot(psiin,qin)
     #plt.show() 
-    q0 = full_interp(qin,psiin,rhop[ind0:]**2,rhot[ind0:],rhot0,verify_interp = True)
+    q0 = full_interp(qin,psiin,rhop[ind0:]**2,rhot[ind0:],rhot0)
 
     qprime = fd_d1_o4(q0,rhot0)
     shat = rhot0/q0*qprime
