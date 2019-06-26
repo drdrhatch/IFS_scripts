@@ -456,8 +456,12 @@ else:
             #global factor is kxavg / (rho/L_{T,n})--i.e. rho/L_eigenmode / (rho / L_gradients) ~ L_gradients / L_eigenmode
             #==> if L_gradients / L_eigenmode is large then the mode can survive in global 
             #Note: filter_local_modes in plot_scan_info_efit.py
-            global_factor = kxavg/(pars0['rhostar']*0.5*(pars0['omn1']+pars0['omt1']))
-            scan_info[i,13] = global_factor
+            if 'rhostar' in pars0:
+               global_factor = kxavg/(pars0['rhostar']*0.5*(pars0['omn1']+pars0['omt1']))
+               scan_info[i,13] = global_factor
+            else:
+               global_factor = 0
+               scan_info[i,13] = global_factor
         else:
             scan_info[i,6] = np.nan
             scan_info[i,7] = np.nan
@@ -468,6 +472,13 @@ else:
             scan_info[i,13] = np.nan
     
         if os.path.isfile('nrg_'+scan_num):
+            for i in range(3):
+              if 'name'+str(i+1) in pars:
+                 print "i",i,str(i+1),pars['name'+str(i+1)][1:-1]
+                 if pars['name'+str(i+1)][1:-1] == 'e':
+                    especnum = i+1
+                 if pars['name'+str(i+1)][1:-1] == 'i':
+                    ispecnum = i+1
             if nspec==1:
                 tn,nrg1=get_nrg0('_'+scan_num,nspec=nspec)
                 scan_info[i,10]=nrg1[-1,7]/abs(nrg1[-1,6])
@@ -476,7 +487,14 @@ else:
                 scan_info[i,10]=nrg2[-1,7]/(abs(nrg2[-1,6])+abs(nrg1[-1,6]))
             elif nspec==3:
                 tn,nrg1,nrg2,nrg3=get_nrg0('_'+scan_num,nspec=nspec)
-                scan_info[i,10]=nrg2[-1,7]/(abs(nrg2[-1,6])+abs(nrg1[-1,6]))
+                if ispecnum != 1:
+                   print "Error: main ions must be first species."
+                if especnum == 2:
+                   scan_info[i,10]=nrg2[-1,7]/(abs(nrg2[-1,6])+abs(nrg1[-1,6]))
+                elif especnum == 3:
+                   scan_info[i,10]=nrg3[-1,7]/(abs(nrg3[-1,6])+abs(nrg1[-1,6]))
+                else:
+                   stop
             else:
                 sys.exit("Not ready for nspec>2")
         else:
