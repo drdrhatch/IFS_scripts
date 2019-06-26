@@ -65,14 +65,13 @@ vti = (0.5*Ti0*1000.0*ee/mref)**0.5
 coll = 2.3031E-5*Lref*(ni0)/(Ti0)**2*(24.0-log(sqrt(ni0*1.0E13)/Ti0*0.001))
 nustar_i=8.0/3.0/pi**0.5*qpsi0/trpeps**1.5*(R_major/Lref)*Z**4*coll
 
-#David,
+#Comments:
 #The paper by Landreman and Ernst is probably the best. Presuming negligible externally driven toroidal rotation (our default assumption in a pedestal in a pedestal), the Er is given by setting eq(6) =0 (and ignoring differences between <B**2> and B**2).
 #The quantity which L & E call k|| can be found in eq (15). (which is the negative of the quantity which Sauter calls alpha, but note that there is a typo in the Sauter paper formula for alpha, which was corrected in a later erratum by Sauter. The Ernst formula uses the correct version.)
 #The exact definitions of nu* for use in this formula can be found in the original Suater paper. 
 #One must have a trapped particle fraction f_t for these formulas. The formal definition of this is a particular integral which is roughly the same size as, but actually isn?t, what the name says. There are various approximations of varying degrees of complexity for this quantity. (The bootstrap code in Prashant?s loop uses the exact messy integral.) In the limit epsilon ->0, f_t = 1.46sqrt(epsilon) (epsilon = outboard minor radius/R ~ 0.3 for standard aspect ratio pedestals). However, for epsilon ~ 0.3, there are modest corrections to this. Without going into the details, from the literature, I derive an approximate formula with finite epsilon corrections, which is better than this at epsilon ~ 0.3:
 #f_t = sqrt(epsilon)*(1. + 0.46* (1.-epsilon))
 #which agrees with the asymptotic limit epsilon ->0, but goes to 1 at epsilon =1 as it should, and is also significantly closer to the right answer at epsilon = 0.3. 
-#Mike
 
 ft = trpeps**0.5*(1.0+0.46*(1.0-trpeps))
 fc = 1.0 - ft
@@ -92,11 +91,14 @@ dndpsi = fd_d1_o4(ni00,psi0)
 dpdpsi = fd_d1_o4(pi0,psi0)
 dRdpsi = fd_d1_o4(R0,psi0)
 
+#This is -d Phi_0 / d psi = Er / (R B_theta) from from Landreman and Ernst PPCF 2012 (see comments below)
 omegator = (1.0/psisep0/ee)*((1-kpar)*dTdpsi + Ti0J/ni00*dndpsi)
+#This is -d Phi_0 / d psi the same thing without neoclassical--simply the pressure gradient.  Should be similar to the above
 omegator0 = (1.0/psisep0/ee)*1/ni00*dpdpsi
 
 outfile = 'omegator'+pfile
 if omtor_file != 'empty':
+   #This includes the effect of toroidal rotation on d Phi_0 / d psi--i.e. the V_{||} term in Eq. 6 of Landreman and Ernst
    print "Including toroidal rotation from file ",omtor_file
    omtor = np.genfromtxt(omtor_file)
    omtor00 = interp(omtor[:,0],omtor[:,1],psi0)
