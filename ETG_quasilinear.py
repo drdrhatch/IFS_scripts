@@ -61,19 +61,29 @@ for j in range(len(k)):
     ratio.append(k[j][3])
 
 Qql = np.array(ratio)*omt
+
+gkp = np.genfromtxt('scanfiles'+sfsuffix+'/gamma_kperp2_ratio_kxcenter0')
+kperp2 = gkp[:,2]
+#Test kperp^3
+#Qql2 = Qql*kperp2/kperp2**1.5
+
 kygrid = np.linspace(pars['kymin'],(pars['nky0']-1)*pars['kymin'],num = pars['nky0']-1)
 print "kygrid",kygrid
 #Cubic spline interpolation
 Qql_interp1 = interp(ky2,Qql,kygrid)
 #Linear interpolation
 Qql_interp2 = np.interp(kygrid,ky2,Qql)
+#Qql2_interp2 = np.interp(kygrid,ky2,Qql2)
 
 Qql_tot1 = np.sum(Qql_interp1)
 Qql_tot2 = np.sum(Qql_interp2)
 Qnl_tot = np.sum(Qes)
+#Qql2_tot = np.sum(Qql2_interp2)
 print "Sum Qql interp1:",np.sum(Qql_interp1)
 print "Sum Qql linear interp:",np.sum(Qql_interp2)
+#print "Sum Qql (kp3) linear interp:",np.sum(Qql2_interp2)
 print "Sum Qnl:",np.sum(Qes)
+#c3 = Qql_tot2/Qql2_tot
 
 fig,ax1=plt.subplots()
 ax1.plot(ky1,Qes,c='blue',label='Q_es')
@@ -82,6 +92,8 @@ ax2=ax1.twinx()
 ax2.plot(ky2,Qql,c='red',label='Q_ql, tot: '+str(Qnl_tot)[0:4])
 ax2.plot(kygrid,Qql_interp1,'--',c='black',label='interp Qql: '+str(Qql_tot1)[0:4])
 ax2.plot(kygrid,Qql_interp2,'--',c='green',label='interp Qql lin: '+str(Qql_tot2)[0:4])
+#ax2.plot(kygrid,c3*Qql2_interp2,'--',c='purple',label=str(c3)+' x '+'+Qql kp3: '+str(Qql2_tot)[0:4])
+#plt.title('C0 = '+str(Qql_tot2/Qnl_tot)[0:4]+'  c3 = '+str(c3))
 plt.title('C0 = '+str(Qql_tot2/Qnl_tot)[0:4])
 plt.xlabel('ky')
 plt.legend(loc=1)
