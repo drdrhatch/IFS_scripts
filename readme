@@ -1,0 +1,68 @@
+This directoyr has several useful (and several un-useful) scripts related to running GENE, visualizing GENE output, manipulating input files, calculating relevant parameters, etc. mostly for pedestal applications.  Here is a very brief overview of some of the most useful scripts.  Feel free to improve this documentation if you feel so inclined.
+
+D_chi_ratio.py:
+Calculates ratios of fluxes and diffusivities from linear GENE output.  Useful for identifying modes in the context of the 'fingerprint' framework (see Kotsch. et al  NF 2019).
+
+ParIO.py:
+Routines for reading GENE parameter files.
+
+calc_Er_neoclassical.py:
+Calculates Er from profiles based on the standard neoclassical expression.
+
+calc_dimensionless_parameters.py:
+Calculates various dimensionless parameters from profiles.
+
+calc_eta_from_gene_profiles:
+Calculates eta and other profile info from profile files.
+
+calc_gene_shear_rate_iterdb.py:
+Calculates the GENE shear rate from an iterdb file.
+
+calc_omega_from_field.py:
+Calculates the growth rate and frequency from linear GENE output (useful in case GENE doesn't converge).
+
+
+calc_shat_from_efit.py:
+Calculates magnetic shear from an efit file.
+
+efit_tools.py:
+Script for reading and manipulating data from an eqdsk / efit file.
+
+extend_buffer.py
+Script for extending geometry files artificially beyond the separatrix for subsequent GENE run.
+
+fieldlib.py
+Library for reading GENE field files.
+
+finite_differences.py:
+Routines for 4th order finite differences.
+
+get_nrg.py
+Reads GENE output nrg files.
+
+interp.py
+Routines for interpolation.
+
+make_iterdb.py
+Routine for writing iterdb files.
+
+modProfs_fixedP.py
+Tools for modifying profiles in various ways to test sensitivites while keeping pressure fixed.
+
+momlib.py
+Library for reading GENE moment files.
+
+mtmDopplerFreqs.py:
+Tool for calculating predicted MTM frequencies (omega*) and the Doppler shift.
+
+my_efit_tools.py
+Reading and manipulating eqdsk / efit files.
+
+nrgdata.py
+Reading GENE nrg files.
+
+plot_mode_structures.py:
+GENE tool for plotting linear mode structures from GENE (can be used for local or global).
+
+read_write_geometry.py:
+Scripts for reading / writing GENE geometry files (e.g. tracer_efit.dat)
