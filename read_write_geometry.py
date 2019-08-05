@@ -20,6 +20,7 @@ def read_geometry_local(file_name):
         elif len(lsplit[0]) > 0:
             parameters[lsplit[0].strip()] = float(lsplit[1])
         l += 1
+        #print "lsplit",lsplit
     
     #print parameters
 
@@ -57,9 +58,10 @@ def read_geometry_local(file_name):
     #16. gl_dxdZ(pi1,k)
     geometry['gl_dxdZ'] = np.empty(0)
 
-    l += 4
-    print "l",l
-    print 'line', file_lines[l]
+    if 'sign_Ip_CW' in geometry: 
+        l += 4
+    else:
+        l += 1
     while file_lines[l]:
         line = file_lines[l].split()
         geometry['ggxx'] = np.append(geometry['ggxx'],float(line[0].strip()))
@@ -78,7 +80,9 @@ def read_geometry_local(file_name):
         geometry['gl_z'] = np.append(geometry['gl_z'],float(line[13].strip()))
         geometry['gl_dxdR'] = np.append(geometry['gl_dxdR'],float(line[14].strip()))
         geometry['gl_dxdZ'] = np.append(geometry['gl_dxdZ'],float(line[15].strip()))
+        #print "l",l,float(line[15])
         l += 1
+        
     
     #for i in geometry:
     #    plt.title(i)
