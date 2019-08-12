@@ -9,6 +9,7 @@ from ParIO import *
 from interp import *
 
 parser=op.OptionParser(description='Plots quasilinear estimates of heat flux and compares with nonlinear fluxes.')
+parser.add_option('--include_qn2','-q', action='store_true',dest = 'include_qn2', help = 'Includes the weight factor Q/n^2', default=False)
 
 options,args=parser.parse_args()
 if len(args)!=2:
@@ -17,6 +18,8 @@ Please include run number as argument (e.g., 0001) and scanfiles suffix as secon
     \n""")
 suffix = args[0]
 sfsuffix = args[1]
+include_qn2 = options.include_qn2
+print "include_qn2",include_qn2
 
 if 'dat' in suffix:
    suffix = '.dat'
@@ -43,29 +46,30 @@ for i in range(N,len(f)):
     ky1.append(f[i][0])
     Qes.append(f[i][2])
 
-#g=open('parameters'+suffix,'r')
-#while True:
-#    h=g.readline()
-#    if 'omn' in h:
-#        omn=float(re.findall(r"\d+\.?\d*",h)[0])
-#    elif 'omt' in h:
-#        omt=float(re.findall(r"\d+\.?\d*",h)[0])
-#        break
-#g.close()
+ldata = np.genfromtxt('scanfiles'+sfsuffix+'/mode_info_all')
 
-k=numpy.loadtxt('scanfiles'+sfsuffix+'/gamma_kperp2_ratio_kxcenter0')
-ky2=[]
-ratio=[]
-for j in range(len(k)):
-    ky2.append(k[j][0])
-    ratio.append(k[j][3])
+Qql = np.empty(0)
+ky2 = np.empty(0)
+Qn2 = np.empty(0)
+nky = 0
+for i in range(len(ldata[:,0])):
+    if not ldata[i,0] in ky2: 
+        ky2 = np.append(ky2,ldata[i,0])
+        Qql = np.append(Qql,ldata[i,6]*omt)
+        Qn2 = np.append(Qn2,ldata[i,7])
+        nky += 1
+    else:
+        if ldata[i,6]*omt > Qql[nky-1]:
+            Qql[nky-1] = ldata[i,6]*omt  #Taking maximum over ballooning angle
+            Qn2[nky-1] = ldata[i,7]
 
-Qql = np.array(ratio)*omt
 
-gkp = np.genfromtxt('scanfiles'+sfsuffix+'/gamma_kperp2_ratio_kxcenter0')
-kperp2 = gkp[:,2]
+#gkp = np.genfromtxt('scanfiles'+sfsuffix+'/gamma_kperp2_ratio_kxcenter0')
+#kperp2 = gkp[:,2]
 #Test kperp^3
 #Qql2 = Qql*kperp2/kperp2**1.5
+if include_qn2:
+    Qql = Qql*Qn2
 
 kygrid = np.linspace(pars['kymin'],(pars['nky0']-1)*pars['kymin'],num = pars['nky0']-1)
 print "kygrid",kygrid
@@ -90,7 +94,7 @@ ax1.plot(ky1,Qes,c='blue',label='Q_es')
 plt.legend(loc=2)
 ax2=ax1.twinx()
 ax2.plot(ky2,Qql,c='red',label='Q_ql, tot: '+str(Qnl_tot)[0:4])
-ax2.plot(kygrid,Qql_interp1,'--',c='black',label='interp Qql: '+str(Qql_tot1)[0:4])
+#ax2.plot(kygrid,Qql_interp1,'--',c='black',label='interp Qql: '+str(Qql_tot1)[0:4])
 ax2.plot(kygrid,Qql_interp2,'--',c='green',label='interp Qql lin: '+str(Qql_tot2)[0:4])
 #ax2.plot(kygrid,c3*Qql2_interp2,'--',c='purple',label=str(c3)+' x '+'+Qql kp3: '+str(Qql2_tot)[0:4])
 #plt.title('C0 = '+str(Qql_tot2/Qnl_tot)[0:4]+'  c3 = '+str(c3))
@@ -100,4 +104,22 @@ plt.legend(loc=1)
 plt.gcf().autofmt_xdate()
 plt.show()
 
+plt.plot(ldata[:,0],ldata[:,4],'x')
+plt.xlabel('kymin')
+plt.ylabel('gamma')
+plt.show()
 
+plt.plot(ldata[:,0],ldata[:,2],'x')
+plt.xlabel('kymin')
+plt.ylabel('kperp')
+plt.show()
+
+plt.plot(ldata[:,0],ldata[:,6],'x')
+plt.xlabel('kymin')
+plt.ylabel('gamma/kperp2')
+plt.show()
+
+plt.plot(ldata[:,0],ldata[:,7],'x')
+plt.xlabel('kymin')
+plt.ylabel('Q/n^2')
+plt.show()
