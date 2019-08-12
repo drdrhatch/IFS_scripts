@@ -105,7 +105,6 @@ def eigenfunctions_from_field_file(pars,suffix,center_only,plot,setTime=-1,smoot
         plt.show()
     return phi, apar
 
-
 def eigenfunction_average(z_grid,jacobian,kperp,omega_d,field,name):
     ave_kperp2 = 0.
     ave_omegad = 0.
