@@ -58,7 +58,7 @@ def read_geometry_local(file_name):
     #16. gl_dxdZ(pi1,k)
     geometry['gl_dxdZ'] = np.empty(0)
 
-    if 'sign_Ip_CW' in geometry: 
+    if 'sign_Ip_CW' in file_raw: 
         l += 4
     else:
         l += 1
