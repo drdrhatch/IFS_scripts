@@ -38,7 +38,7 @@ def omega_calc(suffix):
     weight = []
     omega_avg = np.empty(0,dtype='complex128')
     delta_t = field.tfld[1]-field.tfld[0]
-    zmax = len(phi_t)
+    zmax = len(phi_t[1])
     f=open('omega_new'+suffix,'w')
     f.write('   '+'t'+'        '+'gamma'+'        '+'omega'+'        '+'std_gamma'+'        '+'std_omega\n')
     for t in range(1,iend-istart):
