@@ -23,6 +23,7 @@ parser.add_option('--plot_all','-a',action='store_const',const=1,help = 'Plot al
 parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
 parser.add_option('--idb','-i',type = 'str',action='store',dest="idb_file",help = 'ITERDB file name.',default='empty')
 parser.add_option('--pfile','-f',type = 'str',action='store',dest="prof_file",help = 'ITERDB file name.',default='empty')
+parser.add_option('--output','-o',action='store_true',help = 'Output eigenmode structure in ascii file.',default=False)
 options,args=parser.parse_args()
 print "options",options
 print "args",args
@@ -32,6 +33,7 @@ Please include run number as argument (e.g., 0001)."
     \n""")
 suffix = args[0]
 plot_all=options.plot_all
+output_file=options.output
 print "options.plot_ballooning", options.plot_ballooning
 plot_ballooning=options.plot_ballooning
 plot_theta=options.plot_theta
@@ -165,25 +167,30 @@ if x_local:
     #for i in range(1,field.nx/2+1):
     #    phi[(i+field.nx/2)*field.nz:(i+field.nx/2+1)*field.nz] = field.phi()[:,0,-1-(i-1)]*(-1)**(i)
     
-    plt.title(r'$\phi$')
-    plt.plot(zgrid,np.real(phi),color='red',label=r'$Re[\phi]$')
-    plt.plot(zgrid,np.imag(phi),color='blue',label=r'$Im[\phi]$')
-    plt.plot(zgrid,np.abs(phi),color='black',label=r'$|\phi|$')
-    ax=plt.axis()
-    plt.axvline(zavg,ax[2],ax[3],color='yellow')
-    plt.axvline(-zavg,ax[2],ax[3],color='yellow')
-    plt.legend()
-    plt.xlabel(r'$z/\pi$',size=18)
-    plt.show()
+    if output_file:
+        f = open('mode_structure_'+suffix,'w')
+        np.savetxt(f,np.column_stack((zgrid,np.real(phi),np.imag(phi),np.real(apar),np.imag(apar))))
+        f.close()
+    else:
+        plt.title(r'$\phi$')
+        plt.plot(zgrid,np.real(phi),color='red',label=r'$Re[\phi]$')
+        plt.plot(zgrid,np.imag(phi),color='blue',label=r'$Im[\phi]$')
+        plt.plot(zgrid,np.abs(phi),color='black',label=r'$|\phi|$')
+        ax=plt.axis()
+        plt.axvline(zavg,ax[2],ax[3],color='yellow')
+        plt.axvline(-zavg,ax[2],ax[3],color='yellow')
+        plt.legend()
+        plt.xlabel(r'$z/\pi$',size=18)
+        plt.show()
     
-    plt.title(r'$A_{||}$')
-    plt.plot(zgrid,np.real(apar),color='red',label=r'$Re[A_{||}]$')
-    plt.plot(zgrid,np.imag(apar),color='blue',label=r'$Im[A_{||}]$')
-    plt.plot(zgrid,np.abs(apar),color='black',label=r'$|A_{||}|$')
-    plt.legend()
-    plt.xlabel(r'$z/\pi$',size=18)
-    plt.show()
-    np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
+        plt.title(r'$A_{||}$')
+        plt.plot(zgrid,np.real(apar),color='red',label=r'$Re[A_{||}]$')
+        plt.plot(zgrid,np.imag(apar),color='blue',label=r'$Im[A_{||}]$')
+        plt.plot(zgrid,np.abs(apar),color='black',label=r'$|A_{||}|$')
+        plt.legend()
+        plt.xlabel(r'$z/\pi$',size=18)
+        plt.show()
+        np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
     
     cfunc,zed,corr_len=my_corr_func_complex(phi,phi,zgrid,show_plot=False)
     print "correlation length (for phi): ", corr_len
