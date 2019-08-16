@@ -64,12 +64,12 @@ print "Transit frequency (1/s):", crefSI/Lref
 print "QGBref = nref Tref vtref rhoref*^2 (W/m^2):", ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2
 print "ChiGBref = Lref vtref rhoref*^2 (m^2/s):", Lref*crefSI*rhostar**2
 print "QGBe = nref Tref vte rhoe*^2 (W/m^2):", (ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2)*(me/mref)**0.5
+print "coll (from GENE)",coll
 
 print "*************************"
 print "Dimensionless parameters:"
 print "*************************"
 print "rhostar = ",rhostar
-print "coll",coll
 print "nustar_i",nustar_i
 print "nustar_e",nustar_e
 print "q0",q0
