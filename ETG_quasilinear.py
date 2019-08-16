@@ -68,8 +68,12 @@ elif sat_rule == 4:
     Qql0 = ldata[:,6]*omt 
     for i in range(len(ldata[:,0])):
         if ldata[i,10] < 0.5*ldata[i,0]:
-            Qql0[i] = ldata[i,4]/(ldata[i,0]*ldata[i,2])
-
+            Qql0[i] = ldata[i,4]/(ldata[i,0]*ldata[i,2])*omt
+elif sat_rule == 5:
+    Qql0 = np.empty(len(ldata[:,0]))
+    for i in range(len(ldata[:,0])):
+        denom = ldata[i,0]*ldata[i,2]
+        Qql0[i] = ldata[i,4]/denom*omt
 
 
 
