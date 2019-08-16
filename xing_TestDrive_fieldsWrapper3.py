@@ -10,7 +10,6 @@ from fieldsWrapper import *
 from momentsWrapper import *
 import sys
 
-
 parser=op.OptionParser(description='')
 parser.add_option('--show_plots','-p', action='store',dest = 'show_plots', help = 'Eigenfunction average kperp, omega', default=False)
 parser.add_option('--avg','-a', action='store',dest = 'avg', help = 'Eigenfunction average kperp, omega', default=False)
