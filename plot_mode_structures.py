@@ -168,7 +168,9 @@ if x_local:
     #    phi[(i+field.nx/2)*field.nz:(i+field.nx/2+1)*field.nz] = field.phi()[:,0,-1-(i-1)]*(-1)**(i)
     
     if output_file:
-        f = open('mode_structure_'+suffix,'w')
+        phi = phi / np.max(np.real(phi))
+        apar = apar / np.max(np.real(apar))
+        f = open('mode_structure'+suffix,'w')
         np.savetxt(f,np.column_stack((zgrid,np.real(phi),np.imag(phi),np.real(apar),np.imag(apar))))
         f.close()
     else:
@@ -190,7 +192,7 @@ if x_local:
         plt.legend()
         plt.xlabel(r'$z/\pi$',size=18)
         plt.show()
-        np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
+        #np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
     
     cfunc,zed,corr_len=my_corr_func_complex(phi,phi,zgrid,show_plot=False)
     print "correlation length (for phi): ", corr_len
@@ -258,13 +260,14 @@ if x_local:
     #plt.plot(zgrid,phase_array,'-.',color = 'black')
     #plt.show()
     
-    plt.plot(zgrid,np.real(gradphi),'-',color = 'red',label=r'$Re[\nabla \phi]$')
-    plt.plot(zgrid,np.imag(gradphi),'-.',color = 'red',label=r'$Im[\nabla \phi]$')
-    plt.plot(zgrid,-np.real(omega_complex*apar),'-',color = 'black',label=r'$Re[\omega A_{||}]$')
-    plt.plot(zgrid,-np.imag(omega_complex*apar),'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
-    plt.xlabel(r'$z/\pi$',size=18)
-    plt.legend()
-    plt.show()
+    if not output_file:
+        plt.plot(zgrid,np.real(gradphi),'-',color = 'red',label=r'$Re[\nabla \phi]$')
+        plt.plot(zgrid,np.imag(gradphi),'-.',color = 'red',label=r'$Im[\nabla \phi]$')
+        plt.plot(zgrid,-np.real(omega_complex*apar),'-',color = 'black',label=r'$Re[\omega A_{||}]$')
+        plt.plot(zgrid,-np.imag(omega_complex*apar),'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
+        plt.xlabel(r'$z/\pi$',size=18)
+        plt.legend()
+        plt.show()
     
     diff = np.sum(np.abs(gradphi + omega_complex*apar))
     phi_cont = np.sum(np.abs(gradphi))
