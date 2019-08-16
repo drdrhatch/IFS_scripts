@@ -17,9 +17,10 @@ from read_iterdb import *
 #from calc_omega_from_field import *
 
 parser=op.OptionParser(description='Plots mode structures and calculates various interesting quantities.')
-parser.add_option('--plot_theta','-g',action='store_const',const=False,help = 'Plot all plots.',default=True)
-parser.add_option('--plot_ballooning','-b',action='store_const',const=False,help = 'Plot all plots.',default=True)
-parser.add_option('--plot_all','-a',action='store_const',const=1,help = 'Plot all plots.',default=False)
+parser.add_option('--plot_theta','-g',action='store_const',const=False,help = 'Plot global mode structures decomposed in poloidal m number.',default=True)
+parser.add_option('--calc_epar','-e',action='store_const',const=False,help = 'Calculate E_parallel.',default=False)
+parser.add_option('--plot_ballooning','-b',action='store_const',const=False,help = 'Plot global mode structures in z, r.',default=True)
+#parser.add_option('--plot_all','-a',action='store_const',const=1,help = 'Plot all plots.',default=False)
 parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
 parser.add_option('--idb','-i',type = 'str',action='store',dest="idb_file",help = 'ITERDB file name.',default='empty')
 parser.add_option('--pfile','-f',type = 'str',action='store',dest="prof_file",help = 'ITERDB file name.',default='empty')
@@ -31,10 +32,11 @@ if len(args)!=1:
 Please include run number as argument (e.g., 0001)."
     \n""")
 suffix = args[0]
-plot_all=options.plot_all
+#plot_all=options.plot_all
 print "options.plot_ballooning", options.plot_ballooning
 plot_ballooning=options.plot_ballooning
 plot_theta=options.plot_theta
+calc_epar=options.calc_epar
 idb_file = options.idb_file
 prof_file = options.prof_file
 time0=float(options.time0)
@@ -201,22 +203,23 @@ if x_local:
     #aparI = np.imag(apar)
     #gradphiR = fd_d1_o4(phiR,zgrid)
     #gradphiI = fd_d1_o4(phiI,zgrid)
-    if os.path.isfile('omega'+suffix):
-        om = np.genfromtxt('omega'+suffix)
-    else:
-        #call(['calc_omega_from_field.py',suffix[1:],'-a'])
-        call(['calc_omega_from_field.py',suffix[1:]])
-        om = np.genfromtxt('omega'+suffix)
+    if calc_epar:
+       if os.path.isfile('omega'+suffix):
+           om = np.genfromtxt('omega'+suffix)
+       else:
+           #call(['calc_omega_from_field.py',suffix[1:],'-a'])
+           call(['calc_omega_from_field.py',suffix[1:]])
+           om = np.genfromtxt('omega'+suffix)
 
-    if om.any():
-        if om[0] == 0.0 or om[1] == 0.0 or om[1] != om[1]:
-            #call(['calc_omega_from_field.py',suffix[1:],'-a'])
-            call(['calc_omega_from_field.py',suffix[1:]])
-            om = np.genfromtxt('omega'+suffix)
-    else:
-        #call(['calc_omega_from_field.py',suffix[1:],'-a'])
-        call(['calc_omega_from_field.py',suffix[1:]])
-        om = np.genfromtxt('omega'+suffix)
+       if om.any():
+           if om[0] == 0.0 or om[1] == 0.0 or om[1] != om[1]:
+               #call(['calc_omega_from_field.py',suffix[1:],'-a'])
+               call(['calc_omega_from_field.py',suffix[1:]])
+               om = np.genfromtxt('omega'+suffix)
+       else:
+           #call(['calc_omega_from_field.py',suffix[1:],'-a'])
+           call(['calc_omega_from_field.py',suffix[1:]])
+           om = np.genfromtxt('omega'+suffix)
 
     #omega_apar = (om[2]+om[1]*(0.0+1.0J))*apar
     #omega_apar = (om[2])*apar
@@ -229,43 +232,43 @@ if x_local:
     
     #Note:  the complex frequency is (gamma + i*omega)
     #print "Here"
-    gpars,geometry = read_geometry_local(pars['magn_geometry'][1:-1]+suffix)
-    jacxB = geometry['gjacobian']*geometry['gBfield']
+       gpars,geometry = read_geometry_local(pars['magn_geometry'][1:-1]+suffix)
+       jacxB = geometry['gjacobian']*geometry['gBfield']
     #plt.plot(geometry['gjacobian']*geometry['gBfield'])
     #plt.title('Jac x B')
     #plt.show()
-    omega_complex = (om[2]*(0.0+1.0J) + om[1])
-    omega_phase = np.log(omega_complex/np.abs(omega_complex))/(0.0+1.0J)
-    print "omega_complex",omega_complex
-    print "omega_phase",omega_phase
-    phase_array = np.empty(len(zgrid))
-    phase_array[:] = np.real(omega_phase)
+       omega_complex = (om[2]*(0.0+1.0J) + om[1])
+       omega_phase = np.log(omega_complex/np.abs(omega_complex))/(0.0+1.0J)
+       print "omega_complex",omega_complex
+       print "omega_phase",omega_phase
+       phase_array = np.empty(len(zgrid))
+       phase_array[:] = np.real(omega_phase)
     
-    gradphi = fd_d1_o4(phi,zgrid)
-    for i in range(pars['nx0']):
-        gradphi[pars['nz0']*i:pars['nz0']*(i+1)] = gradphi[pars['nz0']*i:pars['nz0']*(i+1)]/jacxB[:]/np.pi
+       gradphi = fd_d1_o4(phi,zgrid)
+       for i in range(pars['nx0']):
+           gradphi[pars['nz0']*i:pars['nz0']*(i+1)] = gradphi[pars['nz0']*i:pars['nz0']*(i+1)]/jacxB[:]/np.pi
     
-    ratio = gradphi/-apar
-    mode_phase = np.log(ratio / np.abs(ratio))/(0.0+1.0J)
+       ratio = gradphi/-apar
+       mode_phase = np.log(ratio / np.abs(ratio))/(0.0+1.0J)
     #plt.plot(zgrid,mode_phase)
     #plt.plot(zgrid,phase_array,'-.',color = 'black')
     #plt.show()
     
-    plt.plot(zgrid,np.real(gradphi),'-',color = 'red',label=r'$Re[\nabla \phi]$')
-    plt.plot(zgrid,np.imag(gradphi),'-.',color = 'red',label=r'$Im[\nabla \phi]$')
-    plt.plot(zgrid,-np.real(omega_complex*apar),'-',color = 'black',label=r'$Re[\omega A_{||}]$')
-    plt.plot(zgrid,-np.imag(omega_complex*apar),'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
-    plt.xlabel(r'$z/\pi$',size=18)
-    plt.legend()
-    plt.show()
+       plt.plot(zgrid,np.real(gradphi),'-',color = 'red',label=r'$Re[\nabla \phi]$')
+       plt.plot(zgrid,np.imag(gradphi),'-.',color = 'red',label=r'$Im[\nabla \phi]$')
+       plt.plot(zgrid,-np.real(omega_complex*apar),'-',color = 'black',label=r'$Re[\omega A_{||}]$')
+       plt.plot(zgrid,-np.imag(omega_complex*apar),'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
+       plt.xlabel(r'$z/\pi$',size=18)
+       plt.legend()
+       plt.show()
     
-    diff = np.sum(np.abs(gradphi + omega_complex*apar))
-    phi_cont = np.sum(np.abs(gradphi))
-    apar_cont = np.sum(np.abs(omega_complex*apar))
-    print "diff",diff
-    print "phi_cont",phi_cont
-    print "apar_cont",apar_cont
-    print "diff/abs",diff/(phi_cont+apar_cont)
+       diff = np.sum(np.abs(gradphi + omega_complex*apar))
+       phi_cont = np.sum(np.abs(gradphi))
+       apar_cont = np.sum(np.abs(omega_complex*apar))
+       print "diff",diff
+       print "phi_cont",phi_cont
+       print "apar_cont",apar_cont
+       print "diff/abs",diff/(phi_cont+apar_cont)
     
 else:  #x_local = False
 
@@ -545,26 +548,27 @@ else:  #x_local = False
         plt.colorbar()
         plt.show()
 
+    if calc_epar:
 
-    if os.path.isfile('omega'+suffix):
-        om = np.genfromtxt('omega'+suffix)
-    else:
-        #call(['calc_omega_from_field.py',suffix[1:],'-a'])
-        call(['calc_omega_from_field.py',suffix[1:]])
-        om = np.genfromtxt('omega'+suffix)
+       if os.path.isfile('omega'+suffix):
+           om = np.genfromtxt('omega'+suffix)
+       else:
+           #call(['calc_omega_from_field.py',suffix[1:],'-a'])
+           call(['calc_omega_from_field.py',suffix[1:]])
+           om = np.genfromtxt('omega'+suffix)
 
-    if om.any():
-        if om[0] == 0.0 or om[1] == 0.0 or om[1] != om[1]:
-            #call(['calc_omega_from_field.py',suffix[1:],'-a'])
-            call(['calc_omega_from_field.py',suffix[1:]])
-            om = np.genfromtxt('omega'+suffix)
-    else:
-        #call(['calc_omega_from_field.py',suffix[1:],'-a'])
-        call(['calc_omega_from_field.py',suffix[1:]])
-        om = np.genfromtxt('omega'+suffix)
+       if om.any():
+           if om[0] == 0.0 or om[1] == 0.0 or om[1] != om[1]:
+               #call(['calc_omega_from_field.py',suffix[1:],'-a'])
+               call(['calc_omega_from_field.py',suffix[1:]])
+               om = np.genfromtxt('omega'+suffix)
+       else:
+           #call(['calc_omega_from_field.py',suffix[1:],'-a'])
+           call(['calc_omega_from_field.py',suffix[1:]])
+           om = np.genfromtxt('omega'+suffix)
 
     
-    omega_complex = (om[2]*(0.0+1.0J) + om[1])
+       omega_complex = (om[2]*(0.0+1.0J) + om[1])
     
     #if plot_all:
     #    plt.figure(figsize=(8.0,9.5))
@@ -601,36 +605,36 @@ else:  #x_local = False
     #    plt.colorbar()
     #    plt.show()
     
-    print "omega_complex",omega_complex
-    #print "np.shape(field.apar())",np.shape(field.apar())
-    if 'ExBrate' in pars and pars['ExBrate'] == -1111: 
-        if idb_file == 'empty':
-            idb_file = raw_input("Enter ITERDB file name:\n")
-        if prof_file == 'empty':
-            prof_file = raw_input("Enter gene output profiles file name:\n")
-        rhot_idb,profs_idb,units_idb = read_iterdb(idb_file)
-        profs = np.genfromtxt(prof_file)
-        omegator0 = interp(rhot_idb['VROT'],profs_idb['VROT'],profs[:,0])
-        mi = 1.673e-27
-        ee = 1.602e-19
-        mref = pars['mref']*mi
-        time_ref = pars['Lref']/(pars['Tref']*1000.0*ee/mref)**0.5
-        apar_cont = 0.0
-        diff = 0.0
-        apar_cont_2D = np.empty(np.shape(field.apar()),dtype='complex128')
-        for i in range(pars['nx0']):
-            diff += np.sum(np.abs(gradphi[2:-2,:,i] + (omega_complex+(0.0+1.0J)*pars['n0_global']*omegator0[i]*time_ref)*field.apar()[:,:,i]))
-            apar_cont += np.sum(np.abs((omega_complex+(0.0+1.0J)*pars['n0_global']*omegator0[i]*time_ref)*field.apar()[:,:,i]))
-            apar_cont_2D[:,:,i] =  (omega_complex+(0.0+1.0J)*pars['n0_global']*omegator0[i]*time_ref)*field.apar()[:,:,i]
-    else:
-        diff = np.sum(np.abs(gradphi[2:-2,:,:] + omega_complex*field.apar()[:,:,:]))
-        apar_cont = np.sum(np.abs(omega_complex*field.apar()[:,:,:]))
-    phi_cont = np.sum(np.abs(gradphi[2:-2,:,:]))
-    print "diff",diff
-    print "phi_cont",phi_cont
-    print "apar_cont",apar_cont
-    print "diff/abs",diff/(phi_cont+apar_cont)
-    #for i in range(pars['nx0']/10-2):
+       print "omega_complex",omega_complex
+       #print "np.shape(field.apar())",np.shape(field.apar())
+       if 'ExBrate' in pars and pars['ExBrate'] == -1111: 
+           if idb_file == 'empty':
+               idb_file = raw_input("Enter ITERDB file name:\n")
+           if prof_file == 'empty':
+               prof_file = raw_input("Enter gene output profiles file name:\n")
+           rhot_idb,profs_idb,units_idb = read_iterdb(idb_file)
+           profs = np.genfromtxt(prof_file)
+           omegator0 = interp(rhot_idb['VROT'],profs_idb['VROT'],profs[:,0])
+           mi = 1.673e-27
+           ee = 1.602e-19
+           mref = pars['mref']*mi
+           time_ref = pars['Lref']/(pars['Tref']*1000.0*ee/mref)**0.5
+           apar_cont = 0.0
+           diff = 0.0
+           apar_cont_2D = np.empty(np.shape(field.apar()),dtype='complex128')
+           for i in range(pars['nx0']):
+               diff += np.sum(np.abs(gradphi[2:-2,:,i] + (omega_complex+(0.0+1.0J)*pars['n0_global']*omegator0[i]*time_ref)*field.apar()[:,:,i]))
+               apar_cont += np.sum(np.abs((omega_complex+(0.0+1.0J)*pars['n0_global']*omegator0[i]*time_ref)*field.apar()[:,:,i]))
+               apar_cont_2D[:,:,i] =  (omega_complex+(0.0+1.0J)*pars['n0_global']*omegator0[i]*time_ref)*field.apar()[:,:,i]
+       else:
+           diff = np.sum(np.abs(gradphi[2:-2,:,:] + omega_complex*field.apar()[:,:,:]))
+           apar_cont = np.sum(np.abs(omega_complex*field.apar()[:,:,:]))
+       phi_cont = np.sum(np.abs(gradphi[2:-2,:,:]))
+       print "diff",diff
+       print "phi_cont",phi_cont
+       print "apar_cont",apar_cont
+       print "diff/abs",diff/(phi_cont+apar_cont)
+       #for i in range(pars['nx0']/10-2):
     #    print "i"
     #    for i in range(pars['nx0']/10-2):
     #    plt.plot(zgrid,(np.real(gradphi[2:-2,0,i*field.nx/10])),color = 'black',label='Re gradphi')
@@ -643,67 +647,67 @@ else:  #x_local = False
     #    plt.legend()
     #    plt.show()
 
-    if 'ExBrate' in pars and pars['ExBrate'] == -1111 and plot_ballooning: 
-        plt.figure(figsize=(8.0,9.5))
-        fig=plt.gcf()
-        fig.subplots_adjust(right=0.9)
-        fig.subplots_adjust(left=0.16)
-        fig.subplots_adjust(hspace=0.35)
-        plt.subplot(3,1,1)
-        plt.ylabel(r'$z/\pi$',fontsize=13)
-        plt.xlabel(r'$\rho_{tor}$',fontsize=13)
-        #plt.title(r'$Re(\nabla \phi)$')
-        plt.title(r'$Re(grad phi)$')
-        plt.contourf(xgrid,zgrid,np.real(gradphi[2:-2,0,:]),70,vmin = np.min(np.real(gradphi[2:-2,0,:])),vmax = np.max(np.real(gradphi[2:-2,0,:])))
-        for i in range(len(qrats)):
-            ix = np.argmin(abs(geometry['q']-qrats[i])) 
-            plt.axvline(xgrid[ix],color='white')
-        plt.plot(xgrid[imax[1]],zgrid[imax[0]],'x')
-        cb1=plt.colorbar()
-        plt.subplot(3,1,2)
-        #plt.title(r'$Re[\phi]$')
-        plt.title(r'$Re[ omega Apar]$')
-        plt.ylabel(r'$z/\pi$',fontsize=13)
-        plt.xlabel(r'$\rho_{tor}$',fontsize=13)
-        plt.contourf(xgrid,zgrid,-np.real(apar_cont_2D[:,0,:]),70,vmin = np.min(np.real(gradphi[2:-2,0,:])),vmax = np.max(np.real(gradphi[2:-2,0,:])))
-        plt.colorbar()
-        plt.subplot(3,1,3)
-        plt.title(r'$Re[Diff]$')
-        plt.ylabel(r'$z/\pi$',fontsize=13)
-        plt.xlabel(r'$\rho_{tor}$',fontsize=13)
-        plt.contourf(xgrid,zgrid,np.real(gradphi[2:-2,0,:]+apar_cont_2D[:,0,:]),70,vmin = np.min(np.real(gradphi[2:-2,0,:])),vmax = np.max(np.real(gradphi[2:-2,0,:])))
-        plt.colorbar()
-        plt.show()
+       if 'ExBrate' in pars and pars['ExBrate'] == -1111 and plot_ballooning: 
+           plt.figure(figsize=(8.0,9.5))
+           fig=plt.gcf()
+           fig.subplots_adjust(right=0.9)
+           fig.subplots_adjust(left=0.16)
+           fig.subplots_adjust(hspace=0.35)
+           plt.subplot(3,1,1)
+           plt.ylabel(r'$z/\pi$',fontsize=13)
+           plt.xlabel(r'$\rho_{tor}$',fontsize=13)
+           #plt.title(r'$Re(\nabla \phi)$')
+           plt.title(r'$Re(grad phi)$')
+           plt.contourf(xgrid,zgrid,np.real(gradphi[2:-2,0,:]),70,vmin = np.min(np.real(gradphi[2:-2,0,:])),vmax = np.max(np.real(gradphi[2:-2,0,:])))
+           for i in range(len(qrats)):
+               ix = np.argmin(abs(geometry['q']-qrats[i])) 
+               plt.axvline(xgrid[ix],color='white')
+           plt.plot(xgrid[imax[1]],zgrid[imax[0]],'x')
+           cb1=plt.colorbar()
+           plt.subplot(3,1,2)
+           #plt.title(r'$Re[\phi]$')
+           plt.title(r'$Re[ omega Apar]$')
+           plt.ylabel(r'$z/\pi$',fontsize=13)
+           plt.xlabel(r'$\rho_{tor}$',fontsize=13)
+           plt.contourf(xgrid,zgrid,-np.real(apar_cont_2D[:,0,:]),70,vmin = np.min(np.real(gradphi[2:-2,0,:])),vmax = np.max(np.real(gradphi[2:-2,0,:])))
+           plt.colorbar()
+           plt.subplot(3,1,3)
+           plt.title(r'$Re[Diff]$')
+           plt.ylabel(r'$z/\pi$',fontsize=13)
+           plt.xlabel(r'$\rho_{tor}$',fontsize=13)
+           plt.contourf(xgrid,zgrid,np.real(gradphi[2:-2,0,:]+apar_cont_2D[:,0,:]),70,vmin = np.min(np.real(gradphi[2:-2,0,:])),vmax = np.max(np.real(gradphi[2:-2,0,:])))
+           plt.colorbar()
+           plt.show()
     
     
-        plt.figure(figsize=(8.0,9.5))
-        fig=plt.gcf()
-        fig.subplots_adjust(right=0.9)
-        fig.subplots_adjust(left=0.16)
-        fig.subplots_adjust(hspace=0.35)
-        plt.subplot(3,1,1)
-        plt.ylabel(r'$z/\pi$',fontsize=13)
-        plt.xlabel(r'$\rho_{tor}$',fontsize=13)
-        #plt.title(r'$Re(\nabla \phi)$')
-        plt.title(r'$Im(grad phi)$')
-        plt.contourf(xgrid,zgrid,np.imag(gradphi[2:-2,0,:]),70,vmin = np.min(np.imag(gradphi[2:-2,0,:])),vmax = np.max(np.imag(gradphi[2:-2,0,:])))
-        for i in range(len(qrats)):
-            ix = np.argmin(abs(geometry['q']-qrats[i])) 
-            plt.axvline(xgrid[ix],color='white')
-        plt.plot(xgrid[imax[1]],zgrid[imax[0]],'x')
-        cb1=plt.colorbar()
-        plt.subplot(3,1,2)
-        #plt.title(r'$Re[\phi]$')
-        plt.title(r'$Im[ omega Apar]$')
-        plt.ylabel(r'$z/\pi$',fontsize=13)
-        plt.xlabel(r'$\rho_{tor}$',fontsize=13)
-        plt.contourf(xgrid,zgrid,-np.imag(apar_cont_2D[:,0,:]),70,vmin = np.min(np.imag(gradphi[2:-2,0,:])),vmax = np.max(np.imag(gradphi[2:-2,0,:])))
-        plt.colorbar()
-        plt.subplot(3,1,3)
-        plt.title(r'$Im[Diff]$')
-        plt.ylabel(r'$z/\pi$',fontsize=13)
-        plt.xlabel(r'$\rho_{tor}$',fontsize=13)
-        plt.contourf(xgrid,zgrid,np.imag(gradphi[2:-2,0,:]+apar_cont_2D[:,0,:]),70,vmin = np.min(np.imag(gradphi[2:-2,0,:])),vmax = np.max(np.imag(gradphi[2:-2,0,:])))
-        plt.colorbar()
-        plt.show()
+           plt.figure(figsize=(8.0,9.5))
+           fig=plt.gcf()
+           fig.subplots_adjust(right=0.9)
+           fig.subplots_adjust(left=0.16)
+           fig.subplots_adjust(hspace=0.35)
+           plt.subplot(3,1,1)
+           plt.ylabel(r'$z/\pi$',fontsize=13)
+           plt.xlabel(r'$\rho_{tor}$',fontsize=13)
+           #plt.title(r'$Re(\nabla \phi)$')
+           plt.title(r'$Im(grad phi)$')
+           plt.contourf(xgrid,zgrid,np.imag(gradphi[2:-2,0,:]),70,vmin = np.min(np.imag(gradphi[2:-2,0,:])),vmax = np.max(np.imag(gradphi[2:-2,0,:])))
+           for i in range(len(qrats)):
+               ix = np.argmin(abs(geometry['q']-qrats[i])) 
+               plt.axvline(xgrid[ix],color='white')
+           plt.plot(xgrid[imax[1]],zgrid[imax[0]],'x')
+           cb1=plt.colorbar()
+           plt.subplot(3,1,2)
+           #plt.title(r'$Re[\phi]$')
+           plt.title(r'$Im[ omega Apar]$')
+           plt.ylabel(r'$z/\pi$',fontsize=13)
+           plt.xlabel(r'$\rho_{tor}$',fontsize=13)
+           plt.contourf(xgrid,zgrid,-np.imag(apar_cont_2D[:,0,:]),70,vmin = np.min(np.imag(gradphi[2:-2,0,:])),vmax = np.max(np.imag(gradphi[2:-2,0,:])))
+           plt.colorbar()
+           plt.subplot(3,1,3)
+           plt.title(r'$Im[Diff]$')
+           plt.ylabel(r'$z/\pi$',fontsize=13)
+           plt.xlabel(r'$\rho_{tor}$',fontsize=13)
+           plt.contourf(xgrid,zgrid,np.imag(gradphi[2:-2,0,:]+apar_cont_2D[:,0,:]),70,vmin = np.min(np.imag(gradphi[2:-2,0,:])),vmax = np.max(np.imag(gradphi[2:-2,0,:])))
+           plt.colorbar()
+           plt.show()
     
