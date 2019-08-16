@@ -6,12 +6,11 @@ from finite_differences import *
 import matplotlib.pyplot as plt
 from interp import *
 
-
-iterdb_file_name = 'DIIID174082.iterdb'
-aGENE_m = 0.778704682714
-Bref_Gauss = 19304.
-n0_global = 13
-kymin = 0.13848289
+iterdb_file_name = 'JET2_1_Omtor_factor_0.0.iterdb'
+aGENE_m = 1.20
+#Bref_Gauss = 19304.
+n0_global = 64
+kymin = 0.25
 x0 = 0.975
 
 e = 1.6*10**(-19)
