@@ -1,7 +1,6 @@
 from scipy import interpolate
 import numpy as np
 
-
 def interp(xin,yin,xnew):
     """
     xin: x variable input
