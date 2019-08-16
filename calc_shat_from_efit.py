@@ -6,17 +6,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from interp import *
 from finite_differences import *
+from subprocess import call
 
-parser=op.OptionParser(description='Calculates shat from a file (first run my_efit_tools.py -p -n gfile_name to get it from an EFIT file).  Second argument is the file name of a gene profiles file (for rhotor and rhopol).  Outputs shat to file.  Arguments Binfo_filename, gene_profiles_filename, rho_tor.  ')
+parser=op.OptionParser(description='Calculates shat from an efit file.  Argument: efit_file_name.  ')
 options,args=parser.parse_args()
-if len(args)!=3:
+if len(args)!=1:
     exit("""
-Please include Binfo file name and rho_tor.
+Please include efit file name as argument.
     \n""")
 
-binfo = args[0]
-gene = args[1]
-rhot0 = float(args[2])
+efit_file_name = args[0]
 
 #efit_file_name = 'g030701.01187'
 
@@ -50,12 +49,20 @@ def calc_shat_wpsi(qin,psiin,rhot,rhop,rhot_range=[0.8,1.0]):
     return rhot0,q0,shat 
 
     #Calculating shat
-qfilein = np.genfromtxt(binfo)
+
+call(['my_efit_tools.py','-p','-n',efit_file_name])
+call(['my_efit_tools.py','-c','-n',efit_file_name])
+
+qfilein = np.genfromtxt('Binfo_'+efit_file_name)
 q = qfilein[:,4]
 psi = qfilein[:,1]
-genefile = np.genfromtxt(gene)
-ind8 = np.argmin(abs(genefile[:,0]-0.8))
-rhot0,q0,shat = calc_shat_wpsi(q,psi,genefile[ind8:,0],genefile[ind8:,1])
+
+rtrp = np.genfromtxt('rt_rp_'+efit_file_name)
+rt = rtrp[:,0]
+rp = rtrp[:,1]
+
+ind8 = np.argmin(abs(rt-0.8))
+rhot0,q0,shat = calc_shat_wpsi(q,psi,rt[ind8:],rp[ind8:])
 
 #shat_out = shat[xind]
 #print "Assuming shat = ",shat_out
@@ -65,8 +72,4 @@ f = open('shat.dat','w')
 f.write('#1.rhot0 2.q0 3.shat\n')
 np.savetxt(f,np.column_stack((rhot0,q0,shat)))
 f.close()
-
-
-
-
 
