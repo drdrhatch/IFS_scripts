@@ -2,11 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from read_write_geometry import *
 
-geomfile = 'gene_0001'
-plot_change = True
+geomfile = 'tracer_efit_0001_J78697_nx0128_nz080'
+plot_change = False
 
-qmult = 1.0  #multiply q profile by this factor
-qoff = -0.11  #offset q profile by this amount
+qmult = 0.958  #multiply q profile by this factor
+qoff = 0.0  #offset q profile by this amount
 
 parameters, geometry  = read_geometry_global(geomfile)
 q_original = geometry['q']*1.0
@@ -30,7 +30,4 @@ if plot_change:
    plt.xlabel('rhot')
    plt.title('q')
    plt.show()
-
-
-
 
