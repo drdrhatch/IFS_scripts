@@ -24,6 +24,7 @@ parser.add_option('--plot_ballooning','-b',action='store_const',const=False,help
 parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
 parser.add_option('--idb','-i',type = 'str',action='store',dest="idb_file",help = 'ITERDB file name.',default='empty')
 parser.add_option('--pfile','-f',type = 'str',action='store',dest="prof_file",help = 'ITERDB file name.',default='empty')
+parser.add_option('--output','-o',action='store_true',help = 'Output eigenmode structure in ascii file.',default=False)
 options,args=parser.parse_args()
 print "options",options
 print "args",args
@@ -33,6 +34,7 @@ Please include run number as argument (e.g., 0001)."
     \n""")
 suffix = args[0]
 #plot_all=options.plot_all
+output_file=options.output
 print "options.plot_ballooning", options.plot_ballooning
 plot_ballooning=options.plot_ballooning
 plot_theta=options.plot_theta
@@ -167,25 +169,32 @@ if x_local:
     #for i in range(1,field.nx/2+1):
     #    phi[(i+field.nx/2)*field.nz:(i+field.nx/2+1)*field.nz] = field.phi()[:,0,-1-(i-1)]*(-1)**(i)
     
-    plt.title(r'$\phi$')
-    plt.plot(zgrid,np.real(phi),color='red',label=r'$Re[\phi]$')
-    plt.plot(zgrid,np.imag(phi),color='blue',label=r'$Im[\phi]$')
-    plt.plot(zgrid,np.abs(phi),color='black',label=r'$|\phi|$')
-    ax=plt.axis()
-    plt.axvline(zavg,ax[2],ax[3],color='yellow')
-    plt.axvline(-zavg,ax[2],ax[3],color='yellow')
-    plt.legend()
-    plt.xlabel(r'$z/\pi$',size=18)
-    plt.show()
+    if output_file:
+        phi = phi / np.max(np.real(phi))
+        apar = apar / np.max(np.real(apar))
+        f = open('mode_structure'+suffix,'w')
+        np.savetxt(f,np.column_stack((zgrid,np.real(phi),np.imag(phi),np.real(apar),np.imag(apar))))
+        f.close()
+    else:
+        plt.title(r'$\phi$')
+        plt.plot(zgrid,np.real(phi),color='red',label=r'$Re[\phi]$')
+        plt.plot(zgrid,np.imag(phi),color='blue',label=r'$Im[\phi]$')
+        plt.plot(zgrid,np.abs(phi),color='black',label=r'$|\phi|$')
+        ax=plt.axis()
+        plt.axvline(zavg,ax[2],ax[3],color='yellow')
+        plt.axvline(-zavg,ax[2],ax[3],color='yellow')
+        plt.legend()
+        plt.xlabel(r'$z/\pi$',size=18)
+        plt.show()
     
-    plt.title(r'$A_{||}$')
-    plt.plot(zgrid,np.real(apar),color='red',label=r'$Re[A_{||}]$')
-    plt.plot(zgrid,np.imag(apar),color='blue',label=r'$Im[A_{||}]$')
-    plt.plot(zgrid,np.abs(apar),color='black',label=r'$|A_{||}|$')
-    plt.legend()
-    plt.xlabel(r'$z/\pi$',size=18)
-    plt.show()
-    np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
+        plt.title(r'$A_{||}$')
+        plt.plot(zgrid,np.real(apar),color='red',label=r'$Re[A_{||}]$')
+        plt.plot(zgrid,np.imag(apar),color='blue',label=r'$Im[A_{||}]$')
+        plt.plot(zgrid,np.abs(apar),color='black',label=r'$|A_{||}|$')
+        plt.legend()
+        plt.xlabel(r'$z/\pi$',size=18)
+        plt.show()
+        #np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
     
     cfunc,zed,corr_len=my_corr_func_complex(phi,phi,zgrid,show_plot=False)
     print "correlation length (for phi): ", corr_len
@@ -254,21 +263,22 @@ if x_local:
     #plt.plot(zgrid,phase_array,'-.',color = 'black')
     #plt.show()
     
-       plt.plot(zgrid,np.real(gradphi),'-',color = 'red',label=r'$Re[\nabla \phi]$')
-       plt.plot(zgrid,np.imag(gradphi),'-.',color = 'red',label=r'$Im[\nabla \phi]$')
-       plt.plot(zgrid,-np.real(omega_complex*apar),'-',color = 'black',label=r'$Re[\omega A_{||}]$')
-       plt.plot(zgrid,-np.imag(omega_complex*apar),'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
-       plt.xlabel(r'$z/\pi$',size=18)
-       plt.legend()
-       plt.show()
+    if not output_file:
+        plt.plot(zgrid,np.real(gradphi),'-',color = 'red',label=r'$Re[\nabla \phi]$')
+        plt.plot(zgrid,np.imag(gradphi),'-.',color = 'red',label=r'$Im[\nabla \phi]$')
+        plt.plot(zgrid,-np.real(omega_complex*apar),'-',color = 'black',label=r'$Re[\omega A_{||}]$')
+        plt.plot(zgrid,-np.imag(omega_complex*apar),'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
+        plt.xlabel(r'$z/\pi$',size=18)
+        plt.legend()
+        plt.show()
     
-       diff = np.sum(np.abs(gradphi + omega_complex*apar))
-       phi_cont = np.sum(np.abs(gradphi))
-       apar_cont = np.sum(np.abs(omega_complex*apar))
-       print "diff",diff
-       print "phi_cont",phi_cont
-       print "apar_cont",apar_cont
-       print "diff/abs",diff/(phi_cont+apar_cont)
+        diff = np.sum(np.abs(gradphi + omega_complex*apar))
+        phi_cont = np.sum(np.abs(gradphi))
+        apar_cont = np.sum(np.abs(omega_complex*apar))
+        print "diff",diff
+        print "phi_cont",phi_cont
+        print "apar_cont",apar_cont
+        print "diff/abs",diff/(phi_cont+apar_cont)
     
 else:  #x_local = False
 

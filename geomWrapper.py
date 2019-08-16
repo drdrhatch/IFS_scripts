@@ -289,6 +289,48 @@ def calc_kperp_omd(geom_type, geom_coeff,pars,center_only,plot, ky =-1):
     return kperp, omd_curv, omd_gradB
 
 
+def calc_kx_extended(pars,plot, ky =-1):
+
+    nx = int(pars['nx0'])
+    ikx_grid = np.arange(- nx // 2 + 1, nx // 2 + 1)
+    nz = int(pars['nz0'])
+    lx = float(pars['lx'])
+    if ky == -1:
+        ky = float(pars['kymin'])
+    print 'ky = ', ky
+    dkx = 2. * np.pi * float(pars['shat']) * float(ky)
+
+    dpdx_tot = float(pars['beta']) * \
+               (float(pars['omn1']) + float(pars['omt1']))
+    if  int(pars['n_spec']) > 1:
+        dpdx_tot = dpdx_tot + float(pars['beta']) * \
+                   (float(pars['omn2']) + float(pars['omt2']))
+        if int(pars['n_spec']) > 2:
+           dpdx_tot = dpdx_tot + float(pars['beta']) * \
+                      (float(pars['omn3']) + float(pars['omt3']))
+
+    if 'kx_center' in pars:
+        kx_center = float(pars['kx_center'])
+    else:
+        kx_center = 0.
+
+    kx_ext = np.zeros(nx*nz,dtype='float128')
+
+    for i in ikx_grid:
+	kx = i*dkx+kx_center
+
+	kx_ext[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=kx
+
+    if plot:
+        plt.plot(kx_ext,label='kperp')
+        plt.title('entire simulation domain')
+        plt.legend()
+        plt.show()
+
+    return kx_ext
+
+
+
 def bounce_averaged_omd(suffix,pars,geom_coeff,omega_d1,omega_d2,z_grid,ky=-1):
     nl = 1024
     me = 0.27240000E-03

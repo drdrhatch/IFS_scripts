@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from subprocess import call
 import os
 
@@ -10,12 +13,13 @@ for i in range(100):
 
 files = []
 
-base = 'mode_info_1_'
+base = 'mode_info_'
 cat_string = 'cat '
-for i in range(50):  
+for i in range(100):  
+    for j in range(50):
         suffix = '0000'+str(i)
         suffix = suffix[-4:]
-        efile = base+suffix
+        efile = base+str(j)+'_'+suffix
         if os.path.exists('./'+efile):
             print efile
             files.append(efile)
@@ -25,7 +29,4 @@ for i in range(50):
 cat_string += '> '+'mode_info_all'
 
 call(cat_string,shell=True)
-
-        
-
 
