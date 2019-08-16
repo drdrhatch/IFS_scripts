@@ -69,4 +69,13 @@ for i in range(len(qrats)):
     plt.axvline(rhot[ix],color='black')
 plt.show()
 
+f=open('q_rationals.dat','w')
+f.write('#n='+str(n0)+'\n')
+f.write('#Rational surfaces q values:\n')
+for i in range(len(qrats)):
+   f.write('#'+str(qrats[i])+'\n')
+f.write('#1.rhot, 2.q')
+np.savetxt(f,np.column_stack((rhot,geometry['q'])))
+f.close()
+
 
