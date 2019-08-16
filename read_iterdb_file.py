@@ -30,7 +30,9 @@ def read_iterdb_file(iterdb_filename):
         if num % 6 != 0:
             sec_num_lines += 1
         keep_going=1
-        while keep_going:
+        while keep_going and len(data_linesplit) > lnum:
+            print "len(data_linesplit)",len(data_linesplit)
+            print "lnum",lnum
             test=re.search('-DEPENDENT VARIABLE LABEL',data_linesplit[lnum])
             #test2=re.search('INDEPENDENT',data_linesplit[lnum])
             if test :
