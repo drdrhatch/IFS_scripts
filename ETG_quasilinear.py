@@ -67,15 +67,19 @@ elif sat_rule == 3:
 elif sat_rule == 4:
     Qql0 = ldata[:,6]*omt 
     for i in range(len(ldata[:,0])):
-        if ldata[i,10] < 0.5*ldata[i,0]:
-            Qql0[i] = ldata[i,4]/(ldata[i,0]*ldata[i,2])*omt
+        #if ldata[i,10] < 0.5*ldata[i,0]:
+        if ldata[i,2] < 0.5*ldata[i,0]:
+            #Qql0[i] = ldata[i,4]/(ldata[i,0]*ldata[i,2])*omt
+            Qql0[i] = ldata[i,4]/(ldata[i,0]**2)*omt
 elif sat_rule == 5:
     Qql0 = np.empty(len(ldata[:,0]))
     for i in range(len(ldata[:,0])):
         denom = ldata[i,0]*ldata[i,2]
         Qql0[i] = ldata[i,4]/denom*omt
-
-
+elif sat_rule == 6:
+    Qql0 = ldata[:,4]/(0.5*ldata[:,0]**2+0.5*ldata[:,2]**2)*omt
+elif sat_rule == 7:
+    Qql0 = ldata[:,6]*omt*abs(ldata[:,5])/ldata[:,4]
 
 
 Qql = np.empty(0)
@@ -131,7 +135,7 @@ ax2.plot(kygrid,Qql_interp2,'--',c='green',label='interp Qql lin: '+str(Qql_tot2
 plt.xlabel('ky')
 plt.legend(loc=1)
 plt.gcf().autofmt_xdate()
-plt.title(plot_title + ', C0 = '+str(Qql_tot2/Qnl_tot)[0:4])
+plt.title(plot_title + ', C0 = '+str(Qnl_tot/Qql_tot2)[0:4])
 plt.show()
 
 #plt.plot(ldata[:,0],ldata[:,4],'x')
