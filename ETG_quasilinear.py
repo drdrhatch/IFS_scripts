@@ -11,6 +11,9 @@ from interp import *
 parser=op.OptionParser(description='Plots quasilinear estimates of heat flux and compares with nonlinear fluxes.')
 parser.add_option('--include_qn2','-q', action='store_true',dest = 'include_qn2', help = 'Includes the weight factor Q/n^2', default=False)
 parser.add_option('--sat_rule','-s', action='store',type = int,dest = 'sat_rule', help = 'Selects saturation rule: 1=gamma/kperp2, 2=gamma/(kx^2+ky^2).', default=1)
+parser.add_option('--add_all','-a', action='store_true',dest = 'add_all', help = 'Add all contributions for each ky (kx_center scan or EV run).', default=False)
+parser.add_option('--noplot','-n', action='store_true',dest = 'noplot', help = 'No plot.', default=False)
+parser.add_option('--most_unstable','-m', action='store_true',dest = 'most_unstable', help = 'Takes contribution only from the most unstable mode.', default=False)
 
 options,args=parser.parse_args()
 if len(args)!=2:
@@ -20,13 +23,16 @@ Please include run number as argument (e.g., 0001) and scanfiles suffix as secon
 suffix = args[0]
 sfsuffix = args[1]
 include_qn2 = options.include_qn2
+add_all = options.add_all
 sat_rule = options.sat_rule
+noplot = options.noplot
+most_unstable = options.most_unstable
 print "include_qn2",include_qn2
+print "add_all",add_all
+print "sat_rule",sat_rule
+print "most_unstable",most_unstable
 
-plot_title = 'QL spectrum, sat_rule: '+str(sat_rule)
 
-if include_qn2:
-    plot_title += ' with Q/n^2 '
 
 if 'dat' in suffix:
    suffix = '.dat'
@@ -40,9 +46,9 @@ pars = par.pardict
 
 if pars['n_spec'] == 1:
    omt = pars['omt1']
-else:
-   print "Error: Not ready for multiple species!"
-   stop
+elif pars['n_spec'] == 2:
+   print "Warning: Not ready for multiple species!"
+   omt = pars['omt2']
 
 N=pars['nx0']/2+1
 pwd=sys.path[0]
@@ -54,6 +60,11 @@ for i in range(N,len(f)):
     Qes.append(f[i][2])
 
 ldata = np.genfromtxt('scanfiles'+sfsuffix+'/mode_info_all')
+parlin = Parameters()
+parlin.Read_Pars('scanfiles'+sfsuffix+'/parameters')
+parslin = parlin.pardict
+IVEV = parslin['comp_type']
+print "IVEV",IVEV
 
 if sat_rule == 1:
     Qql0 = ldata[:,6]*omt
@@ -80,32 +91,36 @@ elif sat_rule == 6:
     Qql0 = ldata[:,4]/(0.5*ldata[:,0]**2+0.5*ldata[:,2]**2)*omt
 elif sat_rule == 7:
     Qql0 = ldata[:,6]*omt*abs(ldata[:,5])/ldata[:,4]
+elif sat_rule == 8:
+    Qql0 = ldata[:,6]*omt*abs(ldata[:,5])/ldata[:,4]
 
+if include_qn2:
+    Qql0 = ldata[:,7]*Qql0
 
 Qql = np.empty(0)
 ky2 = np.empty(0)
-Qn2 = np.empty(0)
 nky = 0
 for i in range(len(ldata[:,0])):
     if not ldata[i,0] in ky2: 
         ky2 = np.append(ky2,ldata[i,0])
         Qql = np.append(Qql,Qql0[i])
-        Qn2 = np.append(Qn2,ldata[i,7])
         nky += 1
     else:
-        if Qql0[i] > Qql[nky-1]:
+        if add_all and Qql0[i] > 0 and not most_unstable:
+            Qql[nky-1] += Qql0[i]  #Summing at each ky for all positive values
+        elif Qql0[i] > Qql[nky-1] and not most_unstable:
             Qql[nky-1] = Qql0[i]  #Taking maximum over ballooning angle / eigenvalue
-            Qn2[nky-1] = ldata[i,7]
 
 #gkp = np.genfromtxt('scanfiles'+sfsuffix+'/gamma_kperp2_ratio_kxcenter0')
 #kperp2 = gkp[:,2]
 #Test kperp^3
 #Qql2 = Qql*kperp2/kperp2**1.5
-if include_qn2:
-    Qql = Qql*Qn2
+#if include_qn2:
+#    Qql = Qql*Qn2
 
 kygrid = np.linspace(pars['kymin'],(pars['nky0']-1)*pars['kymin'],num = pars['nky0']-1)
-print "kygrid",kygrid
+#print "kygrid",kygrid
+#print "ky1",ky1
 #Cubic spline interpolation
 Qql_interp1 = interp(ky2,Qql,kygrid)
 #Linear interpolation
@@ -120,7 +135,15 @@ print "Sum Qql interp1:",np.sum(Qql_interp1)
 print "Sum Qql linear interp:",np.sum(Qql_interp2)
 #print "Sum Qql (kp3) linear interp:",np.sum(Qql2_interp2)
 print "Sum Qnl:",np.sum(Qes)
+C0 = np.sum(Qes)/np.sum(Qql_interp2)
+print "C0:",C0
+ikpeak = np.argmax(Qql_interp2)
+print "Qql peak ky",kygrid[ikpeak]
+C0peak = np.sum(Qes)/np.sum(Qql_interp2[ikpeak])
+print "C0peak",C0peak
+
 #c3 = Qql_tot2/Qql2_tot
+outfile = 'QL_summary'+suffix+'_'+sfsuffix+'_iqn2'+str(include_qn2)[0]+'_sat'+str(sat_rule)+'_add'+str(add_all)[0]+'_mu'+str(most_unstable)[0]
 
 fig,ax1=plt.subplots()
 ax1.plot(ky1,Qes,c='blue',label='Q_es')
@@ -135,8 +158,25 @@ ax2.plot(kygrid,Qql_interp2,'--',c='green',label='interp Qql lin: '+str(Qql_tot2
 plt.xlabel('ky')
 plt.legend(loc=1)
 plt.gcf().autofmt_xdate()
-plt.title(plot_title + ', C0 = '+str(Qnl_tot/Qql_tot2)[0:4])
-plt.show()
+plt.title(outfile + ', C0 = '+str(Qnl_tot/Qql_tot2)[0:6])
+if not noplot:
+    plt.show()
+else:
+    plt.savefig(outfile+'.ps',format='ps')
+
+f=open(outfile,'w')
+f.write('#comp_type: '+IVEV+'\n')
+f.write('#suffix: '+str(suffix)+'\n')
+f.write('#sfsuffix: '+str(sfsuffix)+'\n')
+f.write('#include_qn2: '+str(include_qn2)+'\n')
+f.write('#sat_rule: '+str(sat_rule)+'\n')
+f.write('#add_all: '+str(add_all)+'\n')
+f.write('#most_unstable: '+str(most_unstable)+'\n')
+f.write('#C0 = '+str(C0)[0:6]+'\n')
+f.write('#C0peak = '+str(C0peak)[0:6]+'\n')
+f.write('#1.ky 2.Qnl 3.Qql_interp\n')
+np.savetxt(f,np.column_stack((kygrid,Qes[1:],Qql_interp2)))
+f.close()
 
 #plt.plot(ldata[:,0],ldata[:,4],'x')
 #plt.xlabel('kymin')
