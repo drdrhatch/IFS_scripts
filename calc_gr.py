@@ -25,7 +25,10 @@ def calc_gr2(suffix,nspec=2,ncols=10):
             nrge=np.delete(nrge,-1,0)
         time=np.delete(time,-1,0)
 
-    start_time=time[-1]-2.0
+    if time[-1] > 80:
+        start_time=time[-1]-2.0
+    else:
+        start_time=0.95*time[-1]
     start_index=np.argmin(abs(time-start_time))
     ntime=len(time)-start_index
 
