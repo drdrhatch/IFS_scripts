@@ -5,7 +5,6 @@ import optparse as op
 import numpy as np
 from read_EFIT_file import *
 
-
 parser=op.OptionParser(description='Calculates dimensionless parameters (beta, nu*, rho*) from an EFIT file and gene profile files at a given value of rho_tor.  Arguments: efit_file_name, gene_profiles_file_name_e, gene_file_name_i, rhot0')
 options,args=parser.parse_args()
 if len(args)!=4:
@@ -61,9 +60,10 @@ nustar_e=16.0/3.0/pi**0.5*q0/trpeps**1.5*(R_major/Lref)*Z**2*coll
 print "Sound speed (m/s):", crefSI
 print "Sound gyroradius (m):", crefSI/OmrefSI
 print "Transit frequency (1/s):", crefSI/Lref
-print "QGBref = nref Tref vtref rhoref*^2 (W/m^2):", ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2
-print "ChiGBref = Lref vtref rhoref*^2 (m^2/s):", Lref*crefSI*rhostar**2
-print "QGBe = nref Tref vte rhoe*^2 (W/m^2):", (ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2)*(me/mref)**0.5
+print "QGBref = nref Tref vtref rhoref*^2 translated to (W/m^2):", ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2
+print "GammaGBref = nref vtref rhoref*^2 translated to (particles / m^2 / s):", ne*1.0e19*crefSI*rhostar**2
+print "ChiGBref = Lref vtref rhoref*^2 translated to (m^2/s):", Lref*crefSI*rhostar**2
+print "QGBe = nref Tref vte rhoe*^2 translated to (W/m^2):", (ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2)*(me/mref)**0.5
 print "coll (from GENE)",coll
 
 print "*************************"
