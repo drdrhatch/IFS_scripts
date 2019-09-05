@@ -3,12 +3,15 @@
 
 import os
 import sys
+import traceback
+
 import numpy as npy
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf as pdfh
 
 from scipy.integrate import simps
 from scipy.interpolate import interp1d,interp2d
+from scipy.interpolate import CubicSpline,RectBivariateSpline
 
 import read_iterdb
 
@@ -91,7 +94,7 @@ def plot_iterdb(iterdbdata,reportpath=''):
 
     return 1
 
-def read_profiles(pfpath,setParam={}):
+def read_profiles_file(pfpath,setParam={}):
    #Developed by Ehab Hassan on 2019-02-17
     from scipy.interpolate import CubicSpline
     if not os.path.isfile(pfpath):
@@ -99,12 +102,13 @@ def read_profiles(pfpath,setParam={}):
        sys.exit()
 
     ofh = open(pfpath,'r')
-    print('Reading %s file ...' % pfpath)
+#   print('Reading %s file ...' % pfpath)
 
     profiles = {}
     units    = {}
     while True:
           recs = ofh.readline().split()
+         #if len(recs)>0 and '#' in recs[0]: continue
           if   len(recs)>4:
                nrec = int(recs[0])
                ary0=npy.zeros(nrec)
@@ -134,6 +138,10 @@ def read_profiles(pfpath,setParam={}):
                     unit = 'm^{-3}'
                elif var1.strip() in ['te','ti']:
                     unit = 'eV'
+               elif var1.strip() in ['pb','ptot']:
+                    unit = 'Pa'
+               elif var1.strip() in ['vtor1','vpol1']:
+                    unit = 'm/s'
                else:
                     unit = temp[temp.index("(")+1:temp.index(")")]
                var2 = str(recs[3]).lower()
@@ -155,7 +163,7 @@ def read_profiles(pfpath,setParam={}):
                   profiles[var2] = ary2
                if   var1.strip() in ['ne','ni','nb','nz1']:
                     profiles[var1] *= 10.0**powr
-               elif var1.strip() in ['te']:
+               elif var1.strip() in ['te','ti','pb','ptot','vtor1','vpol1']:
                     profiles[var1] *= 1.0e3
           else:
                break
@@ -167,7 +175,7 @@ def read_profiles(pfpath,setParam={}):
        elif 'eqdskfpath' in setParam:
           eqdskfpath = setParam['eqdskfpath']
 
-       eqdskdata = read_eqdsk(eqdskfpath)
+       eqdskdata = read_efit_file(eqdskfpath)
 
        qpsifn  = interp1d(eqdskdata['PSIN'],eqdskdata['qpsi'])
        qpsi    = qpsifn(profiles['psinorm'])
@@ -199,14 +207,22 @@ def plot_profiles(pfpath):
     figs.close()
     return profiles
 
-def read_eqdsk(eqdskfpath):
+def read_efit_file(eqdskfpath,setParam={}):
    #Developed by Ehab Hassan on 2019-02-27
+    if os.path.isfile(eqdskfpath) == False:
+       errorFunc = traceback.extract_stack(limit=2)[-2][3]
+       errorLine = traceback.extract_stack(limit=2)[-2][1]
+       errorFile = traceback.extract_stack(limit=2)[-2][2]
+       errMSG    = 'Call %s line %5d in file %s Failed.\n'
+       errMSG   += 'Fatal: file %s not found.'
+       raise IOError(errMSG %(errorFunc,errorLine,errorFile,eqdskfpath))
+    
     ofh = open(eqdskfpath,'r')
     eqdskdata = {}
     cline = ofh.readline()
     eqdskdata['idum']   = int(cline[48:52])
     eqdskdata['RDIM']   = int(cline[52:56])
-    eqdskdata['ZDIM']   = int(cline[56:60])
+    eqdskdata['ZDIM']   = int(cline[56:61])
     cline = ofh.readline()
     eqdskdata['RLEN']   = float(cline[0:16])
     eqdskdata['ZLEN']   = float(cline[16:32])
@@ -220,7 +236,7 @@ def read_eqdsk(eqdskfpath):
     eqdskdata['PSIBND'] = float(cline[48:64])
     eqdskdata['BCTR']   = float(cline[64:80])
     cline = ofh.readline()
-    eqdskdata['TCRNT']  = float(cline[0:16])
+    eqdskdata['CURNT']  = float(cline[0:16])
     eqdskdata['PSIMAX'] = float(cline[16:32])
     eqdskdata['XDUM']   = float(cline[32:48])
     eqdskdata['RMAX']   = float(cline[48:64])
@@ -295,7 +311,7 @@ def read_eqdsk(eqdskfpath):
             eqdskdata['psiRZ'][iline*5+4] = float(cline[64:80])
         except:
             error = 'empty records'
-    eqdskdata['psiRZ'] = npy.reshape(eqdskdata['psiRZ'],(eqdskdata['RDIM'],eqdskdata['ZDIM']))
+    eqdskdata['psiRZ'] = npy.reshape(eqdskdata['psiRZ'],(eqdskdata['ZDIM'],eqdskdata['RDIM']))
 
 
     eqdskdata['qpsi'] = npy.zeros(eqdskdata['RDIM'])
@@ -358,26 +374,25 @@ def read_eqdsk(eqdskfpath):
     eqdskdata['RR1D']  = npy.arange(eqdskdata['RDIM'],dtype=float)*eqdskdata['RLEN']/(eqdskdata['RDIM']-1.0)
     eqdskdata['RR1D'] += eqdskdata['RLFT']
 
-   #eqdskdata['RR2D'],eqdskdata['ZR2D'] = npy.meshgrid(eqdskdata['RR1D'],eqdskdata['ZR1D'])
-
-   #eqdskdata['ZM1D']  = eqdskdata['ZR1D']-eqdskdata['ZMAX']-eqdskdata['ZLEN']/2.0
-   #eqdskdata['RM1D']  = eqdskdata['RR1D']-eqdskdata['RMAX']
-
-   #eqdskdata['RM2D'],eqdskdata['ZM2D'] = npy.meshgrid(eqdskdata['RM1D'],eqdskdata['ZM1D'])
-
     eqdskdata['psiRZ'] = (eqdskdata['psiRZ']-eqdskdata['PSIMAX'])/(eqdskdata['PSIBND']-eqdskdata['PSIMAX'])
 
     eqdskdata['PSI']    = (eqdskdata['PSIBND']-eqdskdata['PSIMAX'])*npy.arange(eqdskdata['RDIM'])/(eqdskdata['RDIM']-1.0)
     eqdskdata['PSIN']   = (eqdskdata['PSI']-eqdskdata['PSI'][0])/(eqdskdata['PSI'][-1]-eqdskdata['PSI'][0])
     eqdskdata['rhopsi'] = npy.sqrt(eqdskdata['PSIN'])
 
-    eqdskdata['PHI']    = npy.empty_like(eqdskdata['PSI'])
-    eqdskdata['PHI'][0] = 0.0
+    extendPSI    = npy.linspace(eqdskdata['PSI'][0],eqdskdata['PSI'][-1],10*npy.size(eqdskdata['PSI']))
+    extendPHI    = npy.empty_like(extendPSI)
+    extendPHI[0] = 0.0
+    qfunc        = CubicSpline(eqdskdata['PSI'],eqdskdata['qpsi'])
+    for i in range(1,npy.size(extendPSI)):
+        x           = extendPSI[:i+1]
+        y           = qfunc(x)
+        extendPHI[i]= npy.trapz(y,x)
 
-    for i in range(1,npy.size(eqdskdata['PSI'])):
-        x = eqdskdata['PSI'][:i+1]
-        y = eqdskdata['qpsi'][:i+1]
-        eqdskdata['PHI'][i] = npy.trapz(y,x)
+    eqdskdata['PHI'] = npy.empty_like(eqdskdata['PSI'])
+    phifunc          = CubicSpline(extendPSI,extendPHI)
+    for i in range(npy.size(eqdskdata['PSI'])):
+        eqdskdata['PHI'][i] = phifunc(eqdskdata['PSI'][i])
 
     eqdskdata['PHIN']   = (eqdskdata['PHI']-eqdskdata['PHI'][0])/(eqdskdata['PHI'][-1]-eqdskdata['PHI'][0])
     eqdskdata['rhotor'] = npy.sqrt(eqdskdata['PHIN'])
@@ -430,6 +445,67 @@ def plot_eqdsk(eqdskdata,reportpath=''):
 
     return 1
 
+def profile_mapping(psi,phi,profpsi=[],profphi=[]):
+    if   any(profpsi):
+         profpsifn=interp1d(psi,profpsi,kind='linear')
+         phipsifn =interp1d(psi,phi,kind='linear')
+         profphi  =profpsifn(phipsifn(psi))
+    elif any(profphi):
+         profphifn=interp1d(phi,profphi,kind='linear')
+         psiphifn =interp1d(phi,psi,kind='linear')
+         profpsi  =profphifn(psiphifn(phi))
+
+'''
+def psi2phi(q,psi):
+    qpsifn  = interp1d(psi,q)
+    psinorm = npy.linspace(psi[0],psi[-1],10*len(psi))
+    qpsi    = qpsifn(psinorm)
+    phinorm = npy.zeros_like(psinorm)
+    for i in range(1,npy.size(qpsi)):
+        x = psinorm[1:i+1]
+        y = qpsi[1:i+1]
+        phinorm[i] = npy.trapz(y,x)
+    phinorm  = (phinorm-phinorm[0])/(phinorm[-1]-phinorm[0])
+    phipsifn = interp1d(psinorm,phinorm)
+    phi      = phipsifn(psi)
+    return phi
+
+def phi2psi(q,phi):
+    qphifn  = interp1d(phi,q)
+    phinorm = npy.linspace(phi[0],phi[-1],10*len(phi))
+    qphi    = qphifn(phinorm)
+    psinorm = npy.zeros_like(phinorm)
+    for i in range(1,npy.size(qphi)):
+        x = phinorm[1:i+1]
+        y = 1./qphi[1:i+1]
+        psinorm[i] = npy.trapz(y,x)
+    psinorm  = (psinorm-psinorm[0])/(psinorm[-1]-psinorm[0])
+    psiphifn = interp1d(phinorm,psinorm)
+    psi      = psiphifn(phi)
+    return psi
+'''
+
+def psi2phi(q,psi):
+    phinorm = npy.zeros_like(psi)
+    for i in range(1,npy.size(q)):
+        x = psi[1:i+1]
+        y = q[1:i+1]
+        phinorm[i] = npy.trapz(y,x)
+    phinorm  = (phinorm-phinorm[0])/(phinorm[-1]-phinorm[0])
+    phi      = phinorm
+    return phi
+
+def phi2psi(q,phi):
+    psinorm = npy.zeros_like(phi)
+    for i in range(1,npy.size(q)):
+        x = phi[1:i+1]
+        y = 1./q[1:i+1]
+        psinorm[i] = npy.trapz(y,x)
+    psinorm  = (psinorm-psinorm[0])/(psinorm[-1]-psinorm[0])
+    psi      = psinorm
+    return psi
+
+
 def findmonotonic(A,kind="increasing"):
     if kind.lower()=="increasing":
        bgnloc=0
@@ -446,7 +522,7 @@ def findmonotonic(A,kind="increasing"):
 
 
 def magsurf_contours(eqdskfpath):
-    eqdskdata = read_eqdsk(eqdskfpath.strip())
+    eqdskdata = read_efit_file(eqdskfpath.strip())
 
     minZ = min(eqdskdata['zbound'])+eqdskdata['ZLEN']/2
     maxZ = max(eqdskdata['zbound'])+eqdskdata['ZLEN']/2
@@ -474,14 +550,12 @@ def magsurf_contours(eqdskfpath):
 def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
     if not eqdskdata.keys():
        if eqdskfpath:
-          eqdskdata = read_eqdsk(eqdskfpath.strip())
+          eqdskdata = read_efit_file(eqdskfpath.strip())
        else:
           print('FATAL: EQDSK FILE NOT FOUND. EXIT!')
           sys.exit()
 
     qpsifn = interp1d(eqdskdata['PSIN'],eqdskdata['qpsi'],kind="linear")
-#   phipsi = interp1d(eqdskdata['PSIN'],eqdskdata['PHIN'],kind="linear")
-#   phi    = phipsi(psi)
 
     minZ = min(eqdskdata['zbound'])+eqdskdata['ZLEN']/2
     maxZ = max(eqdskdata['zbound'])+eqdskdata['ZLEN']/2
@@ -514,7 +588,7 @@ def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
     zsln = []
     slns = npy.array([cs_r,cs_z])
 
-    maxzta = 1.0*npy.pi*qpsifn(psiRZ(cs_r,cs_z))
+    maxzta = 4.0*npy.pi*eqdskdata['RLEN']*eqdskdata['ZLEN']*psiRZ(cs_r,cs_z)
     zta = npy.linspace(0.0,maxzta,npts)
     stp = npy.diff(zta)[0]
     passhalf = False
@@ -522,7 +596,7 @@ def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
        if j >= npy.size(zta)/2: passhalf = True
        slns = rk5(f1,f2,zta[j],slns,stp)
        if passhalf:
-          if (abs(rsln[0]-slns[0])<5.0e-3) and (abs(zsln[0]-slns[1])<5.0e-3):
+          if (abs(rsln[0]-slns[0])<5.0e-1) and (abs(zsln[0]-slns[1])<5.0e-1):
              break
        rsln.append(slns[0])
        zsln.append(slns[1])
@@ -532,7 +606,7 @@ def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
 def magsurf_searching(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
     if not eqdskdata.keys():
        if eqdskfpath:
-          eqdskdata = read_eqdsk(eqdskfpath.strip())
+          eqdskdata = read_efit_file(eqdskfpath.strip())
        else:
           print('FATAL: EQDSK FILE NOT FOUND. EXIT!')
           sys.exit()
@@ -592,15 +666,13 @@ def magsurf_searching(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
         psirho = interp1d(rho1D,psi1D,kind="cubic")
         rhopsi = bisection(psirho,rho1D[0],rho1D[-1],root=psi,eps=eps)
         if abs(psirho(rhopsi)-psi) <= eps:
-           print i
            rbound.append(RMAX+rhopsi*npy.cos(ang))
            zbound.append(ZMAX+rhopsi*npy.sin(ang))
-    print len(eqdskdata['rbound']),len(rbound)
 
     return npy.array(rbound),npy.array(zbound)
 
 def magsurf_interp(eqdskfpath):
-    eqdskdata = read_eqdsk(eqdskfpath.strip())
+    eqdskdata = read_efit_file(eqdskfpath.strip())
 
    #Finding the magnetic surface using interpolation technique
     R1D = eqdskdata['RR1D']-eqdskdata['RLFT']-(eqdskdata['RLEN']/2.0)
