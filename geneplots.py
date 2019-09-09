@@ -3,17 +3,20 @@
 
 import os
 import math
-import numpy as npy
+import warnings
+import genetools
+import efittools
+import read_iterdb
+import matplotlib.cbook
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf as pdfh
+
+import numpy as npy
 
 from read_write_geometry import *
 from scipy.interpolate import interp1d
 
-import genetools
-import efittools
-import read_iterdb
-
+warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 
 def create_k_grid(x_grid):
     nx  = npy.size(x_grid)
@@ -92,8 +95,9 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
         else:
            titletxt = '(k_y=%6.3f)' % (parameters['box']['kymin'])
 
-        geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
-        area = genetools.calculate_surface_area(parameters=parameters,geometry=geomfpath)
+        if siunits:
+           geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
+           area = genetools.calculate_surface_area(parameters=parameters,geometry=geomfpath)
 
         time = npy.array(nrgdata[inrgf]['time'])
         if bgn_t == None: bgn_t = time[0]
@@ -109,196 +113,196 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
         ntimes    = end_t_ind-bgn_t_ind+1
 
         for ispecs in specstype:
-            nfig   = plt.figure('n-'+inrgfpath)
-            axhand = nfig.add_subplot(1,1,1)
-            dens = nrgdata[inrgf][ispecs]['n']
-            axhand.plot(time[bgn_t_ind:end_t_ind+1],dens[bgn_t_ind:end_t_ind+1],label=ispecs)
-            axhand.set_title('n%s' %(titletxt))
-            axhand.set_xlabel('Time')
-            axhand.set_ylabel('Density')
-            if logplots: axhand.set_yscale('symlog')
-            axhand.legend()
+            nfig     = plt.figure('n-'+inrgfpath)
+            axhand01 = nfig.add_subplot(1,1,1)
+            dens     = nrgdata[inrgf][ispecs]['n']
+            axhand01.plot(time[bgn_t_ind:end_t_ind+1],dens[bgn_t_ind:end_t_ind+1],label=ispecs)
+            axhand01.set_title('n%s' %(titletxt))
+            axhand01.set_xlabel('Time')
+            axhand01.set_ylabel('Density')
+            if logplots: axhand01.set_yscale('symlog')
+            axhand01.legend()
 
             uparafig = plt.figure('upara-'+inrgfpath)
-            axhand = uparafig.add_subplot(1,1,1)
-            upara = nrgdata[inrgf][ispecs]['upara']
-            axhand.plot(time[bgn_t_ind:end_t_ind+1],upara[bgn_t_ind:end_t_ind+1],label=ispecs)
-            axhand.set_title('$U_{||}%s$' %(titletxt))
-            axhand.set_xlabel('Time')
-            axhand.set_ylabel('Parallel Velocity')
-            if logplots: axhand.set_yscale('symlog')
-            axhand.legend()
+            axhand02 = uparafig.add_subplot(1,1,1)
+            upara    = nrgdata[inrgf][ispecs]['upara']
+            axhand02.plot(time[bgn_t_ind:end_t_ind+1],upara[bgn_t_ind:end_t_ind+1],label=ispecs)
+            axhand02.set_title('$U_{||}%s$' %(titletxt))
+            axhand02.set_xlabel('Time')
+            axhand02.set_ylabel('Parallel Velocity')
+            if logplots: axhand02.set_yscale('symlog')
+            axhand02.legend()
 
             if mergeplots:
-               Tfig = plt.figure('T-'+inrgfpath)
-               axhand = Tfig.add_subplot(1,1,1)
+               Tfig     = plt.figure('T-'+inrgfpath)
+               axhand03 = Tfig.add_subplot(1,1,1)
                Tpara = nrgdata[inrgf][ispecs]['Tpara']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Tpara[bgn_t_ind:end_t_ind+1],linestyle='-', label='$T_{\\parallel,%s}$' % ispecs)
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tpara[bgn_t_ind:end_t_ind+1],linestyle='-', label='$T_{\\parallel,%s}$' % ispecs)
                Tperp = nrgdata[inrgf][ispecs]['Tperp']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],linestyle='--',label='$T_{\\perp,%s}$' % ispecs)
-               axhand.set_title('$T_{\\parallel,\\perp}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               axhand.set_ylabel('Temperature')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],linestyle='--',label='$T_{\\perp,%s}$' % ispecs)
+               axhand03.set_title('$T_{\\parallel,\\perp}%s$' %(titletxt))
+               axhand03.set_xlabel('Time')
+               axhand03.set_ylabel('Temperature')
+               if logplots: axhand03.set_yscale('symlog')
+               axhand03.legend()
             else:
                Tparafig = plt.figure('Tpara-'+inrgfpath)
-               axhand = Tparafig.add_subplot(1,1,1)
+               axhand03 = Tparafig.add_subplot(1,1,1)
                Tpara = nrgdata[inrgf][ispecs]['Tpara']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],T[parabgn_t_ind:end_t_ind+1],label=ispecs)
-               axhand.set_title('$T_{\\parallel}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               axhand.set_ylabel('Parallel Temperature')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],T[parabgn_t_ind:end_t_ind+1],label=ispecs)
+               axhand03.set_title('$T_{\\parallel}%s$' %(titletxt))
+               axhand03.set_xlabel('Time')
+               axhand03.set_ylabel('Parallel Temperature')
+               if logplots: axhand03.set_yscale('symlog')
+               axhand03.legend()
 
                Tperpfig = plt.figure('Tperp-'+inrgfpath)
-               axhand = Tperpfig.add_subplot(1,1,1)
+               axhand03 = Tperpfig.add_subplot(1,1,1)
                Tperp = nrgdata[inrgf][ispecs]['Tperp']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],label=ispecs)
-               axhand.set_title('$T_{\\perp}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               axhand.set_ylabel('Transverse Temperature')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],label=ispecs)
+               axhand03.set_title('$T_{\\perp}%s$' %(titletxt))
+               axhand03.set_xlabel('Time')
+               axhand03.set_ylabel('Transverse Temperature')
+               if logplots: axhand03.set_yscale('symlog')
+               axhand03.legend()
 
             if mergeplots:
                PFluxfig = plt.figure('PFlux-'+inrgfpath)
-               axhand = PFluxfig.add_subplot(1,1,1)
+               axhand04 = PFluxfig.add_subplot(1,1,1)
                if siunits:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area/1.0e6
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area/1.0e6
-                  axhand.set_ylabel('Particle Flux (MW/keV)')
+                  axhand04.set_ylabel('Particle Flux (MW/keV)')
                else:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']
-                  axhand.set_ylabel('Particle Flux)')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
-               axhand.set_title('$\\Gamma_{es,em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand04.set_ylabel('Particle Flux)')
+               axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
+               axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
+               axhand04.set_title('$\\Gamma_{es,em}%s$' %(titletxt))
+               axhand04.set_xlabel('Time')
+               if logplots: axhand04.set_yscale('symlog')
+               axhand04.legend()
             else:
                PFluxesfig = plt.figure('PFluxes-'+inrgfpath)
-               axhand = PFluxesfig.add_subplot(1,1,1)
+               axhand04 = PFluxesfig.add_subplot(1,1,1)
                if siunits:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area/1.0e6
-                  axhand.set_ylabel('Electrostatic Particle Flux (MW/keV)')
+                  axhand04.set_ylabel('Electrostatic Particle Flux (MW/keV)')
                else:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']
-                  axhand.set_ylabel('Electrostatic Particle Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
-               axhand.set_title('$\\Gamma_{es}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand04.set_ylabel('Electrostatic Particle Flux')
+               axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
+               axhand04.set_title('$\\Gamma_{es}%s$' %(titletxt))
+               axhand04.set_xlabel('Time')
+               if logplots: axhand04.set_yscale('symlog')
+               axhand04.legend()
 
                PFluxemfig = plt.figure('PFluxem-'+inrgfpath)
-               axhand = PFluxemfig.add_subplot(1,1,1)
+               axhand04 = PFluxemfig.add_subplot(1,1,1)
                if siunits:
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area/1.0e6
-                  axhand.set_ylabel('Electromagnetic Particle Flux (MW/keV)')
+                  axhand04.set_ylabel('Electromagnetic Particle Flux (MW/keV)')
                else:
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']
-                  axhand.set_ylabel('Electromagnetic Particle Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
-               axhand.set_title('$\\Gamma_{em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand04.set_ylabel('Electromagnetic Particle Flux')
+               axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
+               axhand04.set_title('$\\Gamma_{em}%s$' %(titletxt))
+               axhand04.set_xlabel('Time')
+               if logplots: axhand04.set_yscale('symlog')
+               axhand04.legend()
 
             if mergeplots:
                HFluxfig = plt.figure('HFlux-'+inrgfpath)
-               axhand = HFluxfig.add_subplot(1,1,1)
+               axhand05 = HFluxfig.add_subplot(1,1,1)
                if siunits:
                   HFluxes = nrgdata[inrgf][ispecs]['HFluxes']*area/1.0e6
                   HFluxem = nrgdata[inrgf][ispecs]['HFluxem']*area/1.0e6
-                  axhand.set_ylabel('Heat Flux (MW)')
+                  axhand05.set_ylabel('Heat Flux (MW)')
                else:
                   HFluxes = nrgdata[inrgf][ispecs]['HFluxes']
                   HFluxem = nrgdata[inrgf][ispecs]['HFluxem']
-                  axhand.set_ylabel('Heat Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
-               axhand.set_title('$Q_{es,em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand05.set_ylabel('Heat Flux')
+               axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
+               axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
+               axhand05.set_title('$Q_{es,em}%s$' %(titletxt))
+               axhand05.set_xlabel('Time')
+               if logplots: axhand05.set_yscale('symlog')
+               axhand05.legend()
             else:
                HFluxesfig = plt.figure('HFluxes-'+inrgfpath)
-               axhand = HFluxesfig.add_subplot(1,1,1)
+               axhand05 = HFluxesfig.add_subplot(1,1,1)
                if siunits:
                   HFluxes = nrgdata[inrgf][ispecs]['HFluxes']*area/1.0e6
-                  axhand.set_ylabel('Electrostatic Heat Flux (MW)')
+                  axhand05.set_ylabel('Electrostatic Heat Flux (MW)')
                else:
                   HFluxes = nrgdata[inrgf][ispecs]['HFluxes']
-                  axhand.set_ylabel('Electrostatic Heat Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
-               axhand.set_title('$Q_{es}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand05.set_ylabel('Electrostatic Heat Flux')
+               axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
+               axhand05.set_title('$Q_{es}%s$' %(titletxt))
+               axhand05.set_xlabel('Time')
+               if logplots: axhand05.set_yscale('symlog')
+               axhand05.legend()
 
                HFluxemfig = plt.figure('HFluxem-'+inrgfpath)
-               axhand = HFluxemfig.add_subplot(1,1,1)
+               axhand05 = HFluxemfig.add_subplot(1,1,1)
                if siunits:
                   HFluxem = nrgdata[inrgf][ispecs]['HFluxem']*area/1.0e6
-                  axhand.set_ylabel('Electromagnetic Heat Flux (MW)')
+                  axhand05.set_ylabel('Electromagnetic Heat Flux (MW)')
                else:
                   HFluxem = nrgdata[inrgf][ispecs]['HFluxem']
-                  axhand.set_ylabel('Electromagnetic Heat Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
-               axhand.set_title('$Q_{em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand05.set_ylabel('Electromagnetic Heat Flux')
+               axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
+               axhand05.set_title('$Q_{em}%s$' %(titletxt))
+               axhand05.set_xlabel('Time')
+               if logplots: axhand05.set_yscale('symlog')
+               axhand05.legend()
 
             if mergeplots:
                Viscosfig = plt.figure('Viscos-'+inrgfpath)
-               axhand = Viscosfig.add_subplot(1,1,1)
+               axhand06 = Viscosfig.add_subplot(1,1,1)
                if siunits:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']*area
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']*area
-                  axhand.set_ylabel('Stress Tensor (N.m)')
+                  axhand06.set_ylabel('Stress Tensor (N.m)')
                else:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']
-                  axhand.set_ylabel('Stress Tensor')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
-               axhand.set_title('$\\Pi_{es,em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand06.set_ylabel('Stress Tensor')
+               axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
+               axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
+               axhand06.set_title('$\\Pi_{es,em}%s$' %(titletxt))
+               axhand06.set_xlabel('Time')
+               if logplots: axhand06.set_yscale('symlog')
+               axhand06.legend()
             else:
                Viscosesfig = plt.figure('Viscoses-'+inrgfpath)
-               axhand = Viscosesfig.add_subplot(1,1,1)
+               axhand06 = Viscosesfig.add_subplot(1,1,1)
                if siunits:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']*area
-                  axhand.set_ylabel('Electrostatic Stress Tensor(N.m)')
+                  axhand06.set_ylabel('Electrostatic Stress Tensor(N.m)')
                else:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']
-                  axhand.set_ylabel('Electrostatic Stress Tensor')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
-               axhand.set_title('$\\Pi_{es}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand06.set_ylabel('Electrostatic Stress Tensor')
+               axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
+               axhand06.set_title('$\\Pi_{es}%s$' %(titletxt))
+               axhand06.set_xlabel('Time')
+               if logplots: axhand06.set_yscale('symlog')
+               axhand06.legend()
 
                Viscosemfig = plt.figure('Viscosem-'+inrgfpath)
-               axhand = Viscosemfig.add_subplot(1,1,1)
+               axhand06 = Viscosemfig.add_subplot(1,1,1)
                if siunits:
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']*area
-                  axhand.set_ylabel('Electromagnetic Stress Tensor(N.m)')
+                  axhand06.set_ylabel('Electromagnetic Stress Tensor(N.m)')
                else:
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']
-                  axhand.set_ylabel('Electromagnetic Stress Tensor')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
-               axhand.set_title('$\\Pi_{em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand06.set_ylabel('Electromagnetic Stress Tensor')
+               axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
+               axhand06.set_title('$\\Pi_{em}%s$' %(titletxt))
+               axhand06.set_xlabel('Time')
+               if logplots: axhand06.set_yscale('symlog')
+               axhand06.legend()
 
         if display: plt.show()
 
@@ -870,7 +874,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
            imax = np.unravel_index(np.argmax(abs(phi)),(nz,nx))
            plot_ballooning = True
            if plot_ballooning:
-              PHI2Dfig = plt.figure('Phi_'+ifieldf[-4:])
+              PHI2Dfig = plt.figure('Phi2d_'+ifieldf[-4:])
               axhand = PHI2Dfig.add_subplot(3,1,1)
               cp=axhand.contourf(xgrid,zgrid,npy.abs(phi_bnd[:,0,:]),70)
               for i in range(len(qrats)):
@@ -904,7 +908,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
            plot_theta = True
            if plot_theta:
-              PHI1Dfig = plt.figure('Phi_'+ifieldf[-4:])
+              PHI1Dfig = plt.figure('Phi1d_'+ifieldf[-4:])
               axhand = PHI1Dfig.add_subplot(1,1,1)
               for i in range(int(mmin),int(mmax)+1):
                   axhand.plot(xgrid,npy.abs(phi_m[i,0,:]))
@@ -929,7 +933,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
                apar_m[:,i] = npy.fft.fft(apar_theta[:,i])
 
            if plot_theta:
-              APAR1Dfig = plt.figure('Apar_'+ifieldf[-4:])
+              APAR1Dfig = plt.figure('Apar1d_'+ifieldf[-4:])
               axhand = APAR1Dfig.add_subplot(1,1,1)
               for i in range(int(mmin),int(mmax)+1):
                   axhand.plot(xgrid,npy.abs(apar_m[i,:]))
@@ -941,7 +945,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
               axhand.set_title(r'$A_{||m}$')
 
            if plot_ballooning:
-              APAR2Dfig = plt.figure('Apar'+ifieldf[-4:])
+              APAR2Dfig = plt.figure('Apar2d_'+ifieldf[-4:])
               axhand = APAR2Dfig.add_subplot(3,1,1)
               cp=axhand.contourf(xgrid,zgrid,npy.abs(apar[:,0,:]),70)
               for i in range(len(qrats)):
