@@ -1391,7 +1391,7 @@ def mode_type(modeinfo,parameters):
        mode_type = 'ID'
 
     if not mode_type:
-       mode_type = 'Other'
+       mode_type = 'N/A'
 
     return mode_type
 
@@ -1409,9 +1409,18 @@ def mode_info(modesfpath):
     mode_info = {}
 
     for imode in range(nmodes):
-        nrgdata   = read_nrg(modesfpath+"nrg_%04d" % (imode+1))
-        paramdata = read_parameters(modesfpath+"parameters_%04d" % (imode+1))
-        field     = read_field(modesfpath+"field_%04d" % (imode+1))
+        if os.path.isfile(modesfpath+'nrg.dat'):
+            nrgfpath   = modesfpath+"nrg.dat"
+            paramfpath = modesfpath+"parameters.dat"
+            fieldfpath = modesfpath+"field.dat"
+        else:
+            nrgfpath   = modesfpath+"nrg_%04d" % (imode+1)
+            paramfpath = modesfpath+"parameters_%04d" % (imode+1)
+            fieldfpath = modesfpath+"field_%04d" % (imode+1)
+
+        nrgdata   = read_nrg(nrgfpath)
+        paramdata = read_parameters(paramfpath)
+        field     = read_field(fieldfpath)
         fieldinfo = field_info(field,paramdata)
 
         iky = omegadata['kymin'][imode]
@@ -1493,23 +1502,32 @@ def flux_type(fluxinfo,parameters,tol=1.0e-2):
     return flux_type
 
 
-def flux_info(simfpath):
+def flux_info(genefpath):
    #Developed by Ehab Hassan on 2019-03-27
-    if simfpath[-1] != "/": simfpath+="/"
-    if "_" in simfpath:
-       slashinds = findall(simfpath,"/")
-       simfpath  = simfpath[:slashinds[-2]+1]
-    paramdata = read_parameters(simfpath)
+    if genefpath[-1] != "/": genefpath+="/"
+    if "nrg" in genefpath or 'parameters' in genefpath:
+       slashinds = findall(genefpath,"/")
+       genefpath  = genefpath[:slashinds[-2]+1]
+
+    paramdata = read_parameters(genefpath)
+
     flux_info = {}
+
     if type(paramdata['box']['kymin'])==list:
        kyminlist = paramdata['box']['kymin']
     else:
        kyminlist = [paramdata['box']['kymin']]
+
     for imode in range(len(kyminlist)):
         iky = kyminlist[imode]
 
-        nrgid   = "nrg_%04d" % (imode+1)
-        nrgdata = read_nrg(simfpath+nrgid)
+        if os.path.isfile(genefpath+"nrg.dat"):
+           nrgid    = "nrg.dat"
+        else:
+           nrgid   = "nrg_%04d" % (imode+1)
+
+        nrgfpath = genefpath+nrgid
+        nrgdata = read_nrg(nrgfpath)
         nrgid   = nrgdata.keys()[0]
 
         flux_info[iky]={}
@@ -1561,7 +1579,7 @@ def flux_info(simfpath):
 def calc_tau(psi,profilepath='',iterdbpath=''):
    #Developed by Ehab Hassan on 2019-03-27
     if   profilepath:
-         profiles,units = efittools.read_profiles(profilepath)
+         profiles,units = efittools.read_profiles_file(profilepath)
          psinorm = profiles['psinorm']
          Te      = profiles['te']
          Ti      = profiles['ti']
