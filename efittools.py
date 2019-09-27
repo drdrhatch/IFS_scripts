@@ -102,13 +102,11 @@ def read_profiles_file(pfpath,setParam={}):
        sys.exit()
 
     ofh = open(pfpath,'r')
-#   print('Reading %s file ...' % pfpath)
 
     profiles = {}
     units    = {}
     while True:
           recs = ofh.readline().split()
-         #if len(recs)>0 and '#' in recs[0]: continue
           if   len(recs)>4:
                nrec = int(recs[0])
                ary0=npy.zeros(nrec)
@@ -312,7 +310,6 @@ def read_efit_file(eqdskfpath,setParam={}):
         except:
             error = 'empty records'
     eqdskdata['psiRZ'] = npy.reshape(eqdskdata['psiRZ'],(eqdskdata['ZDIM'],eqdskdata['RDIM']))
-
 
     eqdskdata['qpsi'] = npy.zeros(eqdskdata['RDIM'])
     for iline in range(nlines1D):

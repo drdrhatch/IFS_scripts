@@ -3,17 +3,20 @@
 
 import os
 import math
-import numpy as npy
+import warnings
+import genetools
+import efittools
+import read_iterdb
+import matplotlib.cbook
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf as pdfh
+
+import numpy as npy
 
 from read_write_geometry import *
 from scipy.interpolate import interp1d
 
-import genetools
-import efittools
-import read_iterdb
-
+warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
 
 def create_k_grid(x_grid):
     nx  = npy.size(x_grid)
@@ -92,213 +95,255 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
         else:
            titletxt = '(k_y=%6.3f)' % (parameters['box']['kymin'])
 
-        geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
-        area = genetools.calculate_surface_area(parameters=parameters,geometry=geomfpath)
+        if siunits:
+           geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
+           area = genetools.calculate_surface_area(parameters=parameters,geometry=geomfpath)
 
         time = npy.array(nrgdata[inrgf]['time'])
         if bgn_t == None: bgn_t = time[0]
         if end_t == None: end_t = time[-1]
+        nonlinear = False
         if 'nonlinear' in parameters['general']:
            if parameters['general']['nonlinear']:
               nonlinear = True
-              if bgn_t == None:
-                 bgn_t_ind = int(npy.size(time)*fraction)
-                 bgn_t = time[bgn_t_ind] 
+              avg_bgn_t_ind = int(npy.size(time)*fraction)
+             #avg_bgn_t = time[avg_bgn_t_ind] 
         bgn_t_ind = npy.argmin(abs(npy.array(time)-bgn_t))
         end_t_ind = npy.argmin(abs(npy.array(time)-end_t))
         ntimes    = end_t_ind-bgn_t_ind+1
 
         for ispecs in specstype:
-            nfig   = plt.figure('n-'+inrgfpath)
-            axhand = nfig.add_subplot(1,1,1)
-            dens = nrgdata[inrgf][ispecs]['n']
-            axhand.plot(time[bgn_t_ind:end_t_ind+1],dens[bgn_t_ind:end_t_ind+1],label=ispecs)
-            axhand.set_title('n%s' %(titletxt))
-            axhand.set_xlabel('Time')
-            axhand.set_ylabel('Density')
-            if logplots: axhand.set_yscale('symlog')
-            axhand.legend()
+            nfig     = plt.figure('n-'+inrgfpath)
+            axhand01 = nfig.add_subplot(1,1,1)
+            dens     = nrgdata[inrgf][ispecs]['n']
+            axhand01.plot(time[bgn_t_ind:end_t_ind+1],dens[bgn_t_ind:end_t_ind+1],label=ispecs)
+            axhand01.set_title('n%s' %(titletxt))
+            axhand01.set_xlabel('Time')
+            axhand01.set_ylabel('Density')
+            if logplots: axhand01.set_yscale('symlog')
+            axhand01.legend()
 
             uparafig = plt.figure('upara-'+inrgfpath)
-            axhand = uparafig.add_subplot(1,1,1)
-            upara = nrgdata[inrgf][ispecs]['upara']
-            axhand.plot(time[bgn_t_ind:end_t_ind+1],upara[bgn_t_ind:end_t_ind+1],label=ispecs)
-            axhand.set_title('$U_{||}%s$' %(titletxt))
-            axhand.set_xlabel('Time')
-            axhand.set_ylabel('Parallel Velocity')
-            if logplots: axhand.set_yscale('symlog')
-            axhand.legend()
+            axhand02 = uparafig.add_subplot(1,1,1)
+            upara    = nrgdata[inrgf][ispecs]['upara']
+            axhand02.plot(time[bgn_t_ind:end_t_ind+1],upara[bgn_t_ind:end_t_ind+1],label=ispecs)
+            axhand02.set_title('$U_{||}%s$' %(titletxt))
+            axhand02.set_xlabel('Time')
+            axhand02.set_ylabel('Parallel Velocity')
+            if logplots: axhand02.set_yscale('symlog')
+            axhand02.legend()
 
             if mergeplots:
-               Tfig = plt.figure('T-'+inrgfpath)
-               axhand = Tfig.add_subplot(1,1,1)
+               Tfig     = plt.figure('T-'+inrgfpath)
+               axhand03 = Tfig.add_subplot(1,1,1)
                Tpara = nrgdata[inrgf][ispecs]['Tpara']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Tpara[bgn_t_ind:end_t_ind+1],linestyle='-', label='$T_{\\parallel,%s}$' % ispecs)
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tpara[bgn_t_ind:end_t_ind+1],linestyle='-', label='$T_{\\parallel,%s}$' % ispecs)
                Tperp = nrgdata[inrgf][ispecs]['Tperp']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],linestyle='--',label='$T_{\\perp,%s}$' % ispecs)
-               axhand.set_title('$T_{\\parallel,\\perp}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               axhand.set_ylabel('Temperature')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],linestyle='--',label='$T_{\\perp,%s}$' % ispecs)
+               axhand03.set_title('$T_{\\parallel,\\perp}%s$' %(titletxt))
+               axhand03.set_xlabel('Time')
+               axhand03.set_ylabel('Temperature')
+               if logplots: axhand03.set_yscale('symlog')
+               axhand03.legend()
             else:
                Tparafig = plt.figure('Tpara-'+inrgfpath)
-               axhand = Tparafig.add_subplot(1,1,1)
+               axhand03 = Tparafig.add_subplot(1,1,1)
                Tpara = nrgdata[inrgf][ispecs]['Tpara']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],T[parabgn_t_ind:end_t_ind+1],label=ispecs)
-               axhand.set_title('$T_{\\parallel}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               axhand.set_ylabel('Parallel Temperature')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],T[parabgn_t_ind:end_t_ind+1],label=ispecs)
+               axhand03.set_title('$T_{\\parallel}%s$' %(titletxt))
+               axhand03.set_xlabel('Time')
+               axhand03.set_ylabel('Parallel Temperature')
+               if logplots: axhand03.set_yscale('symlog')
+               axhand03.legend()
 
                Tperpfig = plt.figure('Tperp-'+inrgfpath)
-               axhand = Tperpfig.add_subplot(1,1,1)
+               axhand03 = Tperpfig.add_subplot(1,1,1)
                Tperp = nrgdata[inrgf][ispecs]['Tperp']
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],label=ispecs)
-               axhand.set_title('$T_{\\perp}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               axhand.set_ylabel('Transverse Temperature')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+               axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],label=ispecs)
+               axhand03.set_title('$T_{\\perp}%s$' %(titletxt))
+               axhand03.set_xlabel('Time')
+               axhand03.set_ylabel('Transverse Temperature')
+               if logplots: axhand03.set_yscale('symlog')
+               axhand03.legend()
 
             if mergeplots:
                PFluxfig = plt.figure('PFlux-'+inrgfpath)
-               axhand = PFluxfig.add_subplot(1,1,1)
+               axhand04 = PFluxfig.add_subplot(1,1,1)
                if siunits:
-                  PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area/1.0e6
-                  PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area/1.0e6
-                  axhand.set_ylabel('Particle Flux (MW/keV)')
+                  PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area
+                  PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area
+                 #PFluxes*= 1.0e6/(1.0e3*1.0e-19)
+                 #PFluxem*= 1.0e6/(1.0e3*1.0e-19)
+                  axhand04.set_ylabel('Particle Flux (Particles/s)')
+                 #axhand04.set_ylabel('Particle Flux (MW/keV)')
                else:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']
-                  axhand.set_ylabel('Particle Flux)')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
-               axhand.set_title('$\\Gamma_{es,em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand04.set_ylabel('Particle Flux)')
+               if nonlinear:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,npy.mean(PFluxes[avg_bgn_t_ind:])))
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,npy.mean(PFluxes[avg_bgn_t_ind:])))
+               else:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
+               axhand04.set_title('$\\Gamma_{es,em}%s$' %(titletxt))
+               axhand04.set_xlabel('Time')
+               if logplots: axhand04.set_yscale('symlog')
+               axhand04.legend()
             else:
                PFluxesfig = plt.figure('PFluxes-'+inrgfpath)
-               axhand = PFluxesfig.add_subplot(1,1,1)
+               axhand04 = PFluxesfig.add_subplot(1,1,1)
                if siunits:
-                  PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area/1.0e6
-                  axhand.set_ylabel('Electrostatic Particle Flux (MW/keV)')
+                  PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area
+                 #PFluxes*= 1.0e6/(1.0e3*1.0e-19)
+                  axhand04.set_ylabel('Electrostatic Particle Flux (Particles/s)')
+                 #axhand04.set_ylabel('Electrostatic Particle Flux (MW/keV)')
                else:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']
-                  axhand.set_ylabel('Electrostatic Particle Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
-               axhand.set_title('$\\Gamma_{es}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand04.set_ylabel('Electrostatic Particle Flux')
+               if nonlinear:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,npy.mean(PFluxes[avg_bgn_t_ind:])))
+               else:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
+               axhand04.set_title('$\\Gamma_{es}%s$' %(titletxt))
+               axhand04.set_xlabel('Time')
+               if logplots: axhand04.set_yscale('symlog')
+               axhand04.legend()
 
                PFluxemfig = plt.figure('PFluxem-'+inrgfpath)
-               axhand = PFluxemfig.add_subplot(1,1,1)
+               axhand04 = PFluxemfig.add_subplot(1,1,1)
                if siunits:
-                  PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area/1.0e6
-                  axhand.set_ylabel('Electromagnetic Particle Flux (MW/keV)')
+                  PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area
+                 #PFluxem*= 1.0e6/(1.0e3*1.0e-19)
+                  axhand04.set_ylabel('Electromagnetic Particle Flux (Particles/s)')
+                 #axhand04.set_ylabel('Electromagnetic Particle Flux (MW/keV)')
                else:
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']
-                  axhand.set_ylabel('Electromagnetic Particle Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
-               axhand.set_title('$\\Gamma_{em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand04.set_ylabel('Electromagnetic Particle Flux')
+               if nonlinear:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,npy.mean(PFluxes[avg_bgn_t_ind:])))
+               else:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
+               axhand04.set_title('$\\Gamma_{em}%s$' %(titletxt))
+               axhand04.set_xlabel('Time')
+               if logplots: axhand04.set_yscale('symlog')
+               axhand04.legend()
 
             if mergeplots:
                HFluxfig = plt.figure('HFlux-'+inrgfpath)
-               axhand = HFluxfig.add_subplot(1,1,1)
+               axhand05 = HFluxfig.add_subplot(1,1,1)
                if siunits:
-                  HFluxes = nrgdata[inrgf][ispecs]['HFluxes']*area/1.0e6
-                  HFluxem = nrgdata[inrgf][ispecs]['HFluxem']*area/1.0e6
-                  axhand.set_ylabel('Heat Flux (MW)')
+                  HFluxes = nrgdata[inrgf][ispecs]['HFluxes']*area
+                  HFluxes/= 1.0e6
+                  HFluxem = nrgdata[inrgf][ispecs]['HFluxem']*area
+                  HFluxem/= 1.0e6
+                  axhand05.set_ylabel('Heat Flux (MW)')
                else:
                   HFluxes = nrgdata[inrgf][ispecs]['HFluxes']
                   HFluxem = nrgdata[inrgf][ispecs]['HFluxem']
-                  axhand.set_ylabel('Heat Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
-               axhand.set_title('$Q_{es,em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand05.set_ylabel('Heat Flux')
+               if nonlinear:
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,npy.mean(HFluxes[avg_bgn_t_ind:])))
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$Q_{em,%s}$=%7.5e' % (ispecs,npy.mean(HFluxem[avg_bgn_t_ind:])))
+               else:
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
+               axhand05.set_title('$Q_{es,em}%s$' %(titletxt))
+               axhand05.set_xlabel('Time')
+               if logplots: axhand05.set_yscale('symlog')
+               axhand05.legend()
             else:
                HFluxesfig = plt.figure('HFluxes-'+inrgfpath)
-               axhand = HFluxesfig.add_subplot(1,1,1)
+               axhand05 = HFluxesfig.add_subplot(1,1,1)
                if siunits:
-                  HFluxes = nrgdata[inrgf][ispecs]['HFluxes']*area/1.0e6
-                  axhand.set_ylabel('Electrostatic Heat Flux (MW)')
+                  HFluxes = nrgdata[inrgf][ispecs]['HFluxes']*area
+                  HFluxes/= 1.0e6
+                  axhand05.set_ylabel('Electrostatic Heat Flux (MW)')
                else:
                   HFluxes = nrgdata[inrgf][ispecs]['HFluxes']
-                  axhand.set_ylabel('Electrostatic Heat Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
-               axhand.set_title('$Q_{es}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand05.set_ylabel('Electrostatic Heat Flux')
+               if nonlinear:
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,npy.mean(HFluxes[avg_bgn_t_ind:])))
+               else:
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
+               axhand05.set_title('$Q_{es}%s$' %(titletxt))
+               axhand05.set_xlabel('Time')
+               if logplots: axhand05.set_yscale('symlog')
+               axhand05.legend()
 
                HFluxemfig = plt.figure('HFluxem-'+inrgfpath)
-               axhand = HFluxemfig.add_subplot(1,1,1)
+               axhand05 = HFluxemfig.add_subplot(1,1,1)
                if siunits:
-                  HFluxem = nrgdata[inrgf][ispecs]['HFluxem']*area/1.0e6
-                  axhand.set_ylabel('Electromagnetic Heat Flux (MW)')
+                  HFluxem = nrgdata[inrgf][ispecs]['HFluxem']*area
+                  HFluxem/= 1.0e6
+                  axhand05.set_ylabel('Electromagnetic Heat Flux (MW)')
                else:
                   HFluxem = nrgdata[inrgf][ispecs]['HFluxem']
-                  axhand.set_ylabel('Electromagnetic Heat Flux')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
-               axhand.set_title('$Q_{em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand05.set_ylabel('Electromagnetic Heat Flux')
+               if nonlinear:
+                  axhand04.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{em,%s}$=%7.5e' % (ispecs,npy.mean(HFluxem[avg_bgn_t_ind:])))
+               else:
+                  axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
+               axhand05.set_title('$Q_{em}%s$' %(titletxt))
+               axhand05.set_xlabel('Time')
+               if logplots: axhand05.set_yscale('symlog')
+               axhand05.legend()
 
             if mergeplots:
                Viscosfig = plt.figure('Viscos-'+inrgfpath)
-               axhand = Viscosfig.add_subplot(1,1,1)
+               axhand06 = Viscosfig.add_subplot(1,1,1)
                if siunits:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']*area
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']*area
-                  axhand.set_ylabel('Stress Tensor (N.m)')
+                  axhand06.set_ylabel('Stress Tensor (N.m)')
                else:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']
-                  axhand.set_ylabel('Stress Tensor')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
-               axhand.set_title('$\\Pi_{es,em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand06.set_ylabel('Stress Tensor')
+               if nonlinear:
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,npy.mean(Viscoses[avg_bgn_t_ind:])))
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,npy.mean(Viscosem[avg_bgn_t_ind:])))
+               else:
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
+               axhand06.set_title('$\\Pi_{es,em}%s$' %(titletxt))
+               axhand06.set_xlabel('Time')
+               if logplots: axhand06.set_yscale('symlog')
+               axhand06.legend()
             else:
                Viscosesfig = plt.figure('Viscoses-'+inrgfpath)
-               axhand = Viscosesfig.add_subplot(1,1,1)
+               axhand06 = Viscosesfig.add_subplot(1,1,1)
                if siunits:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']*area
-                  axhand.set_ylabel('Electrostatic Stress Tensor(N.m)')
+                  axhand06.set_ylabel('Electrostatic Stress Tensor(N.m)')
                else:
                   Viscoses = nrgdata[inrgf][ispecs]['Viscoses']
-                  axhand.set_ylabel('Electrostatic Stress Tensor')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
-               axhand.set_title('$\\Pi_{es}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand06.set_ylabel('Electrostatic Stress Tensor')
+               if nonlinear:
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,npy.mean(Viscoses[avg_bgn_t_ind:])))
+               else:
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
+               axhand06.set_title('$\\Pi_{es}%s$' %(titletxt))
+               axhand06.set_xlabel('Time')
+               if logplots: axhand06.set_yscale('symlog')
+               axhand06.legend()
 
                Viscosemfig = plt.figure('Viscosem-'+inrgfpath)
-               axhand = Viscosemfig.add_subplot(1,1,1)
+               axhand06 = Viscosemfig.add_subplot(1,1,1)
                if siunits:
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']*area
-                  axhand.set_ylabel('Electromagnetic Stress Tensor(N.m)')
+                  axhand06.set_ylabel('Electromagnetic Stress Tensor(N.m)')
                else:
                   Viscosem = nrgdata[inrgf][ispecs]['Viscosem']
-                  axhand.set_ylabel('Electromagnetic Stress Tensor')
-               axhand.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
-               axhand.set_title('$\\Pi_{em}%s$' %(titletxt))
-               axhand.set_xlabel('Time')
-               if logplots: axhand.set_yscale('symlog')
-               axhand.legend()
+                  axhand06.set_ylabel('Electromagnetic Stress Tensor')
+               if nonlinear:
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,npy.mean(Viscosem[avg_bgn_t_ind:])))
+               else:
+                  axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
+               axhand06.set_title('$\\Pi_{em}%s$' %(titletxt))
+               axhand06.set_xlabel('Time')
+               if logplots: axhand06.set_yscale('symlog')
+               axhand06.legend()
 
         if display: plt.show()
 
@@ -418,17 +463,22 @@ def plot_neoclass(neoclassdata,reportpath='',setParam={}):
         for ispecs in specstype:
             PFluxfig = plt.figure('PFlux-'+ineoclassfpath)
             axhand = PFluxfig.add_subplot(1,1,1)
-            PFlux = neoclassdata[ineoclassf][ispecs]['PFlux']*area/1.0e6
-            axhand.plot(time[bgnind:],PFlux[bgnind:],linestyle='-', label='$\\Gamma_{neo,%s}$=%9.7E (MW/keV)' % (ispecs,PFlux[-1]))
+            PFlux = neoclassdata[ineoclassf][ispecs]['PFlux']*area
+           #axhand.plot(time[bgnind:],PFlux[bgnind:],linestyle='-', label='$\\Gamma_{neo,%s}$=%9.7E (MW/keV)' % (ispecs,PFlux[-1]))
+           #PFlux*= 1.0e6/(1.0e3*1.0e-19)
+            axhand.plot(time[bgnind:],PFlux[bgnind:],linestyle='-', label='$\\Gamma_{neo,%s}$=%9.7E (particles/s)' % (ispecs,PFlux[-1]))
             axhand.set_title('$\\Gamma_{neo}%s$' %(titletxt))
             axhand.set_xlabel('Time (seconds)')
-            axhand.set_ylabel('Particle Flux (MW/keV)')
+           #axhand.set_ylabel('Particle Flux (MW/keV)')
+            axhand.set_ylabel('Particle Flux (particles/s)')
             if logplots: axhand.set_yscale('symlog')
             axhand.legend()
 
+
             HFluxfig = plt.figure('HFlux-'+ineoclassfpath)
             axhand = HFluxfig.add_subplot(1,1,1)
-            HFlux = neoclassdata[ineoclassf][ispecs]['HFlux']*area/1.0e6
+            HFlux = neoclassdata[ineoclassf][ispecs]['HFlux']*area
+            HFlux/= 1.0e6
             axhand.plot(time[bgnind:],HFlux[bgnind:],linestyle='-', label='$Q_{neo,%s}$=%9.7E (MW)' % (ispecs,HFlux[-1]))
             axhand.set_title('$Q_{neo}%s$' %(titletxt))
             axhand.set_xlabel('Time (seconds)')
@@ -726,7 +776,11 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
     for ifieldf in field:
         if not param.keys():
-           param = genetools.read_parameters(ifieldf[:-10]+"parameters_"+ifieldf[-4:])
+           if 'dat' in ifieldf:
+              paramfpath = ifieldf[:-9]+"parameters"+ifieldf[-4:]
+           else:
+              paramfpath = ifieldf[:-10]+"parameters"+ifieldf[-5:]
+           param = genetools.read_parameters(paramfpath)
 
         if 'x_local' in param['general']:
             if param['general']['x_local']:
@@ -787,13 +841,22 @@ def plot_field(field,param={},reportpath='',setParam={}):
            axhand.set_xlabel(r'$z/\pi$',size=18)
            axhand.legend()
 
-           if os.path.isfile(ifieldf[:-10]+'omega'+ifieldf[-5:]):
-               om = np.genfromtxt(ifieldf[:-10]+'omega'+ifieldf[-5:])
+           if 'dat' in ifieldf:
+              omegafpath = ifieldf[:-9]+'omega'+ifieldf[-4:]
+           else:
+              omegafpath = ifieldf[:-10]+'omega'+ifieldf[-5:]
+
+           if os.path.isfile(omegafpath):
+               om = np.genfromtxt(omegafpath)
+           omega_complex = (om[2]*(0.0+1.0J) + om[1])
 
           ##Note:  the complex frequency is (gamma + i*omega)
-           gpars,geometry = read_geometry_local(ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:])
+           if 'dat' in ifieldf:
+              geomfpath = ifieldf[:-9]+param['geometry']['magn_geometry']+ifieldf[-4:]
+           else:
+              geomfpath = ifieldf[:-10]+param['geometry']['magn_geometry']+ifieldf[-5:]
+           gpars,geometry = read_geometry_local(geomfpath)
            jacxB = geometry['gjacobian']*geometry['gBfield']
-           omega_complex = (om[2]*(0.0+1.0J) + om[1])
 
            gradphi = fd_d1_o4(phi1d,zgrid)
            for i in range(int(param['box']['nx0'])):
@@ -815,8 +878,8 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
            PHIfig.savefig(reportpath+'phi_mode_%s.png' % (ifieldf[-4:]))
            plt.close(PHIfig)
-           figure.savefig(reportpath+'apar_mode_%s.png' % (ifieldf[-4:]))
-           plt.close(figure)
+           APARfig.savefig(reportpath+'apar_mode_%s.png' % (ifieldf[-4:]))
+           plt.close(APARfig)
            wAPARfig.savefig(reportpath+'wApar_dPhi_mode_%s.png' % (ifieldf[-4:]))
            plt.close(wAPARfig)
 
@@ -830,7 +893,12 @@ def plot_field(field,param={},reportpath='',setParam={}):
            zgrid = npy.arange(nz+4)/float(nz+4-1)*(2.0+3.0*(2.0/nz))-(1.0+2.0*(2.0/nz))
            xgrid = npy.arange(nx)/float(nx-1)*param['box']['lx_a']+param['box']['x0']-param['box']['lx_a']/2.0
 
-           gpars,geometry = read_geometry_global(ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:])
+           if 'dat' in ifieldf:
+              geomfpath = ifieldf[:-9]+param['geometry']['magn_geometry']+ifieldf[-4:]
+           else:
+              geomfpath = ifieldf[:-10]+param['geometry']['magn_geometry']+ifieldf[-5:]
+
+           gpars,geometry = read_geometry_global(geomfpath)
            #Find rational q surfaces
            qmin = npy.min(geometry['q'])
            qmax = npy.max(geometry['q'])
@@ -870,7 +938,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
            imax = np.unravel_index(np.argmax(abs(phi)),(nz,nx))
            plot_ballooning = True
            if plot_ballooning:
-              PHI2Dfig = plt.figure('Phi_'+ifieldf[-4:])
+              PHI2Dfig = plt.figure('Phi2d_'+ifieldf[-4:])
               axhand = PHI2Dfig.add_subplot(3,1,1)
               cp=axhand.contourf(xgrid,zgrid,npy.abs(phi_bnd[:,0,:]),70)
               for i in range(len(qrats)):
@@ -904,7 +972,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
            plot_theta = True
            if plot_theta:
-              PHI1Dfig = plt.figure('Phi_'+ifieldf[-4:])
+              PHI1Dfig = plt.figure('Phi1d_'+ifieldf[-4:])
               axhand = PHI1Dfig.add_subplot(1,1,1)
               for i in range(int(mmin),int(mmax)+1):
                   axhand.plot(xgrid,npy.abs(phi_m[i,0,:]))
@@ -929,7 +997,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
                apar_m[:,i] = npy.fft.fft(apar_theta[:,i])
 
            if plot_theta:
-              APAR1Dfig = plt.figure('Apar_'+ifieldf[-4:])
+              APAR1Dfig = plt.figure('Apar1d_'+ifieldf[-4:])
               axhand = APAR1Dfig.add_subplot(1,1,1)
               for i in range(int(mmin),int(mmax)+1):
                   axhand.plot(xgrid,npy.abs(apar_m[i,:]))
@@ -941,7 +1009,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
               axhand.set_title(r'$A_{||m}$')
 
            if plot_ballooning:
-              APAR2Dfig = plt.figure('Apar'+ifieldf[-4:])
+              APAR2Dfig = plt.figure('Apar2d_'+ifieldf[-4:])
               axhand = APAR2Dfig.add_subplot(3,1,1)
               cp=axhand.contourf(xgrid,zgrid,npy.abs(apar[:,0,:]),70)
               for i in range(len(qrats)):
@@ -963,8 +1031,13 @@ def plot_field(field,param={},reportpath='',setParam={}):
               axhand.set_ylabel(r'$z/\pi$',fontsize=13)
               axhand.set_xlabel(r'$\rho_{tor}$',fontsize=13)
 
-           if os.path.isfile(ifieldf[:-10]+'omega'+ifieldf[-5:]):
-               om = np.genfromtxt(ifieldf[:-10]+'omega'+ifieldf[-5:])
+           if 'dat' in ifieldf:
+              omegafpath = ifieldf[:-9]+'omega'+ifieldf[-4:]
+           else:
+              omegafpath = ifieldf[:-10]+'omega'+ifieldf[-5:]
+
+           if os.path.isfile(omegafpath):
+               om = np.genfromtxt(omegafpath)
 
           ##Note:  the complex frequency is (gamma + i*omega)
            omega_complex = (om[2]*(0.0+1.0J) + om[1])
@@ -1065,25 +1138,51 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
     return 1
 
-def plot_geometry(geometryfpath,reportpath=''):
-    if 'report' not in reportpath:
-       if not os.path.isdir(geometryfpath[:-16]+"report"):
-          os.system('mkdir '+geometryfpath[:-16]+"report")
-          reportpath = geometryfpath[:-16]+"report/"
-       else:
-          reportpath = geometryfpath[:-16]+"report/"
-    elif reportpath[-1] != "/":
-       reportpath += "/"
-
+def plot_geometry(geometryfpath,reportpath='',setParam={}):
     if type(geometryfpath)==str:
        gfpathlist=[geometryfpath]
     elif type(geometryfpath)==list:
-       gfpathlist=geometryfpath
+        gfpathlist=geometryfpath[:]
 
-    geomfigs = pdfh.PdfPages('geometry.pdf')
+    if 'dat' in geometryfpath:
+       if   'chease' in geometryfpath:
+            geomfprefix = geometryfpath[:-10]
+       elif 's_alpha' in geometryfpath:
+            geomfprefix = geometryfpath[:-11]
+       elif 'tracer_efit' in geometryfpath:
+            geomfprefix = geometryfpath[:-15]
+    else:
+       if   'chease' in geometryfpath:
+            geomfprefix = geometryfpath[:-11]
+       elif 's_alpha' in geometryfpath:
+            geomfprefix = geometryfpath[:-12]
+       elif 'tracer_efit' in geometryfpath:
+            geomfprefix = geometryfpath[:-16]
+
+    if 'report' not in reportpath:
+       if not os.path.isdir(geomfprefix+"report"):
+          os.system('mkdir '+geomfprefix+"report")
+          reportpath = geomfprefix+"report/"
+       else:
+          reportpath = geomfprefix+"report/"
+    elif reportpath[-1] != "/":
+       reportpath += "/"
+
+    if  'display' in setParam:
+         display = setParam['display']
+    else:
+         display = False
+
+    geomfigs = pdfh.PdfPages(reportpath+'geometry.pdf')
 
     for ifile in gfpathlist:
-        parameters,geometry = read_geometry_local(ifile)
+        try:
+           parameters,geometry = read_geometry_local(ifile)
+           x_local = True
+        except ValueError:
+           parameters,geometry = read_geometry_global(ifile)
+           x_local = False
+
         Lref = parameters['Lref']
         nz = parameters['gridpoints']
         zgrid = npy.arange(nz)/float(nz-1)*(2.0-(2.0/nz))-1.0
@@ -1094,87 +1193,129 @@ def plot_geometry(geometryfpath,reportpath=''):
 
         GGfig = plt.figure("ggCoeff",dpi=500)
         ax  = GGfig.add_subplot(2,3,1)
-        ax.plot(zgrid,geometry['ggxx'],label=gfname)
-        ax.set_title('ggxx')
+        if x_local:
+           ax.plot(zgrid,geometry['ggxx'],label=gfname)
+           ax.set_title('ggxx')
+        else:
+           ax.plot(zgrid,geometry['gxx'],label=gfname)
+           ax.set_title('gxx')
         ax.set_xticks([])
 
         ax  = GGfig.add_subplot(2,3,2)
-        ax.plot(zgrid,geometry['ggyy'],label=gfname)
-        ax.set_title('ggyy')
+        if x_local:
+           ax.plot(zgrid,geometry['ggyy'],label=gfname)
+           ax.set_title('ggyy')
+        else:
+           ax.plot(zgrid,geometry['gyy'],label=gfname)
+           ax.set_title('gyy')
         ax.set_xticks([])
 
         ax  = GGfig.add_subplot(2,3,3)
-        ax.plot(zgrid,geometry['ggzz'],label=gfname)
-        ax.set_title('ggzz')
+        if x_local:
+           ax.plot(zgrid,geometry['ggzz'],label=gfname)
+           ax.set_title('ggzz')
+        else:
+           ax.plot(zgrid,geometry['gzz'],label=gfname)
+           ax.set_title('gzz')
         ax.set_xticks([])
 
         ax  = GGfig.add_subplot(2,3,4)
-        ax.plot(zgrid,geometry['ggxy'],label=gfname)
+        if x_local:
+           ax.plot(zgrid,geometry['ggxy'],label=gfname)
+        else:
+           ax.plot(zgrid,geometry['gxy'],label=gfname)
         ax.set_xlabel('$Z/\\pi$')
         ax.set_title('ggxy')
 
         ax  = GGfig.add_subplot(2,3,5)
-        ax.plot(zgrid,geometry['ggxz'],label=gfname)
+        if x_local:
+           ax.plot(zgrid,geometry['ggxz'],label=gfname)
+        else:
+           ax.plot(zgrid,geometry['gxz'],label=gfname)
         ax.set_xlabel('$Z/\\pi$')
         ax.set_title('ggxz')
 
         ax  = GGfig.add_subplot(2,3,6)
-        ax.plot(zgrid,geometry['ggyz'],label=gfname)
+        if x_local:
+           ax.plot(zgrid,geometry['ggyz'],label=gfname)
+        else:
+           ax.plot(zgrid,geometry['gyz'],label=gfname)
         ax.set_xlabel('$Z/\\pi$')
         ax.set_title('ggyz')
 
-        GLfig = plt.figure("gl_R",dpi=500)
-        ax  = GLfig.add_subplot(2,2,1)
-        ax.plot(zgrid,geometry['gl_R'],label=gfname)
-        ax.set_title('gl_R')
-        ax.set_xticks([])
+        if x_local:
+           GLfig = plt.figure("gl_R",dpi=500)
+           ax  = GLfig.add_subplot(2,2,1)
+           ax.plot(zgrid,geometry['gl_R'],label=gfname)
+           ax.set_title('gl_R')
+           ax.set_xticks([])
 
-        ax  = GLfig.add_subplot(2,2,2)
-        ax.plot(zgrid,geometry['gl_z'],label=gfname)
-        ax.set_title('gl_R')
-        ax.set_xticks([])
+           ax  = GLfig.add_subplot(2,2,2)
+           ax.plot(zgrid,geometry['gl_z'],label=gfname)
+           ax.set_title('gl_R')
+           ax.set_xticks([])
 
-        ax  = GLfig.add_subplot(2,2,3)
-        ax.plot(zgrid,geometry['gl_dxdR'],label=gfname)
-        ax.set_xlabel('$Z/\\pi$')
-        ax.set_title('gl_dxdR')
+           ax  = GLfig.add_subplot(2,2,3)
+           ax.plot(zgrid,geometry['gl_dxdR'],label=gfname)
+           ax.set_title('gl_dxdR')
+           ax.set_xlabel('$Z/\\pi$')
 
-        ax  = GLfig.add_subplot(2,2,4)
-        ax.plot(zgrid,geometry['gl_dxdZ'],label=gfname)
-        ax.set_xlabel('$Z/\\pi$')
-        ax.set_title('gl_dxdZ')
+           ax  = GLfig.add_subplot(2,2,4)
+           ax.plot(zgrid,geometry['gl_dxdZ'],label=gfname)
+           ax.set_title('gl_dxdZ')
+           ax.set_xlabel('$Z/\\pi$')
 
         gBfig = plt.figure("gBfield",dpi=500)
         ax  = gBfig.add_subplot(2,2,1)
-        ax.plot(zgrid,geometry['gBfield'],label=gfname)
-        ax.set_title('gBfield')
+        if x_local:
+           ax.plot(zgrid,geometry['gBfield'],label=gfname)
+           ax.set_title('gBfield')
+        else:
+           ax.plot(zgrid,geometry['Bfield'],label=gfname)
+           ax.set_title('Bfield')
         ax.set_xticks([])
 
         ax  = gBfig.add_subplot(2,2,2)
-        ax.plot(zgrid,geometry['gdBdx'],label=gfname)
-        ax.set_title('gdBdx')
+        if x_local:
+           ax.plot(zgrid,geometry['gdBdx'],label=gfname)
+           ax.set_title('gdBdx')
+        else:
+           ax.plot(zgrid,geometry['dBdx'],label=gfname)
+           ax.set_title('dBdx')
         ax.set_xticks([])
 
         ax  = gBfig.add_subplot(2,2,3)
-        ax.plot(zgrid,geometry['gdBdy'],label=gfname)
+        if x_local:
+           ax.plot(zgrid,geometry['gdBdy'],label=gfname)
+           ax.set_title('gdBdy')
+        else:
+           ax.plot(zgrid,geometry['dBdy'],label=gfname)
+           ax.set_title('dBdy')
         ax.set_xlabel('$Z/\\pi$')
-        ax.set_title('gdBdy')
         plt.legend()
 
         ax12  = gBfig.add_subplot(2,2,4)
-        ax12.plot(zgrid,geometry['gdBdz'],label=gfname)
+        if x_local:
+           ax12.plot(zgrid,geometry['gdBdz'],label=gfname)
+           ax12.set_title('gdBdz')
+        else:
+           ax12.plot(zgrid,geometry['dBdz'],label=gfname)
+           ax12.set_title('dBdz')
         ax12.set_xlabel('$Z/\\pi$')
-        ax12.set_title('gdBdz')
 
     geomfigs.savefig(gBfig)
-    geomfigs.savefig(GLfig)
+    gBfig.savefig(reportpath+'geometry_gB.png')
     geomfigs.savefig(GGfig)
+    GGfig.savefig(reportpath+'geometry_GG.png')
+    if x_local:
+       geomfigs.savefig(GLfig)
+       GLfig.savefig(reportpath+'geometry_GL.png')
     
     geomfigs.close()
 
-    gBfig.savefig(reportpath+'geometry_gB.png')
-    GLfig.savefig(reportpath+'geometry_GL.png')
-    GGfig.savefig(reportpath+'geometry_GG.png')
 
-    return gBfig,GLfig,GGfig
+    if display:
+       plt.show()
+
+    return 1
 
