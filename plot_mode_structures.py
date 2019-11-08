@@ -33,6 +33,13 @@ if len(args)!=1:
 Please include run number as argument (e.g., 0001)."
     \n""")
 suffix = args[0]
+
+if   suffix in ['dat','.dat']:
+  if suffix == 'dat'
+     suffix = '.'+suffix
+else:
+     suffix = '_'+suffix
+
 #plot_all=options.plot_all
 output_file=options.output
 print "options.plot_ballooning", options.plot_ballooning
@@ -42,8 +49,6 @@ calc_epar=options.calc_epar
 idb_file = options.idb_file
 prof_file = options.prof_file
 time0=float(options.time0)
-
-suffix = '_'+suffix
 
 par = Parameters()
 par.Read_Pars('parameters'+suffix)

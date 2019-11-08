@@ -54,7 +54,10 @@ def read_parameters(paramfpath):
         paramflist=[paramfpath.strip()[:-8]+'parameters_'+paramfpath.strip()[-4:]]
     else: 
          if paramfpath[-1] != "/": paramfpath+="/"
-         paramflist = sorted(glob.glob(paramfpath+"parameters_*"))
+         if os.path.isfile(paramfpath+"parameters_0001"):
+            paramflist = sorted(glob.glob(paramfpath+"parameters_*"))
+         else:
+            paramflist = sorted(glob.glob(paramfpath+"parameters.dat"))
 
     geneparam = {'filepath':paramfpath}
     for fid in range(len(paramflist)):
@@ -210,14 +213,14 @@ def read_parameters(paramfpath):
                          else:
                               geneparam[pkey][skey] = float(items[1])
                       elif type(geneparam[pkey][skey]) == list:
-                         if   skey in ['norm_flux_projection']:
+                         if   skey in ['norm_flux_projection','mag_prof']:
                               geneparam[pkey][skey].append(str2bool(items[1]))
                          elif skey in ['magn_geometry','geomdir','geomfile','x_def','dpdx_term']:
                               geneparam[pkey][skey].append(items[1].strip()[1:-1])
                          else:
                               geneparam[pkey][skey].append(float(items[1]))
                       else:
-                         if   skey in ['norm_flux_projection']:
+                         if   skey in ['norm_flux_projection','mag_prof']:
                               if geneparam[pkey][skey] != str2bool(items[1]):
                                  geneparam[pkey][skey]  = [geneparam[pkey][skey],str2bool(items[1])]
                          elif skey in ['magn_geometry','geomdir','geomfile','x_def','dpdx_term']:
@@ -403,8 +406,8 @@ def read_nrg(nrgfpath,nspecs=0,parameters={},normalized=True):
         while True:
               try:
                  ctime = float(nrgfhand.readline())
-                 if not normalized:
-                    ctime*=(units['Lref']/units['cref'])
+                #if not normalized:
+                #   ctime*=(units['Lref']/units['cref'])
                  nrgdata[inrgfkey]['time']=npy.append(nrgdata[inrgfkey]['time'],ctime)
                  for ispecs in specstype:
                      linedata = nrgfhand.readline().split()
@@ -459,21 +462,22 @@ def read_nrg(nrgfpath,nspecs=0,parameters={},normalized=True):
 
 def read_neoclass(neoclassfpath,nspecs=0,parameters={},normalized=True):
    #Developed by Ehab Hassan on 2019-03-12
-    if "neoclass_" in neoclassfpath.strip():
-       neoclassflist=[neoclassfpath.strip()]
-       parameters = read_parameters(neoclassflist[0][:-13]+'parameters'+neoclassflist[0][-5:])
-    elif "neoclass.dat" in neoclassfpath.strip():
-       neoclassflist=[neoclassfpath.strip()]
-       parameters = read_parameters(neoclassflist[0][:-12]+'parameters'+neoclassflist[0][-4:])
-    else:
-       if neoclassfpath[-1] != "/": neoclassfpath+="/"
-       neoclassflist = sorted(glob.glob(neoclassfpath+"neoclass_*"))
-       if neoclassflist==[]:
-          neoclassflist = sorted(glob.glob(neoclassfpath+"neoclass.*"))
-       if "neoclass_" in neoclassflist[0]:
-          parameters = read_parameters(neoclassflist[0][:-13]+'parameters'+neoclassflist[0][-5:])
-       elif "neoclass.dat" in neoclassflist[0]:
+    neoclassfpath = neoclassfpath.strip()
+    if   "neoclass.dat" in neoclassfpath[-13:]:
+          neoclassflist=[neoclassfpath]
           parameters = read_parameters(neoclassflist[0][:-12]+'parameters'+neoclassflist[0][-4:])
+    elif "neoclass_" in neoclassfpath[-13:]:
+          neoclassflist=[neoclassfpath]
+          parameters = read_parameters(neoclassflist[0][:-13]+'parameters'+neoclassflist[0][-5:])
+    else:
+         if neoclassfpath[-1] != "/": neoclassfpath+="/"
+         neoclassflist = sorted(glob(neoclassfpath+"neoclass_*"))
+         if    neoclassflist==[]:
+               neoclassflist = sorted(glob.glob(neoclassfpath+"neoclass.*"))
+         if   "neoclass.dat" in neoclassflist[0][-13:]:
+               parameters = read_parameters(neoclassflist[0][:-12]+'parameters'+neoclassflist[0][-4:])
+         elif "neoclass_" in neoclassflist[0][-13:]:
+               parameters = read_parameters(neoclassflist[0][:-13]+'parameters'+neoclassflist[0][-5:])
 
     nspecs    = parameters['box']['n_spec']
     specstype = []
@@ -986,9 +990,14 @@ def field_info(field,param={}):
            field_info['parity_factor_phi']  = npy.abs(npy.sum(phi))/npy.sum(npy.abs(phi))
 
            #Calculating E|| Cancellation
-           gpars,geometry = read_geometry_local(ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:])
+           if os.path.isfile(ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:]):
+              gpars,geometry = read_geometry_local(ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:])
+              omegafpath = ifieldf[:-10]+"omega_"+ifieldf[-4:]
+           else:
+              gpars,geometry = read_geometry_local(ifieldf[:-9]+param['geometry']['magn_geometry']+'.'+ifieldf[-3:])
+              omegafpath = ifieldf[:-9]+"omega."+ifieldf[-3:]
            jacxB = geometry['gjacobian']*geometry['gBfield']
-           omegadata = read_omega(ifieldf[:-10]+"omega_"+ifieldf[-4:])
+           omegadata = read_omega(omegafpath)
            omega_complex = (omegadata['omega']*(0.0+1.0J) + omegadata['gamma'])
            gradphi = fd_d1_o4(phi,zgrid)
            for j in range(int(param['box']['nx0'])):
@@ -1039,20 +1048,24 @@ def field_info(field,param={}):
            zgrid = npy.arange(nz+4)/float(nz+4-1)*(2.0+3.0*(2.0/nz))-(1.0+2.0*(2.0/nz))
            xgrid = npy.arange(nx)/float(nx-1)*param['box']['lx_a']+param['box']['x0']-param['box']['lx_a']/2.0
 
-           gpars,geometry = read_geometry_global(ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:])
+           if os.path.isfile( ifieldf[:-10]+param['geometry']['magn_geometry']+'.dat'):
+              geomfpath = ifieldf[:-10]+param['geometry']['magn_geometry']+'.dat'
+           else:
+              geomfpath = ifieldf[:-10]+param['geometry']['magn_geometry']+'_'+ifieldf[-4:]
+           gpars,geometry = read_geometry_global(geomfpath)
 
            phase = (0.0+1.0J)*param['box']['n0_global']*2.0*npy.pi*geometry['q']
 
            phi_bnd = npy.zeros((nz+4,ny,nx),dtype = 'complex128')
+           gradphi = npy.zeros((nz+4,nx)   ,dtype = 'complex128')
            phi_bnd[2:-2,:,:] = phi
+
            for j in range(nx):
                phi_bnd[-2,0,j] = phi_bnd[ 2,0,j]*npy.e**(-phase[j])
                phi_bnd[-1,0,j] = phi_bnd[ 3,0,j]*npy.e**(-phase[j])
                phi_bnd[ 0,0,j] = phi_bnd[-4,0,j]*npy.e**( phase[j])
                phi_bnd[ 1,0,j] = phi_bnd[-3,0,j]*npy.e**( phase[j])
 
-           gradphi= npy.zeros((nz+4,nx),dtype = 'complex128')
-           for j in range(nx):
                gradphi[:,j]    = fd_d1_o4(phi_bnd[:,0,j],zgrid)
                gradphi[2:-2,j] = gradphi[2:-2,j]/npy.pi/(geometry['jacobian'][:,j]*geometry['Bfield'][:,j])
 
@@ -1140,15 +1153,13 @@ def find_mode_frequency(fieldfpath,fraction=0.9,bgn_t=None,end_t=None,method='fa
            if end_t == None: end_t  = tlist[-1]
            end_t_ind = npy.argmin(abs(npy.array(tlist)-end_t))
           #if bgn_t == None: bgn_t  = tlist[-1]*fraction
-          #bgn_t_ind = npy.argmin(abs(npy.array(tlist)-bgn_t))
+           bgn_t_ind = npy.argmin(abs(npy.array(tlist)-bgn_t))
            if bgn_t == None:
-              while True:
-                    bgn_t     = tlist[-1]*fraction
-                    bgn_t_ind = npy.argmin(abs(npy.array(tlist)-bgn_t))
-                    ntimes    = end_t_ind-bgn_t_ind
-                    if    ntimes > 1500: fraction+=0.01; continue
-                    else: break
-                    bgn_t  = tlist[-1]*fraction
+              bgn_t     = tlist[-1]*fraction
+              bgn_t_ind = npy.argmin(abs(npy.array(tlist)-bgn_t))
+              if end_t_ind-bgn_t_ind > 150:
+                 bgn_t_ind = npy.size(tlist)-151
+                 bgn_t = tlist[bgn_t_ind]
            ntimes    = end_t_ind-bgn_t_ind
 
            frequency[modeid]={}
@@ -1171,20 +1182,21 @@ def find_mode_frequency(fieldfpath,fraction=0.9,bgn_t=None,end_t=None,method='fa
               omega_phi     = npy.log(phi/np.roll(phi,1))
               omega_phi     = npy.delete(omega_phi,0)
               omega_phi    /= dt
-              omega_phi_avg = npy.average(npy.real(omega_phi))
-              gamma_phi_avg = npy.average(npy.imag(omega_phi))
+              omega_phi_avg = npy.average(omega_phi.imag)
+              gamma_phi_avg = npy.average(omega_phi.real)
 
               frequency[modeid]['omega_phi'] = omega_phi_avg
               frequency[modeid]['gamma_phi'] = gamma_phi_avg
 
-              omega_apr     = npy.log(apr/np.roll(apr,1))
-              omega_apr     = npy.delete(omega_apr,0)
-              omega_apr    /= dt
-              omega_apr_avg = npy.average(npy.real(omega_apr))
-              gamma_apr_avg = npy.average(npy.imag(omega_apr))
+              if nfields>1:
+                 omega_apr     = npy.log(apr/np.roll(apr,1))
+                 omega_apr     = npy.delete(omega_apr,0)
+                 omega_apr    /= dt
+                 omega_apr_avg = npy.average(omega_apr.imag)
+                 gamma_apr_avg = npy.average(omega_apr.real)
 
-              frequency[modeid]['omega_apr'] = omega_apr_avg
-              frequency[modeid]['gamma_apr'] = gamma_apr_avg
+                 frequency[modeid]['omega_apr'] = omega_apr_avg
+                 frequency[modeid]['gamma_apr'] = gamma_apr_avg
 
            elif method.lower() in ['slow','general-mode','thorough']:
               for tind in range(bgn_t_ind,end_t_ind+1):
@@ -1217,7 +1229,10 @@ def find_mode_frequency(fieldfpath,fraction=0.9,bgn_t=None,end_t=None,method='fa
                          if ix < nx/2:
                             apar[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=field.apar()[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                 elif not x_local:
-                  gpars,geometry = read_geometry_global(ifieldf[:-10]+pars['magn_geometry'][1:-1]+'_'+ifieldf[-4:])
+                  if 'field.dat' in ifieldf:
+                     gpars,geometry = read_geometry_global(ifieldf[:-9]+pars['magn_geometry'][1:-1]+ifieldf[-4:])
+                  else:
+                     gpars,geometry = read_geometry_global(ifieldf[:-10]+pars['magn_geometry'][1:-1]+ifieldf[-5:])
                   n0_global      = int(pars['n0_global'])
                   q              = geometry['q']
                   phase          = 2.0*npy.pi*(0.0+1.0J)*n0_global*q
@@ -1396,50 +1411,71 @@ def mode_type(modeinfo,parameters):
     return mode_type
 
 
-def mode_info(modesfpath):
+def mode_info(genefpath):
    #Developed by Ehab Hassan on 2019-03-13
-    if   "_" in modesfpath:
-         inds = findall(modesfpath,"/")
-         modesfpath = modesfpath.strip()[:inds[-1]+1]
-    elif modesfpath[-1] != "/":
-         modesfpath+="/"
+    if   'parameters' in genefpath:
+          paramflist = [genefpath]
+    elif 'nrg' in genefpath:
+         if 'dat' in genefpath[-4:]:
+            paramflist = [genefpath[:-7]+'parameters.dat']
+         else:
+            paramflist = [genefpath[:-8]+'parameters_'+genefpath[-4:]]
+    elif 'omega' in genefpath:
+         if 'dat' in genefpath[-4:]:
+            paramflist = [genefpath[:-9]+'parameters.dat']
+         else:
+            paramflist = [genefpath[:-10]+'parameters_'+genefpath[-4:]]
+    else:
+         if genefpath[-1] != "/": genefpath+="/"
+         paramflist = sorted(glob(genefpath+'parameters_????'))
+         if paramlist == []:
+            paramflist = glob(genefpath+'parameters.dat')
 
-    omegadata = read_omega(modesfpath)
-    nmodes    = len(omegadata['kymin'])
     mode_info = {}
 
-    for imode in range(nmodes):
-        if os.path.isfile(modesfpath+'nrg.dat'):
-            nrgfpath   = modesfpath+"nrg.dat"
-            paramfpath = modesfpath+"parameters.dat"
-            fieldfpath = modesfpath+"field.dat"
+    for paramid in paramflist:
+        if 'dat' in paramid:
+           imode   = 'dat'
+           nrgid   = 'nrg.dat'
+           omegaid = 'omega.dat'
+           fieldid = 'field.dat'
         else:
-            nrgfpath   = modesfpath+"nrg_%04d" % (imode+1)
-            paramfpath = modesfpath+"parameters_%04d" % (imode+1)
-            fieldfpath = modesfpath+"field_%04d" % (imode+1)
+           imode   = int(paramid[-4:])-1
+           nrgid   = 'nrg_%04d'   % (imode+1)
+           omegaid = 'omega_%04d' % (imode+1)
+           fieldid = 'field_%04d' % (imode+1)
+
+        nrgfpath   = os.path.abspath(nrgid)
+        fieldfpath = os.path.abspath(fieldid)
+        omegafpath = os.path.abspath(omegaid)
+        paramfpath = os.path.abspath(paramid)
 
         nrgdata   = read_nrg(nrgfpath)
+        fielddata = read_field(fieldfpath)
+        omegadata = read_omega(omegafpath)
         paramdata = read_parameters(paramfpath)
-        field     = read_field(fieldfpath)
-        fieldinfo = field_info(field,paramdata)
+        fieldinfo = field_info(fielddata,paramdata)
 
         iky = omegadata['kymin'][imode]
-        mode_info[iky]={}
+        mode_info[iky] = {}
 
         mode_info[iky]['kymin'] = paramdata['box']['kymin']
         if   'x0'        in paramdata['box'].keys():
              mode_info[iky]['x0'] = paramdata['box']['x0']
         else:
              mode_info[iky]['x0'] = npy.nan
+
         if   'kx_center' in paramdata['box'].keys():
              mode_info[iky]['kx_center'] = paramdata['box']['kx_center']
         else:
              mode_info[iky]['kx_center'] = 0.0
+
         if   'n0_global' in paramdata['box'].keys():
              mode_info[iky]['n0_global'] = paramdata['box']['n0_global']
         else:
              mode_info[iky]['n0_global'] = npy.nan
-        if   omegadata['gamma'][imode] != 0.0:
+
+        if   omegadata:
              mode_info[iky]['gamma'] = omegadata['gamma'][imode]
              mode_info[iky]['omega'] = omegadata['omega'][imode]
         else:
@@ -1450,22 +1486,27 @@ def mode_info(modesfpath):
              mode_info[iky]['zavg'] = fieldinfo['zavg']
         else:
              mode_info[iky]['zavg'] = npy.nan
+
         if 'corr_len' in fieldinfo.keys():
              mode_info[iky]['corr_len'] = fieldinfo['corr_len']
         else:
              mode_info[iky]['corr_len'] = npy.nan
+
         if 'parity_factor_apar' in fieldinfo.keys():
              mode_info[iky]['parity_factor_apar'] = fieldinfo['parity_factor_apar']
         else:
              mode_info[iky]['parity_factor_apar'] = npy.nan
+
         if 'parity_factor_phi' in fieldinfo.keys():
              mode_info[iky]['parity_factor_phi'] = fieldinfo['parity_factor_phi']
         else:
              mode_info[iky]['parity_factor_phi'] = npy.nan
+
         if 'Epar_Cancellation' in fieldinfo.keys():
              mode_info[iky]['Epar_Cancellation'] = fieldinfo['Epar_Cancellation']
         else:
              mode_info[iky]['Epar_Cancellation'] = npy.nan
+
         if 'global_factor' in fieldinfo.keys():
              mode_info[iky]['glabal_factor'] = fieldinfo['global_factor']
         else:
@@ -1504,29 +1545,31 @@ def flux_type(fluxinfo,parameters,tol=1.0e-2):
 
 def flux_info(genefpath):
    #Developed by Ehab Hassan on 2019-03-27
-    if genefpath[-1] != "/": genefpath+="/"
-    if "nrg" in genefpath or 'parameters' in genefpath:
-       slashinds = findall(genefpath,"/")
-       genefpath  = genefpath[:slashinds[-2]+1]
-
-    paramdata = read_parameters(genefpath)
+    if   'parameters' in genefpath:
+          paramflist = [genefpath]
+    elif 'nrg' in genefpath:
+         if 'dat' in genefpath[-4:]:
+            paramflist = [genefpath[:-7]+'parameters.dat']
+         else:
+            paramflist = [genefpath[:-8]+'parameters_'+genefpath[-4:]]
+    else:
+         if genefpath[-1] != "/": genefpath+="/"
+         paramflist = sorted(glob(genefpath+'parameters_????'))
+         if paramlist == []:
+            paramflist = glob(genefpath+'parameters.dat')
 
     flux_info = {}
 
-    if type(paramdata['box']['kymin'])==list:
-       kyminlist = paramdata['box']['kymin']
-    else:
-       kyminlist = [paramdata['box']['kymin']]
-
-    for imode in range(len(kyminlist)):
-        iky = kyminlist[imode]
-
-        if os.path.isfile(genefpath+"nrg.dat"):
-           nrgid    = "nrg.dat"
+    for paramid in paramflist:
+        paramfpath = os.path.abspath(paramid)
+        paramdata = read_parameters(paramfpath)
+        iky = paramdata['box']['kymin']
+        if 'dat' in paramid:
+           nrgid = 'nrg.dat'
         else:
-           nrgid   = "nrg_%04d" % (imode+1)
+           nrgid = 'nrg_%04d' % int(paramid[-4:])
 
-        nrgfpath = genefpath+nrgid
+        nrgfpath = os.path.abspath(nrgid)
         nrgdata = read_nrg(nrgfpath)
         nrgid   = nrgdata.keys()[0]
 
@@ -1549,19 +1592,21 @@ def flux_info(genefpath):
                 HFlux_em -= (3./2.)*PFlux_em*paramdata[specid]['temp']
              HFlux     = HFlux_es + HFlux_em
              Dee       = PFlux
-             if type(paramdata[specid]['omn'])==list:
-                Dee      /= max(paramdata[specid]['omn'])
-             else:
-                Dee      /= paramdata[specid]['omn']
+             if 'omn' in paramdata[specid]:
+                if type(paramdata[specid]['omn'])==list:
+                   Dee      /= max(paramdata[specid]['omn'])
+                else:
+                   Dee      /= paramdata[specid]['omn']
              if type(paramdata[specid]['dens'])==list:
                 Dee      /= max(paramdata[specid]['dens'])
              else:
                 Dee      /= paramdata[specid]['dens']
              Chi       = HFlux
-             if type(paramdata[specid]['omn'])==list:
-                Chi      /= max(paramdata[specid]['omt'])
-             else:
-                Chi      /= paramdata[specid]['omt']
+             if 'omt' in paramdata[specid]:
+                 if type(paramdata[specid]['omt'])==list:
+                    Chi      /= max(paramdata[specid]['omt'])
+                 else:
+                    Chi      /= paramdata[specid]['omt']
              if type(paramdata[specid]['dens'])==list:
                 Chi      /= max(paramdata[specid]['dens'])
              else:
@@ -1606,23 +1651,24 @@ def units_conversion(paramfpath='',parameters={}):
 
     units               = {}
 
-    units['nref']       = parameters['units']['nref']*1.0e19
-    units['Lref']       = parameters['units']['Lref']
-    units['Bref']       = parameters['units']['Bref']
-    units['Tref']       = parameters['units']['Tref']*1.60218e-19*1.0e3
-    units['mref']       = parameters['units']['mref']*1.6726e-27
+    if parameters['units']:
+       units['nref']       = parameters['units']['nref']*1.0e19
+       units['Lref']       = parameters['units']['Lref']
+       units['Bref']       = parameters['units']['Bref']
+       units['Tref']       = parameters['units']['Tref']*1.60218e-19*1.0e3
+       units['mref']       = parameters['units']['mref']*1.6726e-27
 
-    units['qref']       = 1.60218e-19
-    units['vref']       = npy.sqrt(1.0*units['Tref']/units['mref'])
-    units['cref']       = npy.sqrt(units['Tref']/units['mref'])
-    units['gyrofreq']   = units['qref']*units['Bref']/units['mref']
-    units['gyroradius'] = units['cref']/units['gyrofreq']
-    units['rhostar']    = units['gyroradius']/units['Lref']
+       units['qref']       = 1.60218e-19
+       units['vref']       = npy.sqrt(1.0*units['Tref']/units['mref'])
+       units['cref']       = npy.sqrt(units['Tref']/units['mref'])
+       units['gyrofreq']   = units['qref']*units['Bref']/units['mref']
+       units['gyroradius'] = units['cref']/units['gyrofreq']
+       units['rhostar']    = units['gyroradius']/units['Lref']
 
-    units['pref']       = units['nref']*units['Tref']
-    units['Ggb']        = units['cref']*units['nref']*units['rhostar']**2
-    units['Qgb']        = units['cref']*units['pref']*units['rhostar']**2
-    units['Pgb']        = units['nref']*units['mref']*(units['cref']*units['rhostar'])**2
+       units['pref']       = units['nref']*units['Tref']
+       units['Ggb']        = units['cref']*units['nref']*units['rhostar']**2
+       units['Qgb']        = units['cref']*units['pref']*units['rhostar']**2
+       units['Pgb']        = units['nref']*units['mref']*(units['cref']*units['rhostar'])**2
 
     return units
 
