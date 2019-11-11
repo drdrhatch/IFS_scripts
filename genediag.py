@@ -24,7 +24,8 @@ parser.add_argument('--findtau',     '-findtau',     action='store_const',const=
 parser.add_argument('--siunits',     '-siunits',     action='store_const',const=1,help='Covert to the SI Units')
 parser.add_argument('--plotnrg',     '-plotnrg',     action='store_const',const=1,help='Plot the profiles in nrg_xxxx file')
 parser.add_argument('--display',     '-display',     action='store_const',const=1,help='Display the plots')
-parser.add_argument('--modeinfo',    '-modeinfo',    action='store_const',const=1,help='Retrieve information about a mode')
+parser.add_argument('--modeinfo',    '-modeinfo',    action='store_const',const=1,help='Retrieve information about modes')
+parser.add_argument('--fluxinfo',    '-fluxinfo',    action='store_const',const=1,help='Retrieve information about fluxes')
 parser.add_argument('--findarea',    '-findarea',    action='store_const',const=1,help='Find the surface area of magnetic surface')
 parser.add_argument('--logscale',    '-logscale',    action='store_const',const=1,help='Plot in log scale')
 parser.add_argument('--omega2hz',    '-omega2hz',    action='store_const',const=1,help='Convert omega to Hz')
@@ -44,6 +45,7 @@ if parser.parse_args():
    siunits   =    args.siunits
    omega2hz  =    args.omega2hz
    modeinfo  =    args.modeinfo
+   fluxinfo  =    args.fluxinfo
    findarea  =    args.findarea
    logscale  =    args.logscale
    plotgeom  =    args.plotgeom
@@ -65,10 +67,6 @@ if   findtau:
      profilefpath = inputs[1]
      tau = genetools.calc_tau(psiloc,profilepath=profilefpath)
      print('tau = Zeff*Te/Ti = %7.5f' % tau)
-elif omega2hz:
-     genepath = '.'
-     ky,freq = genetools.omega_to_hz(genefpath=genepath)
-     print('omega(ky=%5.3f) = %7.5f Hz' % (ky[0],freq[0]))
 else:
      orderlist = [str('%04d') % (i+1) for i in range(9999)]
      orderlist.append('dat')
@@ -77,7 +75,6 @@ else:
         if item in orderlist:
            if item == 'dat': item = '.dat'
            modeorder.append(item)
-
 if siunits:
    if modeorder:
       if 'dat' in modeorder[0]:
@@ -118,6 +115,20 @@ for mode in modeorder:
     if siunits or findomega:
        conv_units = genetools.units_conversion(paramfpath=paramfpath)
 
+    if omega2hz:
+       if 'dat' in mode:
+          genepath = './omega.dat'
+       else:
+          genepath = './omega_%04d' % int(mode)
+       paramdata = genetools.read_parameters(paramfpath)
+       x0 = paramdata['box']['x0']
+       ky,freq = genetools.omega_to_hz(genefpath=genepath)
+       if 'n0_global' in paramdata['box']:
+          n0 = paramdata['box']['n0_global']
+          print('omega(x0=%5.3f,ky=%5.3f,n0=%d) = %7.5f Hz' % (x0,ky[0],n0,freq[0]))
+       else:
+          print('omega(x0=%5.3f,ky=%5.3f,n0=%d) = %7.5f Hz' % (x0,ky[0],n0,freq[0]))
+
     if findomega:
        if   mode.isdigit():
             fieldfname = 'field_%04d'     % int(mode)
@@ -126,12 +137,13 @@ for mode in modeorder:
        fieldfpath = os.path.abspath(fieldfname)
        if not os.path.isfile(fieldfpath):
           print('File: %s is not in the given path.' % fieldfname); sys.exit()
-       t1 = 9.5
-       t2 = 9.8
+       t1       = 2.00
+       t2       = 2.15
+       tpercent = 0.9
        if quick:
-          modefreq = genetools.find_mode_frequency(fieldfpath,fraction=0.90,bgn_t=t1,end_t=t2,method='fast-mode')
+          modefreq = genetools.find_mode_frequency(fieldfpath,fraction=tpercent,bgn_t=t1,end_t=t2,method='fast-mode')
        else:
-          modefreq = genetools.find_mode_frequency(fieldfpath,fraction=0.90,bgn_t=t1,end_t=t2,method='thorough')
+          modefreq = genetools.find_mode_frequency(fieldfpath,fraction=tpercent,bgn_t=t1,end_t=t2,method='thorough')
 
        if 'omega_apr' in modefreq[modenumber]: aparFlag = True
        else:                                   aparFlag = False
@@ -294,7 +306,7 @@ for mode in modeorder:
        area  = genetools.calculate_surface_area(geomfpath,paramfpath)
        print('Magnetic Surface Area = %7.5f' % area)
 
-    if modeinfo:
+    if fluxinfo:
        genepath = os.path.abspath('./')
        if genepath[-1]!='/': genepath+='/'
 
@@ -314,6 +326,43 @@ for mode in modeorder:
        print("De/(Xe+Xi) = %5.3f" % (fluxinfo[kyflux]['e']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
        print("Dz/(Xe+Xi) = %5.3f" % (fluxinfo[kyflux]['z']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
        print("Instability Type: %s" % (fluxinfo[kyflux]['Type']))
+
+       if   PYTHON3:
+            saveinfo = str(input('Do you want to save info to file?(Yes/No) ')).lower()
+       elif PYTHON2:
+            saveinfo = raw_input('Do you want to save info to file?(Yes/No) ').lower()
+
+       if saveinfo in ['yes','y']:
+          if not os.path.isdir(genepath+"report"):
+             os.system('mkdir '+genepath+"report")
+             reportpath = genepath+"report/"
+          else:
+             reportpath = genepath+"report/"
+
+          infofpath = reportpath+'gene_flux_info_%04d' % int(mode)
+          ofhand = open(infofpath,'w')
+
+          ofhand.write("Mode Flux Info:\n")
+          ofhand.write("ky = %5.3f\n" % kyflux)
+          ofhand.write("Xi/Xe = %5.3f\n" % (fluxinfo[kyflux]['i']['Chi']/fluxinfo[kyflux]['e']['Chi']))
+          ofhand.write("De/Xe = %5.3f\n" % (fluxinfo[kyflux]['e']['Dee']/fluxinfo[kyflux]['e']['Chi']))
+          ofhand.write("Dz/Xe = %5.3f\n" % (fluxinfo[kyflux]['z']['Dee']/fluxinfo[kyflux]['e']['Chi']))
+          ofhand.write("De/(Xe+Xi) = %5.3f\n" % (fluxinfo[kyflux]['e']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
+          ofhand.write("Dz/(Xe+Xi) = %5.3f\n" % (fluxinfo[kyflux]['z']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
+          ofhand.write("Instability Type: %s\n" % (fluxinfo[kyflux]['Type']))
+          ofhand.write("\n")
+
+          ofhand.close()
+
+    if modeinfo:
+       genepath = os.path.abspath('./')
+       if genepath[-1]!='/': genepath+='/'
+
+       if mode in ['.dat','dat']:
+          paramfname  = 'parameters.dat'
+       else:
+          paramfname  = 'parameters_%04d' % int(mode)
+       parampath = os.path.abspath(paramfname)
 
        modeinfo = genetools.mode_info(genefpath=parampath)
        kymode = modeinfo.keys()[0]
@@ -342,18 +391,8 @@ for mode in modeorder:
           else:
              reportpath = genepath+"report/"
 
-          infofpath = reportpath+'gene_info_%04d' % int(mode)
+          infofpath = reportpath+'gene_mode_info_%04d' % int(mode)
           ofhand = open(infofpath,'w')
-
-          ofhand.write("Mode Flux Info:\n")
-          ofhand.write("ky = %5.3f\n" % kyflux)
-          ofhand.write("Xi/Xe = %5.3f\n" % (fluxinfo[kyflux]['i']['Chi']/fluxinfo[kyflux]['e']['Chi']))
-          ofhand.write("De/Xe = %5.3f\n" % (fluxinfo[kyflux]['e']['Dee']/fluxinfo[kyflux]['e']['Chi']))
-          ofhand.write("Dz/Xe = %5.3f\n" % (fluxinfo[kyflux]['z']['Dee']/fluxinfo[kyflux]['e']['Chi']))
-          ofhand.write("De/(Xe+Xi) = %5.3f\n" % (fluxinfo[kyflux]['e']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
-          ofhand.write("Dz/(Xe+Xi) = %5.3f\n" % (fluxinfo[kyflux]['z']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
-          ofhand.write("Instability Type: %s\n" % (fluxinfo[kyflux]['Type']))
-          ofhand.write("\n")
 
           ofhand.write("Mode General Info:\n")
           ofhand.write("Qem/Qes = %5.3f\n" % (modeinfo[kymode]['Qem/Qes']))
