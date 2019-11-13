@@ -13,25 +13,26 @@ from finite_differences import *
 #mode = 'omnz': increase omnz (i.e. impurity density gradient) by alpha and decrease omni 
 #mode = 'omte': increase omte without compensation
 #mode = 'omti': increase omti without compensation
+#mode = 'omne': increase omne without compensation
 
-mode = 'omte'
-alpha = 0.9
-target_factor = 0.9
+mode = 'omne'
+alpha = 1.2
+target_factor = 1.2
 #Set this to True if you want to pin the separatrix electron temperature
-set_Tesep = True
+set_Tesep = False
 Tesep_target = 80  #Separatrix electron temperature in eV
 x0_Tsep = 0.993 #radial location at which to send Tsep to target
 lambda_Tsep = 0.016
 
-#===========================================================
-#===========================================================
-#===========================================================
+fileName = 'CMOD1120907032May12alpha01.iterdb'
+profilesName = 'rt_rp_double'
+file_out_base = 'CMOD1120907032May12alpha01'
+base_number = ''
+rhotMidPed = 0.977
 
-fileName = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96.iterdb'
-profilesName = 'gene_profiles_e_jet78697'
-file_out_base = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96'
-base_number = '78697'
-rhotMidPed = 0.97
+#===========================================================
+#===========================================================
+#===========================================================
 
 rhot, te, ti, ne, ni, nz, omega_tor = read_iterdb_file(fileName)
 data = np.genfromtxt(profilesName)
@@ -119,6 +120,47 @@ if mode == 'omte':
     plt.axis([0.9,1.0,0.0,ax[3]])
     plt.legend()
     plt.show()
+
+if mode == 'omne':
+    midPedIndex = np.argmin(abs(rhot - rhotMidPed))
+    neMidPed = ne[midPedIndex]
+    print 'rhot =', rhotMidPed
+    print 'ne =', neMidPed
+
+    newNe = neMidPed*np.power(ne/neMidPed,alpha)
+    newNi = newNe/ne*ni
+    newNz = newNe/ne*nz
+
+    newTe = te
+    newTi = ti
+
+    newomne = -1.0/newNe*fd_d1_o4_uneven(newNe,rhot)
+    omne0 = -1.0/ne*fd_d1_o4_uneven(ne,rhot)
+    
+    #total pressure with new density and tempeturate profiles
+    newPtot = newNe * newTe + newTi * (newNi + newNz)
+
+    qz = float(raw_input("Enter charge of impurity species:"))
+
+    qltest = np.sum(newNi-newNe+qz*newNz)/np.sum(newNe)
+    print("Test of quasineutrality (should be <<1):",qltest)
+ 
+    plt.plot(rhot,newNe,label='new ne')
+    plt.plot(rhot,newNi,label='new ni')
+    plt.plot(rhot,newNz,label='new nz')
+    plt.plot(rhot,newNi-newNe+qz*newNz,label='Test of quasineut.')
+    plt.legend()
+    plt.show()
+
+    plt.title('alpha='+str(alpha))
+    plt.plot(rhot,omne0,label='omn old')
+    plt.plot(rhot,target_factor*omne0,'--',color='black',label='target')
+    plt.plot(rhot,newomne,label='omne new')
+    ax = plt.axis()
+    plt.axis([0.9,1.0,0.0,ax[3]])
+    plt.legend()
+    plt.show()
+
 
 if mode == 'omti':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
