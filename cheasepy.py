@@ -221,7 +221,7 @@ def namelistcreate(setParam={}):
     wfh.write(' &EQDATA \n')
     if   'RELAX'     not in setParam: setParam['RELAX']     = 0.0
     if   'NBSEXPQ'   not in setParam: setParam['NBSEXPQ']   = 1111
-    if   'NEQDSK'    not in setParam: setParam['NEQDSK']    = 1
+    if   'NEQDSK'    not in setParam: setParam['NEQDSK']    = 0
     if   'NS'        not in setParam: setParam['NS']        = 256
     if   'NT'        not in setParam: setParam['NT']        = 256
     if   'NISO'      not in setParam: setParam['NISO']      = 256
@@ -233,12 +233,12 @@ def namelistcreate(setParam={}):
     if   'NOPT'      not in setParam: setParam['NOPT']      = 0
     if   'NSURF'     not in setParam: setParam['NSURF']     = 6
     if   'NFUNC'     not in setParam: setParam['NFUNC']     = 4
-    if   'NPPFUN'    not in setParam: setParam['NPPFUN']    = 4
-    if   'NFUNRHO'   not in setParam: setParam['NFUNRHO']   = 0
-    if   'NRHOMESH'  not in setParam: setParam['NRHOMESH']  = setParam['NFUNRHO']
+    if   'NRHOMESH'  not in setParam: setParam['NRHOMESH']  = 0
+    if   'NFUNRHO'   not in setParam: setParam['NFUNRHO']   = setParam['NRHOMESH']
     if   'NSTTP'     not in setParam: setParam['NSTTP']     = 1
     if   'NPROPT'    not in setParam: setParam['NPROPT']    = setParam['NSTTP']  if setParam['NPPFUN']==4 else -setParam['NSTTP']
     else:                             setParam['NPROPT']    = setParam['NPROPT'] if setParam['NPPFUN']==4 else -abs(setParam['NPROPT'])
+    if   'NPPFUN'    not in setParam: setParam['NPPFUN']    = 8
     if   'NVERBOSE'  not in setParam: setParam['NVERBOSE']  = 4
     if   'NDIAGOP'   not in setParam: setParam['NDIAGOP']   = 1
     if   'NIDEAL'    not in setParam: setParam['NIDEAL']    = 9
@@ -1468,7 +1468,7 @@ def find_boundary(eqdsk='',setParam={}):
        rbndtst = int(eqdskdata['RLEN']/(max(eqdskdata['rbound'])-abs(min(eqdskdata['rbound']))))
        zbndtst = int(eqdskdata['ZLEN']/(max(eqdskdata['zbound'])+abs(min(eqdskdata['zbound']))))
        if  rbndtst==1 and zbndtst==1:
-           rbound,zbound = magsurf_solvflines(eqdskdata=eqdskdata,psi=0.9999,eps=1.0e-16)
+           rbound,zbound = magsurf_solvflines(eqdskdata=eqdskdata,psi=0.999,eps=1.0e-16)
        else:
            rbound=npy.zeros(2*len(eqdskdata['rbound'])-1)
            zbound=npy.zeros(2*len(eqdskdata['zbound'])-1)
@@ -1510,6 +1510,7 @@ def read_imported(importeddata,setParam={},**kwargs):
              eqdskflag = True
 
     IMPORTEDdata = {}
+    if not importeddata: return IMPORTEDdata
 
     if 'rhopsi' in importeddata:
        IMPORTEDdata['rhopsi'] = importeddata['rhopsi'][:]
@@ -2405,7 +2406,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
        report = True
 
     if not os.path.isfile(OSPATH):
-       srhpath    = os.path.join(OSPATH,'*.h5')
+       srhpath    = os.path.join(OSPATH,'chease*.h5')
        h5list     = sorted(glob(srhpath))
     else:
        h5list     = [OSPATH]
@@ -2710,16 +2711,19 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
                        if glob('./EXPEQ'):                 os.system('rm EXPEQ')
                        if glob('./EXPTNZ'):                os.system('rm EXPTNZ')
                        if glob('./*_EQDSK'):               os.system('rm *_EQDSK')
-                       if glob('./*_EXPTNZ'):              os.system('rm *_EXPTNZ')
                        if glob('./*CHEASE'):               os.system('rm *CHEASE')
                        if glob('./*ITERDB'):               os.system('rm *ITERDB')
-                       if glob('./*PROFILES'):             os.system('rm *PROFILES')
+                       if glob('./*_EXPTNZ'):              os.system('rm *_EXPTNZ')
                        if glob('./ogyropsi*'):             os.system('rm ogyropsi*')
+                       if glob('./*PROFILES'):             os.system('rm *PROFILES')
+                       if glob('./chease_iter*'):          os.system('rm chease_iter*')
                        if glob('./EXPEQ_EQDSK*'):          os.system('rm EXPEQ_EQDSK*')
                        if glob('./EXPEQ_EXPEQ*'):          os.system('rm EXPEQ_EXPEQ*')
+                       if glob('./EXPEQ_iter*.IN'):        os.system('rm EXPEQ_iter*.IN')
+                       if glob('./EXPTNZ_iter*.IN'):       os.system('rm EXPTNZ_iter*.IN')
                        if glob('./chease_namelist*'):      os.system('rm chease_namelist*')
                        if glob('./chease_parameters.csv'): os.system('rm chease_parameters.csv')
-                       continue
+                       sys.exit()
                     elif  selection == 4: sys.exit()
                     else: break
               else: raise(NameError)
@@ -2963,8 +2967,11 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
           if glob('./EXPEQ'):            os.system('rm EXPEQ')
           if glob('./EXPTNZ'):           os.system('rm EXPTNZ')
           if glob('./ogyropsi*'):        os.system('rm ogyropsi*')
+          if glob('./chease_iter*'):     os.system('rm chease_iter*')
           if glob('./EXPEQ_EQDSK*'):     os.system('rm EXPEQ_EQDSK*')
           if glob('./EXPEQ_EXPEQ*'):     os.system('rm EXPEQ_EXPEQ*')
+          if glob('./EXPEQ_iter*.IN'):   os.system('rm EXPEQ_iter*.IN')
+          if glob('./EXPTNZ_iter*.IN'):  os.system('rm EXPTNZ_iter*.IN')
           if glob('./chease_namelist*'): os.system('rm chease_namelist*')
           print(CRED+'List of Available CHEASE Files:'+CEND)
           os.system('ls')
@@ -3528,7 +3535,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
 
        namelist = namelistcreate(setParam=namelistParam)
        
-       cheasefname = sorted(glob('./ogyropsi_*.h5'))
+       cheasefname = sorted(glob('./chease_*.h5'))
        if   len(cheasefname)==0:
             it=0
             exit_status = os.system('./chease_hdf5 chease_namelist > iter%03d.OUT' % it)
@@ -3536,8 +3543,8 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
            #exit_status = subprocess.call(['./chease_hdf5','chease_namelist'])
             if abs(exit_status) > 0: sys.exit()
             if os.path.isfile('./chease_namelist'): os.system('cp ./chease_namelist ./chease_namelist_iter%03d' % it)
-            if os.path.isfile('./ogyropsi.dat'):    os.system('cp ./ogyropsi.dat ogyropsi_iter%03d.dat'         % it)
-            if os.path.isfile('./ogyropsi.h5'):     os.system('cp ./ogyropsi.h5 ogyropsi_iter%03d.h5'           % it)
+            if os.path.isfile('./ogyropsi.dat'):    os.system('cp ./ogyropsi.dat chease_iter%03d.dat'         % it)
+            if os.path.isfile('./ogyropsi.h5'):     os.system('cp ./ogyropsi.h5 chease_iter%03d.h5'           % it)
             if os.path.isfile('./EXPEQ'):           os.system('cp ./EXPEQ EXPEQ_iter%03d.IN'                    % it)
             if os.path.isfile('./EXPTNZ'):          os.system('cp ./EXPTNZ EXPTNZ_iter%03d.IN'                  % it)
             if os.path.isfile('./EXPEQ.OUT'):       os.system('cp ./EXPEQ.OUT EXPEQ_iter%03d.OUT'               % it)
@@ -3630,7 +3637,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
        exptnzParam['eprofiles'] = eprofiles_src
        exptnzParam['iprofiles'] = iprofiles_src
 
-       cheasefpath = 'ogyropsi_iter%03d.h5' % it
+       cheasefpath = 'chease_iter%03d.h5' % it
        cheasedata = read_chease(cheasefpath=cheasefpath)
 
        ITErr = (cheasedata['Itor']-ITEXP)/ITEXP
@@ -3644,7 +3651,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
 
            expeqfpath  = 'EXPEQ_iter%03d.OUT'   % it
            exptnzfpath = 'EXPTNZ_iter%03d.OUT'  % it
-           cheasefpath = 'ogyropsi_iter%03d.h5' % it
+           cheasefpath = 'chease_iter%03d.h5' % it
 
            if   rhomesh_src in [0,'chease']:
                 if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
@@ -3984,8 +3991,8 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
           #exit_status = os.system('./chease_hdf5 chease_namelist')
           #exit_status = subprocess.call(['./chease_hdf5','chease_namelist'])
            if abs(exit_status) > 0: sys.exit()
-           if os.path.isfile('./ogyropsi.dat'):   os.system('cp ./ogyropsi.dat ogyropsi_iter%03d.dat'     % (it+1))
-           if os.path.isfile('./ogyropsi.h5'):    os.system('cp ./ogyropsi.h5 ogyropsi_iter%03d.h5'       % (it+1))
+           if os.path.isfile('./ogyropsi.dat'):   os.system('cp ./ogyropsi.dat chease_iter%03d.dat'     % (it+1))
+           if os.path.isfile('./ogyropsi.h5'):    os.system('cp ./ogyropsi.h5 chease_iter%03d.h5'       % (it+1))
            if os.path.isfile('./EXPEQ'):          os.system('cp ./EXPEQ EXPEQ_iter%03d.IN'                % (it+1))
            if os.path.isfile('./EXPTNZ'):         os.system('cp ./EXPTNZ EXPTNZ_iter%03d.IN'              % (it+1))
            if os.path.isfile('./EXPEQ.OUT'):      os.system('cp ./EXPEQ.OUT EXPEQ_iter%03d.OUT'           % (it+1))
@@ -3993,7 +4000,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
            if os.path.isfile('./EXPEQ_EXPEQ.IN'): os.system('cp ./EXPEQ_EXPEQ.IN EXPEQ_EXPEQ_iter%03d.IN' % (it+1))
            if os.path.isfile('./EQDSK_EXPEQ.IN'): os.system('cp ./EQDSK_EXPEQ.IN EQDSK_EXPEQ_iter%03d.IN' % (it+1))
 
-           cheasepath = 'ogyropsi_iter%03d.h5' % (it+1)
+           cheasepath = 'chease_iter%03d.h5' % (it+1)
            cheasedata = read_chease(cheasefpath=cheasepath)
 
            ITErr = (cheasedata['Itor']-ITEXP)/ITEXP
