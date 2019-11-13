@@ -6,7 +6,7 @@ import os
 import optparse as op
 
 parser=op.OptionParser(description='Calculates growth rate and frequncy from linear scan.')
-parser.add_option('--alg','-a',action='store',type = int,help = 'Choose 1 for eigenmode average method and 2 for maximum value.',default = 1)
+parser.add_option('--alg','-a',action='store',type = int,help = 'Choose 1 for eigenmode average method and 2 for maximum value.',default = 2)
 parser.add_option('--single','-s',action='store',type = str,help = 'Analyze only one run in the scan (e.g. 0001).',default = 0)
 options,args=parser.parse_args()
 
