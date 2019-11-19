@@ -43,7 +43,7 @@ Ptot = te * ne + ti * (ni + nz)
 
 #*************start modification from max*************************
 #************Hyperbolic tangent is applies so that only parameter in pedestal region will be inflected**********
-width=rhotTopPed-rhotMidPed
+width=rhotMidPed-rhotTopPed
 weight = ((np.exp((rhot-rhotTopPed)*2/width)-1)/(np.exp((rhot-rhotTopPed)*2/width)+1)+1)/2 
 
 alpha=1+(alpha-1)*weight
