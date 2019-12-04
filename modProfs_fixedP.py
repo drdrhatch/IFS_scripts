@@ -43,9 +43,9 @@ Ptot = te * ne + ti * (ni + nz)
 
 #*************start modification from max*************************
 #************Hyperbolic tangent is applies so that only parameter in pedestal region will be inflected**********
-width=rhotTopPed-rhotMidPed
+width=rhotMidPed-rhotTopPed
 weight = ((np.exp((rhot-rhotTopPed)*2/width)-1)/(np.exp((rhot-rhotTopPed)*2/width)+1)+1)/2 
-
+alpha0=alpha
 alpha=1+(alpha-1)*weight
 
 #print alpha
@@ -279,7 +279,7 @@ if 1 == 1:
 
 if 1 == 1:
     time_str = '9999'
-    add_string = '_alpha'+str(alpha)+'_'+mode+'_x0_'+str(rhotMidPed)
+    add_string = '_alpha'+str(alpha0)+'_'+mode+'_x0_'+str(rhotMidPed)
     output_iterdb(rhot,rhop,newNe*1.E-19,newTe*1.E-3,newNi*1.E-19,newTi*1.E-3,file_out_base+add_string,base_number,time_str,vrot=omega_tor,nimp=newNz*1.E-19)
     f=open('gene_profiles_i'+file_out_base+add_string,'w')
     np.savetxt(f,np.column_stack((rhot,rhop,newTi*1.0e-3,newNi*1.0e-19)))
