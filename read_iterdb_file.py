@@ -31,8 +31,8 @@ def read_iterdb_file(iterdb_filename):
             sec_num_lines += 1
         keep_going=1
         while keep_going and len(data_linesplit) > lnum:
-            print "len(data_linesplit)",len(data_linesplit)
-            print "lnum",lnum
+            #print "len(data_linesplit)",len(data_linesplit)
+            #print "lnum",lnum
             test=re.search('-DEPENDENT VARIABLE LABEL',data_linesplit[lnum])
             #test2=re.search('INDEPENDENT',data_linesplit[lnum])
             if test :
@@ -196,7 +196,8 @@ def read_iterdb_file(iterdb_filename):
     #plt.plot(rhot_nb)
     #plt.plot(rhot_vrot)
     #plt.show()
-    if with_impurity:
-       return rhot_te, te, ti, ne, ni, nb, vrot
-    else:
-       return rhot_te, te, ti, ne, ni, vrot
+    if not with_impurity:
+       nb = False
+    return rhot_te, te, ti, ne, ni, nb, vrot
+
+
