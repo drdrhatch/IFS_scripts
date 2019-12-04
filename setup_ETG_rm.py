@@ -11,12 +11,13 @@ from ParIO import *
 from get_nrg import *
 import optparse as op
 import csv
+import matplotlib.pyplot as plt
 
 #####Setup
 ky_scan_string = "10, 20, 30, 40, 50, 60, 80, 120, 160, 240"
 num_kxcenter = 3
-template_dir = '/global/u2/d/drhatch/gene_dev/prob_ETG_template'
-GENE_dir = '/global/u2/d/drhatch/gene_dev/'
+template_dir = '/global/u2/d/drhatch/gene-dev/prob_ETG_template'
+GENE_dir = '/global/u2/d/drhatch/gene-dev/'
 
 parser=op.OptionParser(description='Synthesizes data from nonlinear ETG simulation and sets up corresponding linear ETG run.  Run this script in the ouput directory of the NL simulation.')
 #parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
