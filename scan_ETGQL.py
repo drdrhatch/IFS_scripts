@@ -5,6 +5,7 @@ from omega_tool import omega_calc
 import os
 import optparse as op
 from subprocess import call
+from parIOWrapper import init_read_parameters_file
 
 parser=op.OptionParser(description='Calculates various quasilinear estimates of heat flux and outputs plots and summary files.')
 parser.add_option('--archive','-a', action='store_true',dest = 'archive', help = 'Move to home directory.', default=True)
@@ -17,7 +18,7 @@ suffix = args[0]
 sfsuffix = args[1]
 archive = options.archive
 
-arch_dir = '/marconi/home/userexternal/dhatch00/ETGQL/'
+arch_dir = '/global/project/projectdirs/m2116/hatch/ETGQL/'
 
 if 'dat' in suffix:
    suffix = '.dat'
@@ -117,10 +118,12 @@ call(['ETG_quasilinear.py',suffix,sfsuffix,'-n','-s 4','-m'])
 call(['mv',file_name,outdir])
 call(['mv',file_name+'.ps',outdir])
 
-
 call(['cp','summary_'+suffix+'.csv',outdir])
 call(['cp','parameters_'+suffix,outdir])
 call(['cp','scanfiles'+sfsuffix+'/mode_info_all',outdir+'/mode_info_all_'+sfsuffix])
+
+pars = init_read_parameters_file('_'+suffix)
+call(['cp',pars['magn_geometry'][1:-1]+'_'+suffix,outdir])
 
 if archive:
     call(['cp','-r',outdir,arch_dir])
