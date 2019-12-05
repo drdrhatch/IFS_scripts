@@ -436,7 +436,7 @@ else:
             #print 'ind_theta0',ind_theta0
 
             #Estimate of global relevance
-            dkx = 2.0*np.pi*pars0['shat']
+            dkx = 2.0*np.pi*pars0['shat']*pars0['kymin']
             phi2tot = np.sum(np.sum(abs(phikx)**2,axis=0),axis=0)
             kxgrid = np.empty(pars0['nx0'],dtype='float64')
             if 'kx_center' in pars0:

@@ -62,7 +62,7 @@ trpeps = pars['x0']*Lref/major_R
 Z = 1.0
 
 beta = 403.0e-5*nref*Tref/Bref**2  #From GENE documentation
-crefSI = (Tref*1000.0*ee/imass)**0.5
+crefSI = abs(Tref*1000.0*ee/imass)**0.5
 cref_gene = 9787.1518*np.sqrt((Tref*1000.0)/2.0)
 OmrefSI = ee*Bref/imass 
 rhostar = crefSI/OmrefSI/Lref
@@ -71,8 +71,9 @@ coll = 2.3031E-5*Lref*(nref)/(Tref)**2*(24.0-np.log(np.sqrt(nref*1.0E13)/Tref*0.
 
 #nustar_i=8.0/3.0/np.pi**0.5*q0/trpeps**1.5*(major_R/Lref)*(ni/nref)*Z**4/(Tref/Ti)**2*coll
 
-nustar_e=16.0/3.0/np.pi**0.5*q0/trpeps**1.5*(major_R/Lref)*Z**2*coll
+nustar_e=16.0/3.0/np.pi**0.5*q0/abs(trpeps)**1.5*(major_R/Lref)*Z**2*coll
 
+print "x0:", pars['x0']
 print "Sound speed (m/s):", crefSI
 print "Sound gyroradius (m):", crefSI/OmrefSI
 print "Transit frequency (1/s):", crefSI/Lref
@@ -90,4 +91,8 @@ print "rhostar = ",rhostar
 print "nustar_e",nustar_e
 print "q0",q0
 print "beta = ",beta
+for i in range(pars['n_spec']):
+    print "name"+str(i+1),pars['name'+str(i+1)]
+    print "omn"+str(i+1),pars['omn'+str(i+1)]
+    print "omt"+str(i+1),pars['omt'+str(i+1)]
 

@@ -6,6 +6,7 @@ import optparse as op
 from subprocess import call
 from interp import *
 from finite_differences import *
+#import matplotlib.pyplot as plt
 
 parser=op.OptionParser(description='Calculates dR / drhot, where R is outboard midplane major radius.')
 options,args=parser.parse_args()
@@ -14,18 +15,28 @@ if len(args)!=2:
 Please include EFIT file name and radial location (in rho_tor).
     \n""")
 efit = args[0]
-x0 = args[1]
+x0 = float(args[1])
 
 Binfo_file = 'Binfo_'+efit
 rtrp_file = 'rt_rp_'+efit
-call(['my_efit_tools.py',efit,-c])
-call(['my_efit_tools.py',efit,-p])
+call(['my_efit_tools.py',efit,'-c','-n'])
+call(['my_efit_tools.py',efit,'-p','-n'])
 Binfo = np.genfromtxt(Binfo_file)
 R0 = Binfo[:,0]
 psi0 = Binfo[:,1]
 rtrp = np.genfromtxt(rtrp_file)
 rhot0 = rtrp[:,0]
 rhop0 = rtrp[:,1]
+
+#plt.plot(rhot0,rhop0)
+#plt.ylabel('rhop')
+#plt.xlabel('rhot')
+#plt.show()
+
+#plt.plot(psi0**0.5,R0)
+#plt.ylabel('R')
+#plt.xlabel('rhop')
+#plt.show()
 
 rhot = np.linspace(0.0,1.0,10000)
 
