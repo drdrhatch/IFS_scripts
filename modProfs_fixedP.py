@@ -22,17 +22,14 @@ target_factor = 1.2
 set_Tesep = False
 Tesep_target = 80  #Separatrix electron temperature in eV
 x0_Tsep = 0.993 #radial location at which to send Tsep to target
-lambda_Tsep = 0.016
+lambda_Tsep = 0.016  #scale length over which to smooth to Tsep
 
-fileName = 'CMOD1120907032May12alpha01.iterdb'
-profilesName = 'rt_rp_double'
-file_out_base = 'CMOD1120907032May12alpha01'
-base_number = ''
-rhotMidPed = 0.977
-
-#===========================================================
-#===========================================================
-#===========================================================
+fileName = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96.iterdb'
+profilesName = 'gene_profiles_e_jet78697'
+file_out_base = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96'
+base_number = '78697'
+rhotMidPed = 0.97
+rhotTopPed =0.955
 
 rhot, te, ti, ne, ni, nz, omega_tor = read_iterdb_file(fileName)
 data = np.genfromtxt(profilesName)
@@ -40,6 +37,16 @@ rhot0 = data[:,0]
 rhop0 = data[:,1]
 rhop = interp(rhot0,rhop0,rhot)
 Ptot = te * ne + ti * (ni + nz)
+
+#*************start modification from max*************************
+#************Hyperbolic tangent is applies so that only parameter in pedestal region will be inflected**********
+width=rhotTopPed-rhotMidPed
+weight = ((np.exp((rhot-rhotTopPed)*2/width)-1)/(np.exp((rhot-rhotTopPed)*2/width)+1)+1)/2 
+
+alpha=1+(alpha-1)*weight
+
+#print alpha
+#*************end modification from max*************************
 
 # collisionality scan
 if mode == 'coll':

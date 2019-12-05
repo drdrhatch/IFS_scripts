@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 import traceback
 
@@ -59,6 +60,89 @@ def rk5(f1,f2,czt,slns,stp):
     slns[0] = slns[0]+stp*(16.0*k01/135.0+6656.0*k03/12825.0+28561.0*k04/56430.0-9.0*k05/50.0+2*k06/55.0)
     slns[1] = slns[1]+stp*(16.0*k11/135.0+6656.0*k13/12825.0+28561.0*k14/56430.0-9.0*k15/50.0+2*k16/55.0)
     return slns
+
+def read_iterdb_file(filename):
+    '''
+    This Code is Written by: David R. Hatch
+    It reads the iterdb file and returns three dictionaries,
+    each diectionary has five quantities:
+    electron density (NE) and temperature (TE),
+    ion density (NM1) and temperatures (TI),
+    impurity density (NM2), if any,
+    rotational velocity (VROT).
+    The three dictionaries provide the toroidal coordinate (rhotor),
+    profiles, and units for each quantity.
+    '''
+    f=open(filename,'r')
+    data_in=f.read()
+    data_linesplit=data_in.split('\n')
+
+    keep_going=1
+    i=0
+    while keep_going:
+        test=re.search(';-# OF X PTS',data_linesplit[i])
+        if test:
+            num=data_linesplit[i].split()[0]
+            num=float(num)
+            num=int(num)
+            keep_going=(1==2)
+        if i == len(data_linesplit):
+            keep_going=(1==2)
+        i=i+1
+
+    lnum=0
+    try_again=1
+    prof_out = {}
+    rhot_out = {}
+    units_out = {}
+    while try_again:
+        lnum,try_again,quantity,units,rhot,arr=get_next(data_linesplit,lnum,num)
+        prof_out[quantity]=arr
+        units_out[quantity]=units
+        rhot_out[quantity]=rhot
+    return rhot_out,prof_out,units_out
+
+def get_next(data_linesplit,lnum,num):
+    sec_num_lines = num/6
+    if num % 6 != 0:
+        sec_num_lines += 1
+    keep_going=1
+    while keep_going:
+        test=re.search('-DEPENDENT VARIABLE LABEL',data_linesplit[lnum])
+        if test :
+            quantity=data_linesplit[lnum].split()[0]
+            units=data_linesplit[lnum].split()[1]
+        test=re.search('DATA FOLLOW',data_linesplit[lnum])
+        if test:
+            keep_going=(1==2)
+        lnum=lnum+1
+
+    rhot=npy.empty(0)
+    lnum0 = lnum
+    for j in range(lnum0,lnum0+int(sec_num_lines)):
+        for k in range(6):
+            str_temp=data_linesplit[j][1+k*13:1+(k+1)*13]
+            if(str_temp):
+                temp=npy.array(data_linesplit[j][1+k*13:1+(k+1)*13],dtype='float')
+                rhot=npy.append(rhot,temp)
+        lnum=lnum+1
+    lnum=lnum+1
+
+    arr=npy.empty(0)
+    lnum0 = lnum
+    for j in range(lnum0,lnum0+int(sec_num_lines)):
+        for k in range(6):
+            str_temp=data_linesplit[j][1+k*13:1+(k+1)*13]
+            if(str_temp):
+                temp=npy.array(data_linesplit[j][1+k*13:1+(k+1)*13],dtype='float')
+                arr=npy.append(arr,temp)
+        lnum=lnum+1
+
+    lnum_out=lnum
+    try_again=1
+    if len(data_linesplit)-lnum < 10:
+        try_again=False
+    return lnum_out, try_again,quantity,units,rhot,arr
 
 def plot_iterdb(iterdbdata,reportpath=''):
     if len(reportpath)==0:
@@ -452,7 +536,6 @@ def profile_mapping(psi,phi,profpsi=[],profphi=[]):
          psiphifn =interp1d(phi,psi,kind='linear')
          profpsi  =profphifn(psiphifn(phi))
 
-'''
 def psi2phi(q,psi):
     qpsifn  = interp1d(psi,q)
     psinorm = npy.linspace(psi[0],psi[-1],10*len(psi))
@@ -480,27 +563,6 @@ def phi2psi(q,phi):
     psiphifn = interp1d(phinorm,psinorm)
     psi      = psiphifn(phi)
     return psi
-'''
-
-def psi2phi(q,psi):
-    phinorm = npy.zeros_like(psi)
-    for i in range(1,npy.size(q)):
-        x = psi[1:i+1]
-        y = q[1:i+1]
-        phinorm[i] = npy.trapz(y,x)
-    phinorm  = (phinorm-phinorm[0])/(phinorm[-1]-phinorm[0])
-    phi      = phinorm
-    return phi
-
-def phi2psi(q,phi):
-    psinorm = npy.zeros_like(phi)
-    for i in range(1,npy.size(q)):
-        x = phi[1:i+1]
-        y = 1./q[1:i+1]
-        psinorm[i] = npy.trapz(y,x)
-    psinorm  = (psinorm-psinorm[0])/(psinorm[-1]-psinorm[0])
-    psi      = psinorm
-    return psi
 
 
 def findmonotonic(A,kind="increasing"):
@@ -526,8 +588,10 @@ def magsurf_contours(eqdskfpath):
     minR = min(eqdskdata['rbound'])
     maxR = max(eqdskdata['rbound'])
 
+    R2D,Z2D = npy.meshgrid(eqdskdata['RR1D'],eqdskdata['ZR1D'])
+
     fig,ax = plt.subplots(1)
-    cs = plt.contour(eqdskdata['RR2D'],eqdskdata['ZR2D'],eqdskdata['psiRZ'],1000)
+    cs = plt.contour(R2D,Z2D,eqdskdata['psiRZ'],1000)
     plt.close(fig)
     lines = []
     for j in range(0,len(cs.levels)):
@@ -542,9 +606,9 @@ def magsurf_contours(eqdskfpath):
            if any(lines[-1][:,1] >= maxZ):  continue
            rcval = lines[-1][:,0]
            zcval = lines[-1][:,1]
-    return rcval,zcval
+    return rcval,zcval-eqdskdata['ZLEN']/2
 
-def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
+def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-16):
     if not eqdskdata.keys():
        if eqdskfpath:
           eqdskdata = read_efit_file(eqdskfpath.strip())
@@ -579,24 +643,40 @@ def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
            cs_r   = r
            cs_z   = z
 
-    npts = 1024 
+    npts = 1024
 
     rsln = []
     zsln = []
     slns = npy.array([cs_r,cs_z])
 
-    maxzta = 4.0*npy.pi*eqdskdata['RLEN']*eqdskdata['ZLEN']*psiRZ(cs_r,cs_z)
+    if type(psiRZ(cs_r,cs_z))==float:
+       maxzta = 4.0*npy.pi*eqdskdata['RLEN']*eqdskdata['ZLEN']*psiRZ(cs_r,cs_z)
+    else:
+       maxzta = 4.0*npy.pi*eqdskdata['RLEN']*eqdskdata['ZLEN']*max(psiRZ(cs_r,cs_z))
     zta = npy.linspace(0.0,maxzta,npts)
     stp = npy.diff(zta)[0]
-    passhalf = False
-    for j in range(npy.size(zta)):
-       if j >= npy.size(zta)/2: passhalf = True
+    rflipped = 0; rflag = False
+    zflipped = 0; zflag = False
+    nzta = npy.size(zta)
+    for j in range(nzta):
        slns = rk5(f1,f2,zta[j],slns,stp)
-       if passhalf:
-          if (abs(rsln[0]-slns[0])<5.0e-1) and (abs(zsln[0]-slns[1])<5.0e-1):
-             break
+       if rflipped >= 2: rflag = True
+       if zflipped >= 2: zflag = True
+       if (rflag and zflag) and (abs(rref-slns[0])<0.05 and abs(zref-slns[1])<0.05):
+          break
        rsln.append(slns[0])
        zsln.append(slns[1])
+       if j==0:
+          rref = eqdskdata['rbound'][npy.argmin(abs(rsln[0]-eqdskdata['rbound']))]
+          zref = eqdskdata['zbound'][npy.argmin(abs(zsln[0]-eqdskdata['zbound']))]
+       elif j==1:
+          rrefsign = npy.sign(rsln[-1]-rsln[-2])
+          zrefsign = npy.sign(zsln[-1]-zsln[-2])
+       elif j>2:
+          rcrntsign = npy.sign(rsln[-1]-rsln[-2])
+          zcrntsign = npy.sign(zsln[-1]-zsln[-2])
+          if rrefsign ==-rcrntsign: rflipped += 1; rrefsign = rcrntsign 
+          if zrefsign ==-zcrntsign: zflipped += 1; zrefsign = zcrntsign 
 
     return npy.array(rsln),npy.array(zsln)-eqdskdata['ZLEN']/2
 

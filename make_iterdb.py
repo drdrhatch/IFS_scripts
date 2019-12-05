@@ -145,9 +145,9 @@ if 1 == 1:
 # ITERDB file has profiles and vrot for ExB angular velocity
 if 1 == 1:
     ############################ modify ############################
-    file_out_base = 'DIIID' 
-    base_number = '154406'
-    time_str = '05170'
+    file_out_base = 'DIIID_' 
+    base_number = 'WPQH_'
+    time_str = '2800'
     ################################################################
     rhop=np.sqrt(psi0)
     psi_u = interp(rhot0,psi0,uni_rhot)

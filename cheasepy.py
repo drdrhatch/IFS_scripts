@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import re
 import sys
 import time
 import h5py
@@ -15,6 +14,7 @@ import matplotlib.pyplot as plt
 from glob import glob
 from efittools import read_efit_file
 from efittools import psi2phi,phi2psi
+from efittools import read_iterdb_file
 from efittools import magsurf_solvflines
 from efittools import read_profiles_file
 from scipy.integrate   import trapz,simps,quad
@@ -48,39 +48,58 @@ def current_correction(chease,expeq={},setParam={}):
        sys.exit()
 
     if 'ITEXP' in setParam: ITEXP = setParam['ITEXP']
-    error = (chease['ITOR']/ITEXP)-1.0
+    error = (chease['Itor']/ITEXP)-1.0
     
     if   current_type in [3,'iprl','iprln','iparallel','iparalleln']:
          if   current_src in [0,'chease']:
-              IOHMIC  = (1.0-error)*(chease['IPRLN']-chease['IBSN'])
+              Iohmic  = (1.0-error)*(chease['Iprl']-chease['Ibs'])
+             #IPRLPSI = integrate(chease['CHI'],chease['IPRL']*chease['J']/chease['R'],axis=0,method='trapz')
+             #IPRLT   = integrate(chease['PSI'],IPRLPSI,axis=0)
+             #ISIGPSI = integrate(chease['CHI'],chease['signeo']*chease['J']/chease['R'],axis=0,method='trapz')
+             #ISIGT   = integrate(chease['PSI'],ISIGPSI,axis=0)
+             #Eparall = (ITEXP-IPRLT)/ISIGT
+             #IOHMIC  = chease['signeo']*Eparall
+             #IOHMIC  = (IOHMIC-IOHMIC[0])/(IOHMIC[-1]-IOHMIC[0])
          elif current_src in [2,'expeq']:
-              IOHMIC  = (1.0-error)*(expeq['iprlN']-chease['IBSN'])
-         IPRLN   = chease['IBSN'] + IOHMIC
-         correction = IPRLN[:]
+              IOHMIC  = (1.0-error)*((chease['B0EXP']*expeq['Iprl']*chease['R0EXP']/mu0)-chease['Ibs'])
+         IPRL   = chease['Ibs'] + IOHMIC
     elif current_type in [4,'jprl','jprln','jparallel','jparalleln']:
          if   current_src in [0,'chease']:
-              JOHMIC  = (1.0-error)*(chease['JPRLN']-chease['JBSN'])
+             #JOHMIC  = (1.0-error)*(chease['Jprl']-chease['Jbs'])
+              JPRLPSI = integrate(chease['CHI'],chease['Jprl']*chease['J']/chease['R'],axis=0,method='trapz')
+              JPRLT   = integrate(chease['PSI'],JPRLPSI,axis=0)
+              JSIGPSI = integrate(chease['CHI'],chease['signeo']*chease['J']/chease['R'],axis=0,method='trapz')
+              JSIGT   = integrate(chease['PSI'],JSIGPSI,axis=0)
+              Eparall = (ITEXP-JPRLT)/JSIGT
+              JOHMIC  = chease['signeo']*Eparall
          elif current_src in [2,'expeq']:
-              JOHMIC  = (1.0-error)*(expeq['jprlN']-chease['JBSN'])
-         JPRLN   = chease['JBSN'] + JOHMIC
-         correction = JPRLN[:]
+              JOHMIC  = (1.0-error)*(expeq['Jprl']-chease['Jbs'])
+              JOHMIC  = (1.0-error)*((chease['B0EXP']*expeq['Iprl']/chease['R0EXP']/mu0)-chease['Ibs'])
+         JPRL   = chease['Jbs'] + JOHMIC
 
-    if 'correction' not in locals():
-       print('WARNING: return correction is not calculated!')
-       correction = npy.zeros(npy.size(chease['IPRLN']))
+    if   IPRLN in locals():
+         IPRLN      = mu0*IPRL/chease['R0EXP']/chease['B0EXP']
+         correction = IPRLN[:]
+    elif JPRLN in locals():
+         JPRLN      = mu0*JPRL*chease['R0EXP']/chease['B0EXP']
+         correction = JPRLN[:]
+    else:
+         print('WARNING: return correction is not calculated!')
+         correction = npy.zeros_like(chease['Iprl'])
 
     return correction
+
 
 def interp(xin,fxin,xnew,ynew=[],yout=[]):
     #splrep returns knots and coefficients for cubic spline
     #Use these knots and coefficients with splev to get a new y
 
-    x_knots = splrep(xin,fxin)
-    fxnew   = splev(xnew,x_knots,der=0)
+    fknots = splrep(xin,fxin)
+    fxnew  = splev(xnew,fknots,der=0)
 
     if len(ynew)>0 and len(yout)>0:
-       y_knots = splrep(ynew,fxnew)
-       fxout   = splev(yout,y_knots,der=0)
+       yknots = splrep(ynew,fxnew)
+       fxout  = splev(yout,yknots,der=0)
 
        x_knots = splrep(ynew,xnew)
        xout    = splev(yout,x_knots,der=0)
@@ -89,278 +108,25 @@ def interp(xin,fxin,xnew,ynew=[],yout=[]):
 
     return fxout
 
-
-def findall(inlist,item):
-   #Developed by Ehab Hassan on 2019-03-28
-    inds = []
-    for i,character in enumerate(inlist):
-        if character==item: inds.append(i)
-    return inds
-
-def namelistcreate(csvfn,rec,setParam={}):
-    infid = open(csvfn, "r")
-    import csv
-    table = {}
-    for row in csv.reader(infid):
-        table[row[0]] = row[1:]
-    infid.close()
-
-    namelistkeys = table.keys()
-    setParamKeys = setParam.keys()
-
-    nrec = len(table[list(namelistkeys)[0]])
-    NBSEXPQ = []
-    for irec in range(nrec):
-        NBSEXPQ.append(1111)
-
-    wfh = open('chease_namelist','w')
-    wfh.write('*** for EQDSK file copied onto EXPEQ file \n')
-    wfh.write('*** cp this file to "chease_namelist" and run chease \n')
-    wfh.write('***  \n')
-    wfh.write('***  \n')
-    wfh.write(' &EQDATA \n')
-    if   'NTNOVA'    in namelistkeys: wfh.write(' NTNOVA=%4d,     \n' % (int(table['NTNOVA'][rec])))
-    if   'RELAX'     in setParamKeys: wfh.write(' RELAX=%2.2f, '      % (float(setParam['RELAX'])))
-    elif 'RELAX'     in namelistkeys: wfh.write(' RELAX=%2.2f, '      % (float(table['RELAX'][rec])))
-    else:                             wfh.write(' RELAX=%2.2f, '      % (float(0.0)))
-    if   'NBSEXPQ'   in setParamKeys: wfh.write(' NBSEXPQ=%04d, '     % (int(setParam['NBSEXPQ'])))
-    elif 'NBSEXPQ'   in namelistkeys: wfh.write(' NBSEXPQ=%04d, '     % (int(table['NBSEXPQ'][rec])))
-    else:   table['NBSEXPQ']=NBSEXPQ; wfh.write(' NBSEXPQ=1111, ')
-    if   'NEQDSK'    in setParamKeys: wfh.write(' NEQDSK=%1d,     \n' % (int(setParam['NEQDSK'])))
-    elif 'NEQDSK'    in namelistkeys: wfh.write(' NEQDSK=%1d,     \n' % (int(table['NEQDSK'][rec])))
-    else:                             wfh.write(' NEQDSK=%1d,     \n' % (int(1)))
-
-    if   'NS'        in setParamKeys: wfh.write(' NS=%4d, '           % (int(setParam['NS'])))
-    elif 'NS'        in namelistkeys: wfh.write(' NS=%4d, '           % (int(table['NS'][rec])))
-    if   'NT'        in setParamKeys: wfh.write(' NT=%4d,         \n' % (int(setParam['NT'])))
-    elif 'NT'        in namelistkeys: wfh.write(' NT=%4d,         \n' % (int(table['NT'][rec])))
-    if   'NPSI'      in setParamKeys: wfh.write(' NPSI=%4d, '         % (int(setParam['NPSI'])))
-    elif 'NPSI'      in namelistkeys: wfh.write(' NPSI=%4d, '         % (int(table['NPSI'][rec])))
-    if   'NCHI'      in setParamKeys: wfh.write(' NCHI=%4d, '         % (int(setParam['NCHI'])))
-    elif 'NCHI'      in namelistkeys: wfh.write(' NCHI=%4d, '         % (int(table['NCHI'][rec])))
-    if   'NISO'      in setParamKeys: wfh.write(' NISO=%4d,       \n' % (int(setParam['NISO'])))
-    elif 'NISO'      in namelistkeys: wfh.write(' NISO=%4d,       \n' % (int(table['NISO'][rec])))
-    if   'NRBOX'     in setParamKeys: wfh.write(' NRBOX=%4d, '        % (int(setParamKeys['NRBOX'])))
-    elif 'NRBOX'     in namelistkeys: wfh.write(' NRBOX=%4d, '        % (int(table['NRBOX'][rec])))
-    if   'NZBOX'     in setParamKeys: wfh.write(' NZBOX=%4d,      \n' % (int(setParamKeys['NZBOX'])))
-    elif 'NZBOX'     in namelistkeys: wfh.write(' NZBOX=%4d,      \n' % (int(table['NZBOX'][rec])))
-
-    if   'NCSCAL'    in setParamKeys: wfh.write(' NCSCAL=%1d, '       % (float(setParam['NCSCAL'])))
-    elif 'NCSCAL'    in namelistkeys: wfh.write(' NCSCAL=%1d, '       % (int(table['NCSCAL'][rec])))
-    else:                             wfh.write(' NCSCAL=4, ')
-    if   'NOPT'      in setParamKeys: wfh.write(' NOPT=%1d,       \n' % (int(setParam['NOPT'])))
-    elif 'NOPT'      in namelistkeys: wfh.write(' NOPT=%1d,       \n' % (int(table['NOPT'][rec])))
-    else:                             wfh.write(' NOPT=0,         \n')
-    if   'NSURF'     in setParamKeys: wfh.write(' NSURF=%1d, '        % (int(setParam['NSURF'])))
-    elif 'NSURF'     in namelistkeys: wfh.write(' NSURF=%1d, '        % (int(table['NSURF'][rec])))
-    else:                             wfh.write(' NSURF=6, ')
-    if   'NFUNC'     in setParamKeys: wfh.write(' NFUNC=%1d,      \n' % (int(setParam['NFUNC'])))
-    elif 'NFUNC'     in namelistkeys: wfh.write(' NFUNC=%1d,      \n' % (int(table['NFUNC'][rec])))
-    else:                             wfh.write(' NFUNC=4,        \n')
-    if   'NPPFUN'    in setParamKeys: 
-                                      wfh.write(' NPPFUN=%1d,     \n' % (int(setParam['NPPFUN'])))
-                                      nppfun = int(setParam['NPPFUN'])
-    elif 'NPPFUN'    in namelistkeys:
-                                      wfh.write(' NPPFUN=%1d,     \n' % (int(table['NPPFUN'][rec])))
-                                      nppfun = int(table['NPPFUN'][rec])
-    else:                             
-                                      wfh.write(' NPPFUN=4,       \n')
-                                      nppfun = 4
-    if   'NFUNRHO'   in setParamKeys: wfh.write(' NFUNRHO=%1d, '      % (int(setParam['NFUNRHO'])))
-    elif 'NFUNRHO'   in namelistkeys: wfh.write(' NFUNRHO=%1d, '      % (int(table['NFUNRHO'][rec])))
-    else:                             wfh.write(' NFUNRHO=0, ')
-    if   'NRHOMESH'  in setParamKeys: wfh.write(' NRHOMESH=%1d,   \n' % (int(setParam['NRHOMESH'])))
-    elif 'NRHOMESH'  in namelistkeys: wfh.write(' NRHOMESH=%1d,   \n' % (int(table['NRHOMESH'][rec])))
-    else:                             wfh.write(' NRHOMESH=0,     \n')
-    if   'NSTTP'     in setParamKeys: wfh.write(' NSTTP=%1d, '        % (int(setParam['NSTTP'])))
-    elif 'NSTTP'     in namelistkeys: wfh.write(' NSTTP=%1d, '        % (int(table['NSTTP'][rec])))
-    else:                             wfh.write(' NSTTP=%1d, '        % (int(1)))
-    if   'NPROPT'    in setParamKeys:
-                     if   nppfun== 4: wfh.write(' NPROPT=%1d,     \n' % ( int(setParam['NPROPT'])))
-                     elif nppfun== 8: wfh.write(' NPROPT=%1d,     \n' % (-int(setParam['NPROPT'])))
-    elif 'NPROPT'    in namelistkeys:
-                     if   nppfun== 4: wfh.write(' NPROPT=%1d,     \n' % ( int(table['NPROPT'][rec])))
-                     elif nppfun== 8: wfh.write(' NPROPT=%1d,     \n' % (-int(table['NPROPT'][rec])))
-    else:                             
-        if   'NSTTP' in setParamKeys:
-                     if   nppfun== 4: wfh.write(' NPROPT=%1d,     \n' % ( int(setParam['NSTTP'])))
-                     elif nppfun== 8: wfh.write(' NPROPT=%1d,     \n' % (-int(setParam['NSTTP'])))
-        elif 'NSTTP' in namelistkeys:
-                     if   nppfun== 4: wfh.write(' NPROPT=%1d,     \n' % ( int(table['NSTTP'][rec])))
-                     elif nppfun== 8: wfh.write(' NPROPT=%1d,     \n' % (-int(table['NSTTP'][rec])))
-
-    if   'NVERBOSE'  in setParamKeys: wfh.write(' NVERBOSE=%1d,   \n' % (int(setParam['NVERBOSE'])))
-    elif 'NVERBOSE'  in namelistkeys: wfh.write(' NVERBOSE=%1d,   \n' % (int(table['NVERBOSE'][rec])))
-    else:                             wfh.write(' NVERBOSE=%1d,   \n' % (int(4)))
-
-    if   'QSPEC'     in setParamKeys: wfh.write(' QSPEC=%3.3f, '      % (float(setParam['QSPEC'])))
-    elif 'QSPEC'     in namelistkeys: wfh.write(' QSPEC=%3.3f, '      % (float(table['QSPEC'][rec])))
-    if   'CSSPEC'    in setParamKeys: wfh.write(' CSSPEC=%3.3f,   \n' % (float(setParam['CSSPEC'])))
-    elif 'CSSPEC'    in namelistkeys: wfh.write(' CSSPEC=%3.3f,   \n' % (float(table['CSSPEC'][rec])))
-    if   'TRIANG'    in setParamKeys: wfh.write(' TRIANG=%3.3f,   \n' % (float(setParam['TRIANG'])))
-    elif 'TRIANG'    in namelistkeys: wfh.write(' TRIANG=%3.3f,   \n' % (float(table['TRIANG'][rec])))
-
-    if   'R0'        in setParamKeys: wfh.write(' R0=%10.8f, '        % (float(setParam['R0'])))
-    elif 'R0'        in namelistkeys: wfh.write(' R0=%10.8f, '        % (float(table['R0'][rec])))
-    if   'RZ0'       in setParamKeys: wfh.write(' RZ0=%10.8f,     \n' % (float(setParam['RZ0'])))
-    elif 'RZ0'       in namelistkeys: wfh.write(' RZ0=%10.8f,     \n' % (float(table['RZ0'][rec])))
-
-    if   'RBOXLEN'   in setParamKeys: wfh.write(' RBOXLEN=%3.3f, '    % (float(setParam['RBOXLEN'])))
-    elif 'RBOXLEN'   in namelistkeys: wfh.write(' RBOXLEN=%3.3f, '    % (float(table['RBOXLEN'][rec])))
-    if   'ZBOXLEN'   in setParamKeys: wfh.write(' ZBOXLEN=%3.3f, '    % (float(setParam['ZBOXLEN'])))
-    elif 'ZBOXLEN'   in namelistkeys: wfh.write(' ZBOXLEN=%3.3f, '    % (float(table['ZBOXLEN'][rec])))
-    if   'RBOXLFT'   in setParamKeys: wfh.write(' RBOXLFT=%3.3f,  \n' % (float(setParam['RBOXLFT'])))
-    elif 'RBOXLFT'   in namelistkeys: wfh.write(' RBOXLFT=%3.3f,  \n' % (float(table['RBOXLFT'][rec])))
-
-    if   'R0EXP'     in setParamKeys: wfh.write(' R0EXP=%3.3f, '      % (float(setParam['R0EXP'])))
-    elif 'R0EXP'     in namelistkeys: wfh.write(' R0EXP=%3.3f, '      % (float(table['R0EXP'][rec])))
-    if   'B0EXP'     in setParamKeys: wfh.write(' B0EXP=%3.3f,    \n' % (float(setParam['B0EXP'])))
-    elif 'B0EXP'     in namelistkeys: wfh.write(' B0EXP=%3.3f,    \n' % (float(table['B0EXP'][rec])))
-
-    if   'NDIAGOP'   in setParamKeys: wfh.write(' NDIAGOP=%1d, '      % (int(setParam['NDIAGOP'])))
-    elif 'NDIAGOP'   in namelistkeys: wfh.write(' NDIAGOP=%1d, '      % (int(table['NDIAGOP'][rec])))
-    else:                             wfh.write(' NDIAGOP=%1d, '      % (int(1)))
-    if   'NIDEAL'    in setParamKeys: wfh.write(' NIDEAL=%1d,     \n' % (int(setParam['NIDEAL'])))
-    elif 'NIDEAL'    in namelistkeys: wfh.write(' NIDEAL=%1d,     \n' % (int(table['NIDEAL'][rec])))
-    else:                             wfh.write(' NIDEAL=9,       \n')
-    if   'NDIFPS'    in setParamKeys: wfh.write(' NDIFPS=%1d, '       % (int(setParam['NDIFPS'])))
-    elif 'NDIFPS'    in namelistkeys: wfh.write(' NDIFPS=%1d, '       % (int(table['NDIFPS'][rec])))
-    else:                             wfh.write(' NDIFPS=%1d,     \n' % (int(0)))
-    if   'NDIFT'     in setParamKeys: wfh.write(' NDIFT=%1d,      \n' % (int(setParam['NDIFT'])))
-    elif 'NDIFT'     in namelistkeys: wfh.write(' NDIFT=%1d,      \n' % (int(table['NDIFT'][rec])))
-    else:                             wfh.write(' NDIFT=%1d,      \n' % (int(1)))
-
-    if   'NMESHC'    in namelistkeys: wfh.write(' NMESHC=%1d, '       % (int(table['NMESHC'][rec])))
-    else:                             wfh.write(' NMESHC=1,')
-    if   'NPOIDC'    in namelistkeys: wfh.write(' NPOIDC=%1d, '       % (int(table['NPOIDC'][rec])))
-    else:                             wfh.write(' NPOIDC=2,')
-    if   'SOLPDC'    in namelistkeys: wfh.write(' SOLPDC=%2.2f,   \n' % (float(table['SOLPDC'][rec])))
-    else:                             wfh.write(' SOLPDC=0.7, \n')
-    if   'CPLACE'    in namelistkeys: 
-       CPLACE = [float(f) for f in table['CPLACE'][rec].split(',')]
-       wfh.write(' CPLACE=')
-       for cplace in CPLACE:
-                                      wfh.write('%4.4f,'              % float(cplace))
-       wfh.write('\n')
-    else:                             wfh.write(' CPLACE=0.9,0.95,0.99,1.0, \n')
-    if   'CWIDTH'    in namelistkeys: 
-       CWIDTH = [float(f) for f in table['CWIDTH'][rec].split(',')]
-       wfh.write(' CWIDTH=')
-       for cwidth    in CWIDTH:
-                                      wfh.write('%4.4f,'              % float(cwidth))
-       wfh.write('\n')
-    else:                             wfh.write(' CWIDTH=0.1,0.05,0.01,0.025, \n')
-
-    if   'NMESHD'    in namelistkeys: wfh.write(' NMESHD=%1d, '       % (int(table['NMESHD'][rec])))
-    if   'NPOIDD'    in namelistkeys: wfh.write(' NPOIDD=%1d, '       % (int(table['NPOIDD'][rec])))
-    if   'SOLPDD'    in namelistkeys: wfh.write(' SOLPDD=%2.2f,   \n' % (float(table['SOLPDD'][rec])))
-    if   'DPLACE'    in namelistkeys: 
-       DPLACE = [float(f) for f in table['DPLACE'][rec].split(',')]
-       wfh.write(' DPLACE=')
-       for dplace    in DPLACE:
-                                    wfh.write('%4.4f,'              % float(dplace))
-       wfh.write('\n')
-    if 'DWIDTH'      in namelistkeys: 
-       DWIDTH = [float(f) for f in table['DWIDTH'][rec].split(',')]
-       wfh.write(' DWIDTH=')
-       for dwidth in DWIDTH:
-                                    wfh.write('%4.4f,'              % float(dwidth))
-       wfh.write('\n')
-    if   'NMESHPOL'  in setParamKeys: wfh.write(' NMESHPOL=%4d, '     % (int(setParam['NMESHPOL'])))
-    elif 'NMESHPOL'  in namelistkeys: wfh.write(' NMESHPOL=%4d, '     % (int(table['NMESHPOL'][rec])))
-    else:                             wfh.write(' NMESHPOL=%4d, '     % (int(1)))
-    if   'SOLPDPOL'  in setParamKeys: wfh.write(' SOLPDPOL=%2.2f, \n' % (float(setParam['SOLPDPOL'])))
-    elif 'SOLPDPOL'  in namelistkeys: wfh.write(' SOLPDPOL=%2.2f, \n' % (float(table['SOLPDPOL'][rec])))
-    else:                             wfh.write(' SOLPDPOL=%2.2f, \n' % (float(0.1)))
-    if   'NTURN'     in setParamKeys: wfh.write(' NTURN=%2d, '        % (int(setParam['NTURN'])))
-    elif 'NTURN'     in namelistkeys: wfh.write(' NTURN=%2d, '        % (int(table['NTURN'][rec])))
-    else:                             wfh.write(' NTURN=%2d, '        % (int(20)))
-    if   'NBLC0'     in setParamKeys: wfh.write(' NBLC0=%2d, '        % (int(setParam['NBLC0'])))
-    elif 'NBLC0'     in namelistkeys: wfh.write(' NBLC0=%2d, '        % (int(table['NBLC0'][rec])))
-    else:                             wfh.write(' NBLC0=%2d, '        % (int(16)))
-    if   'NPPR'      in setParamKeys: wfh.write(' NPPR=%2d,       \n' % (int(setParam['NPPR'])))
-    elif 'NPPR'      in namelistkeys: wfh.write(' NPPR=%2d,       \n' % (int(table['NPPR'][rec])))
-    else:                             wfh.write(' NPPR=%2d,       \n' % (int(24)))
-    if   'NINMAP'    in setParamKeys: wfh.write(' NINMAP=%2d, '       % (int(setParam['NINMAP'])))
-    elif 'NINMAP'    in namelistkeys: wfh.write(' NINMAP=%2d, '       % (int(table['NINMAP'][rec])))
-    else:                             wfh.write(' NINMAP=%2d, '       % (int(40)))
-    if   'NINSCA'    in setParamKeys: wfh.write(' NINSCA=%2d,     \n' % (int(setParam['NINSCA'])))
-    elif 'NINSCA'    in namelistkeys: wfh.write(' NINSCA=%2d,     \n' % (int(table['NINSCA'][rec])))
-    else:                             wfh.write(' NINSCA=%2d,     \n' % (int(40)))
-    if   'NSYM'      in setParamKeys: wfh.write(' NSYM=%1d, '         % (int(setParam['NSYM'])))
-    elif 'NSYM'      in namelistkeys: wfh.write(' NSYM=%1d, '         % (int(table['NSYM'][rec])))
-    else:                             wfh.write(' NSYM=%1d, '         % (int(0)))
-    if   'NEGP'      in setParamKeys: wfh.write(' NEGP=%1d, '         % (int(setParam['NEGP'])))
-    elif 'NEGP'      in namelistkeys: wfh.write(' NEGP=%1d, '         % (int(table['NEGP'][rec])))
-    else:                             wfh.write(' NEGP=%1d, '         % (int(0)))
-    if   'NER'       in setParamKeys: wfh.write(' NER=%1d,        \n' % (int(setParam['NER'])))
-    elif 'NER'       in namelistkeys: wfh.write(' NER=%1d,        \n' % (int(table['NER'][rec])))
-    else:                             wfh.write(' NER=%1d,        \n' % (int(2)))
-    if   'EPSLON'    in setParamKeys: wfh.write(' EPSLON=%6.2E,   \n' % (float(setParam['EPSLON'])))
-    elif 'EPSLON'    in namelistkeys: wfh.write(' EPSLON=%6.2E,   \n' % (float(table['EPSLON'][rec])))
-    else:                             wfh.write(' EPSLON=%6.2E,   \n' % (float(1.0E-10)))
-    if   'ETAEI'     in setParamKeys: wfh.write(' ETAEI=%2.1f, '      % (float(setParam['ETAEI'])))
-    elif 'ETAEI'     in namelistkeys: wfh.write(' ETAEI=%2.1f, '      % (float(table['ETAEI'][rec])))
-    else:                             wfh.write(' ETAEI=%2.1f, '      % (float(3.0)))
-    if   'RPEOP'     in setParamKeys: wfh.write(' RPEOP=%2.1f, '      % (float(setParam['RPEOP'])))
-    elif 'RPEOP'     in namelistkeys: wfh.write(' RPEOP=%2.1f, '      % (float(table['RPEOP'][rec])))
-    else:                             wfh.write(' RPEOP=%2.1f, '      % (float(0.5)))
-    if   'RZION'     in setParamKeys: wfh.write(' RZION=%2.1f, '      % (float(setParam['RZION'])))
-    elif 'RZION'     in namelistkeys: wfh.write(' RZION=%2.1f, '      % (float(table['RZION'][rec])))
-    else:                             wfh.write(' RZION=%2.1f, '      % (float(1.0)))
-    if   'GAMMA'     in setParamKeys: wfh.write(' GAMMA=%12.11f,  \n' % (float(setParam['GAMMA'])))
-    elif 'GAMMA'     in namelistkeys: wfh.write(' GAMMA=%12.11f,  \n' % (float(table['GAMMA'][rec])))
-    else:                             wfh.write(' GAMMA=%12.11f,  \n' % (float(1.6666666667)))
-    if   'AT3(1)'    in setParamKeys: wfh.write(' AT3(1)=%2.2f,   \n' % (float(setParam['AT3(1)'])))
-    elif 'AT3(1)'    in namelistkeys: wfh.write(' AT3(1)=%2.2f,   \n' % (float(table['AT3(1)'][rec])))
-    else:                             wfh.write(' AT3(1)=%2.2f,   \n' % (float(-0.69)))
-    if   'TENSPROF'  in setParamKeys: wfh.write(' TENSPROF=%2.2f, \n' % (float(setParam['TENSPROF'])))
-    elif 'TENSPROF'  in namelistkeys: wfh.write(' TENSPROF=%2.2f, \n' % (float(table['TENSPROF'][rec])))
-    if   'TENSBND'   in setParamKeys: wfh.write(' TENSBND=%2.2f,  \n' % (float(setParam['TENSBND'])))
-    elif 'TENSBND'   in namelistkeys: wfh.write(' TENSBND=%2.2f,  \n' % (float(table['TENSBND'][rec])))
-    if   'cocos_in'  in setParamKeys: wfh.write(' cocos_in=%1d,   \n' % (int(setParam['cocos_in'])))
-    elif 'cocos_in'  in namelistkeys: wfh.write(' cocos_in=%1d,   \n' % (int(table['cocos_in'][rec])))
-    if   'cocos_out' in setParamKeys: wfh.write(' cocos_out=%2d   \n' % (int(setParam['cocos_out'])))
-    elif 'cocos_out' in namelistkeys: wfh.write(' cocos_out=%2d   \n' % (int(table['cocos_out'][rec])))
-    wfh.write(' &END \n')
-    wfh.write('\n')
-    wfh.close()
-
-    return table
-
-def derivative(x,fx,axis=0,dorder=1,method='gradient'):
-    fxShape = npy.shape(fx)
-    nDim    = len(fxShape)
-    if   method=='gradient':
-         if   nDim == 1:
-              dfdx = npy.gradient(fx,x)
-    elif method=='CubicSpline':
-         if   nDim == 1:
-              CS = CubicSpline(x,fx)
-              dfdx = CS(x,dorder)
-         elif nDim == 2:
-              m = fxShape[0]
-              n = fxShape[1]
-              dfdx=npy.zeros((m,n))
-              if   axis == 0:
-                   for j in range(n):
-                      CS = CubicSpline(x,fx[:,j])
-                      dfdx[:,j] = CS(x,dorder)
-              elif axis == 1:
-                   for i in range(m):
-                      CS = CubicSpline(x,fx[i,:])
-                      dfdx[i,:] = CS(x,dorder)
-    return dfdx
-
 def integrate(x,fx,axis=0,method='trapz'):
     fxShape = npy.shape(fx)
     nDim    = len(fxShape)
     if   method in ['trapz','trapzoid']:
          if   nDim == 1:
-              intf = trapz(y=fx,x=x,dx=npy.argmin(diff(x)))
+              intf = trapz(y=fx,x=x,dx=npy.argmin(npy.diff(x)))
+         elif nDim == 2:
+              if   axis == 0:
+                   intf = trapz(y=fx,x=x,dx=npy.argmin(npy.diff(x)),axis=0)
+              elif axis == 1:
+                   intf = trapz(y=fx,x=x,dx=npy.argmin(npy.diff(x)),axis=1)
     elif method in ['simps','simpson']:
          if   nDim == 1:
-              intf = simps(y=fx,x=x,dx=npy.argmin(diff(x)))
+              intf = simps(y=fx,x=x,dx=npy.argmin(npy.diff(x)))
+         elif nDim == 2:
+              if   axis == 0:
+                   intf = simps(y=fx,x=x,dx=npy.argmin(npy.diff(x)),axis=0)
+              elif axis == 1:
+                   intf = simps(y=fx,x=x,dx=npy.argmin(npy.diff(x)),axis=1)
     elif method=='CubicSpline':
          m = fxShape[0]
          n = fxShape[1]
@@ -389,7 +155,188 @@ def integrate(x,fx,axis=0,method='trapz'):
                           intf[j] = quad(fyfnc,x[0],x[-1])
     return intf
 
-def read_chease(cheasefpath,setParam={},**kwargs):
+def derivative(x,fx,axis=0,dorder=1,method='gradient'):
+    fxShape = npy.shape(fx)
+    nDim    = len(fxShape)
+    if   method=='gradient':
+         if   nDim == 1:
+              dfdx = npy.gradient(fx,x)
+    elif method=='CubicSpline':
+         if   nDim == 1:
+              CS = CubicSpline(x,fx)
+              dfdx = CS(x,dorder)
+         elif nDim == 2:
+              m = fxShape[0]
+              n = fxShape[1]
+              dfdx=npy.zeros((m,n))
+              if   axis == 0:
+                   for j in range(n):
+                      CS = CubicSpline(x,fx[:,j])
+                      dfdx[:,j] = CS(x,dorder)
+              elif axis == 1:
+                   for i in range(m):
+                      CS = CubicSpline(x,fx[i,:])
+                      dfdx[i,:] = CS(x,dorder)
+    return dfdx
+
+
+def findall(inlist,item):
+   #Developed by Ehab Hassan on 2019-03-28
+    inds = []
+    for i,character in enumerate(inlist):
+        if character==item: inds.append(i)
+    return inds
+
+
+def getrecord(rec,datain):
+    if type(datain) == dict:
+       dataout = {}
+       keys = datain.keys()
+       if type(datain[keys[0]]) in [int,float,complex]:
+          dataout = datain.copy()
+       else:
+          irec = min(irec,npy.size(datain[keys[0]]))
+          for ikey in keys:
+              dataout[ikey] = datain[ikey][irec]
+
+    return dataout
+
+
+def read_csv(csvfn):
+    import csv
+    infid = open(csvfn, "r")
+    csvdata = {}
+    for row in csv.reader(infid):
+        csvdata[row[0]] = row[1:]
+    infid.close()
+    return csvdata
+
+
+def namelistcreate(setParam={}):
+    wfh = open('chease_namelist','w')
+    wfh.write('*** for EQDSK file copied onto EXPEQ file \n')
+    wfh.write('*** cp this file to "chease_namelist" and run chease \n')
+    wfh.write('***  \n')
+    wfh.write('***  \n')
+    wfh.write(' &EQDATA \n')
+    if   'RELAX'     not in setParam: setParam['RELAX']     = 0.0
+    if   'NBSEXPQ'   not in setParam: setParam['NBSEXPQ']   = 1111
+    if   'NEQDSK'    not in setParam: setParam['NEQDSK']    = 0
+    if   'NS'        not in setParam: setParam['NS']        = 256
+    if   'NT'        not in setParam: setParam['NT']        = 256
+    if   'NISO'      not in setParam: setParam['NISO']      = 256
+    if   'NPSI'      not in setParam: setParam['NPSI']      = 1024
+    if   'NCHI'      not in setParam: setParam['NCHI']      = 1024
+    if   'NRBOX'     not in setParam: setParam['NRBOX']     = 60
+    if   'NZBOX'     not in setParam: setParam['NZBOX']     = 60
+    if   'NCSCAL'    not in setParam: setParam['NCSCAL']    = 4
+    if   'NOPT'      not in setParam: setParam['NOPT']      = 0
+    if   'NSURF'     not in setParam: setParam['NSURF']     = 6
+    if   'NFUNC'     not in setParam: setParam['NFUNC']     = 4
+    if   'NRHOMESH'  not in setParam: setParam['NRHOMESH']  = 0
+    if   'NFUNRHO'   not in setParam: setParam['NFUNRHO']   = setParam['NRHOMESH']
+    if   'NSTTP'     not in setParam: setParam['NSTTP']     = 1
+    if   'NPROPT'    not in setParam: setParam['NPROPT']    = setParam['NSTTP']  if setParam['NPPFUN']==4 else -setParam['NSTTP']
+    else:                             setParam['NPROPT']    = setParam['NPROPT'] if setParam['NPPFUN']==4 else -abs(setParam['NPROPT'])
+    if   'NPPFUN'    not in setParam: setParam['NPPFUN']    = 8
+    if   'NVERBOSE'  not in setParam: setParam['NVERBOSE']  = 4
+    if   'NDIAGOP'   not in setParam: setParam['NDIAGOP']   = 1
+    if   'NIDEAL'    not in setParam: setParam['NIDEAL']    = 9
+    if   'NDIFPS'    not in setParam: setParam['NDIFPS']    = 0
+    if   'NDIFT'     not in setParam: setParam['NDIFT']     = 1
+    if   'NMESHC'    not in setParam: setParam['NMESHC']    = 1
+    if   'NPOIDC'    not in setParam: setParam['NPOIDC']    = 2
+    if   'SOLPDC'    not in setParam: setParam['SOLPDC']    = 0.7
+    if   'CPLACE'    not in setParam: setParam['CPLACE']    = '0.9,0.95,0.99,1.0'
+    if   'CWIDTH'    not in setParam: setParam['CWIDTH']    = '0.1,0.05,0.01,0.025'
+    if   'NMESHPOL'  not in setParam: setParam['NMESHPOL']  = 1
+    if   'SOLPDPOL'  not in setParam: setParam['SOLPDPOL']  = 0.1
+    if   'NTURN'     not in setParam: setParam['NTURN']     = 20
+    if   'NBLC0'     not in setParam: setParam['NBLC0']     = 16
+    if   'NPPR'      not in setParam: setParam['NPPR']      = 24
+    if   'NINMAP'    not in setParam: setParam['NINMAP']    = 40
+    if   'NINSCA'    not in setParam: setParam['NINSCA']    = 40
+    if   'NSYM'      not in setParam: setParam['NSYM']      = 0
+    if   'NEGP'      not in setParam: setParam['NEGP']      = 0
+    if   'NER'       not in setParam: setParam['NER']       = 2
+    if   'EPSLON'    not in setParam: setParam['EPSLON']    = 1.0E-10
+    if   'ETAEI'     not in setParam: setParam['ETAEI']     = 3.0
+    if   'RPEOP'     not in setParam: setParam['RPEOP']     = 0.5
+    if   'RZION'     not in setParam: setParam['RZION']     = 1.0
+    if   'GAMMA'     not in setParam: setParam['GAMMA']     = 1.6666666667
+    if   'AT3(1)'    not in setParam: setParam['AT3(1)']    = -0.69
+    if   'TENSPROF'  not in setParam: setParam['TENSPROF']  = 0.0
+    if   'TENSBND'   not in setParam: setParam['TENSBND']   = 0.0
+    if   'cocos_in'  not in setParam: setParam['cocos_in']  = 2
+    if   'cocos_out' not in setParam: setParam['cocos_out'] = 12
+
+    if   'RELAX'     in setParam: wfh.write(' RELAX=%2.2f, '      % (float(setParam['RELAX'])))
+    if   'NBSEXPQ'   in setParam: wfh.write(' NBSEXPQ=%04d, '     % (int(setParam['NBSEXPQ'])))
+    if   'NEQDSK'    in setParam: wfh.write(' NEQDSK=%1d,     \n' % (int(setParam['NEQDSK'])))
+    if   'NS'        in setParam: wfh.write(' NS=%4d, '           % (int(setParam['NS'])))
+    if   'NT'        in setParam: wfh.write(' NT=%4d,         \n' % (int(setParam['NT'])))
+    if   'NPSI'      in setParam: wfh.write(' NPSI=%4d, '         % (int(setParam['NPSI'])))
+    if   'NCHI'      in setParam: wfh.write(' NCHI=%4d, '         % (int(setParam['NCHI'])))
+    if   'NISO'      in setParam: wfh.write(' NISO=%4d,       \n' % (int(setParam['NISO'])))
+    if   'NRBOX'     in setParam: wfh.write(' NRBOX=%4d, '        % (int(setParam['NRBOX'])))
+    if   'NZBOX'     in setParam: wfh.write(' NZBOX=%4d,      \n' % (int(setParam['NZBOX'])))
+    if   'NCSCAL'    in setParam: wfh.write(' NCSCAL=%1d, '       % (float(setParam['NCSCAL'])))
+    if   'NOPT'      in setParam: wfh.write(' NOPT=%1d,       \n' % (int(setParam['NOPT'])))
+    if   'NSURF'     in setParam: wfh.write(' NSURF=%1d, '        % (int(setParam['NSURF'])))
+    if   'NFUNC'     in setParam: wfh.write(' NFUNC=%1d,      \n' % (int(setParam['NFUNC'])))
+    if   'NPPFUN'    in setParam: wfh.write(' NPPFUN=%1d,     \n' % (int(setParam['NPPFUN'])))
+    if   'NFUNRHO'   in setParam: wfh.write(' NFUNRHO=%1d, '      % (int(setParam['NFUNRHO'])))
+    if   'NRHOMESH'  in setParam: wfh.write(' NRHOMESH=%1d,   \n' % (int(setParam['NRHOMESH'])))
+    if   'NSTTP'     in setParam: wfh.write(' NSTTP=%1d, '        % (int(setParam['NSTTP'])))
+    if   'NPROPT'    in setParam: wfh.write(' NPROPT=%1d,     \n' % ( int(setParam['NPROPT'])))
+    if   'NVERBOSE'  in setParam: wfh.write(' NVERBOSE=%1d,   \n' % (int(setParam['NVERBOSE'])))
+    if   'QSPEC'     in setParam: wfh.write(' QSPEC=%3.3f, '      % (float(setParam['QSPEC'])))
+    if   'CSSPEC'    in setParam: wfh.write(' CSSPEC=%3.3f,   \n' % (float(setParam['CSSPEC'])))
+    if   'TRIANG'    in setParam: wfh.write(' TRIANG=%3.3f,   \n' % (float(setParam['TRIANG'])))
+    if   'R0'        in setParam: wfh.write(' R0=%10.8f, '        % (float(setParam['R0'])))
+    if   'RZ0'       in setParam: wfh.write(' RZ0=%10.8f,     \n' % (float(setParam['RZ0'])))
+    if   'RBOXLEN'   in setParam: wfh.write(' RBOXLEN=%3.3f, '    % (float(setParam['RBOXLEN'])))
+    if   'ZBOXLEN'   in setParam: wfh.write(' ZBOXLEN=%3.3f, '    % (float(setParam['ZBOXLEN'])))
+    if   'RBOXLFT'   in setParam: wfh.write(' RBOXLFT=%3.3f,  \n' % (float(setParam['RBOXLFT'])))
+    if   'R0EXP'     in setParam: wfh.write(' R0EXP=%3.3f, '      % (float(setParam['R0EXP'])))
+    if   'B0EXP'     in setParam: wfh.write(' B0EXP=%3.3f,    \n' % (float(setParam['B0EXP'])))
+    if   'NDIAGOP'   in setParam: wfh.write(' NDIAGOP=%1d, '      % (int(setParam['NDIAGOP'])))
+    if   'NIDEAL'    in setParam: wfh.write(' NIDEAL=%1d,     \n' % (int(setParam['NIDEAL'])))
+    if   'NDIFPS'    in setParam: wfh.write(' NDIFPS=%1d, '       % (int(setParam['NDIFPS'])))
+    if   'NDIFT'     in setParam: wfh.write(' NDIFT=%1d,      \n' % (int(setParam['NDIFT'])))
+    if   'NMESHC'    in setParam: wfh.write(' NMESHC=%1d, '       % (int(setParam['NMESHC'])))
+    if   'NPOIDC'    in setParam: wfh.write(' NPOIDC=%1d, '       % (int(setParam['NPOIDC'])))
+    if   'SOLPDC'    in setParam: wfh.write(' SOLPDC=%2.2f,   \n' % (float(setParam['SOLPDC'])))
+    if   'CPLACE'    in setParam: wfh.write(' CPLACE=%s,      \n' % (str(setParam['CPLACE'])))
+    if   'CWIDTH'    in setParam: wfh.write(' CWIDTH=%s,      \n' % (str(setParam['CWIDTH'])))
+    if   'NMESHPOL'  in setParam: wfh.write(' NMESHPOL=%4d, '     % (int(setParam['NMESHPOL'])))
+    if   'SOLPDPOL'  in setParam: wfh.write(' SOLPDPOL=%2.2f, \n' % (float(setParam['SOLPDPOL'])))
+    if   'NTURN'     in setParam: wfh.write(' NTURN=%2d, '        % (int(setParam['NTURN'])))
+    if   'NBLC0'     in setParam: wfh.write(' NBLC0=%2d, '        % (int(setParam['NBLC0'])))
+    if   'NPPR'      in setParam: wfh.write(' NPPR=%2d,       \n' % (int(setParam['NPPR'])))
+    if   'NINMAP'    in setParam: wfh.write(' NINMAP=%2d, '       % (int(setParam['NINMAP'])))
+    if   'NINSCA'    in setParam: wfh.write(' NINSCA=%2d,     \n' % (int(setParam['NINSCA'])))
+    if   'NSYM'      in setParam: wfh.write(' NSYM=%1d, '         % (int(setParam['NSYM'])))
+    if   'NEGP'      in setParam: wfh.write(' NEGP=%1d, '         % (int(setParam['NEGP'])))
+    if   'NER'       in setParam: wfh.write(' NER=%1d,        \n' % (int(setParam['NER'])))
+    if   'EPSLON'    in setParam: wfh.write(' EPSLON=%6.2E,   \n' % (float(setParam['EPSLON'])))
+    if   'ETAEI'     in setParam: wfh.write(' ETAEI=%2.1f, '      % (float(setParam['ETAEI'])))
+    if   'RPEOP'     in setParam: wfh.write(' RPEOP=%2.1f, '      % (float(setParam['RPEOP'])))
+    if   'RZION'     in setParam: wfh.write(' RZION=%2.1f, '      % (float(setParam['RZION'])))
+    if   'GAMMA'     in setParam: wfh.write(' GAMMA=%12.11f,  \n' % (float(setParam['GAMMA'])))
+    if   'AT3(1)'    in setParam: wfh.write(' AT3(1)=%2.2f,   \n' % (float(setParam['AT3(1)'])))
+    if   'TENSPROF'  in setParam: wfh.write(' TENSPROF=%2.2f, \n' % (float(setParam['TENSPROF'])))
+    if   'TENSBND'   in setParam: wfh.write(' TENSBND=%2.2f,  \n' % (float(setParam['TENSBND'])))
+    if   'cocos_in'  in setParam: wfh.write(' cocos_in=%2d,   \n' % (int(setParam['cocos_in'])))
+    if   'cocos_out' in setParam: wfh.write(' cocos_out=%2d   \n' % (int(setParam['cocos_out'])))
+
+    wfh.write(' &END \n')
+    wfh.write('\n')
+    wfh.close()
+
+    return setParam
+
+def read_chease(cheasefpath,setParam={},Normalized=False,**kwargs):
     if os.path.isfile(cheasefpath) == False:
        errorFunc = traceback.extract_stack(limit=2)[-2][3]
        errorLine = traceback.extract_stack(limit=2)[-2][1]
@@ -416,8 +363,8 @@ def read_chease(cheasefpath,setParam={},**kwargs):
     CHEASEdata['R0EXP']       = datag.attrs["R0EXP"]
 
     CHEASEdata['PSI']         = npy.array(datag["grid"]["PSI"])
-    CHEASEdata['rhopsi']      = npy.sqrt(CHEASEdata['PSI']/CHEASEdata['PSI'][-1])
-    CHEASEdata['rhotor']      = npy.array(datag["var1d"]["rho_tor"])
+    CHEASEdata['rhopsi_SI']   = npy.sqrt(CHEASEdata['PSI']/CHEASEdata['PSI'][-1])
+    CHEASEdata['rhotor_SI']   = npy.array(datag["var1d"]["rho_tor"])
 
     CHEASEdata['CHI']         = npy.array(datag["grid"]["CHI"])
     if CHEASEdata['CHI'][0]>CHEASEdata['CHI'][1]:
@@ -427,19 +374,19 @@ def read_chease(cheasefpath,setParam={},**kwargs):
        CHEASEdata['CHI']      = npy.append(CHEASEdata['CHI'],2.0*npy.pi)
        extendCHI              = True
 
-    CHEASEdata['JBS']         = npy.array(datag["var1d"]["jbsBav"])
+    CHEASEdata['Jbs']         = npy.array(datag["var1d"]["jbsBav"])
     CHEASEdata['Zeff']        = npy.array(datag["var1d"]["zeff"])
     CHEASEdata['kappa']       = npy.array(datag["var1d"]["kappa"])
     CHEASEdata['shear']       = npy.array(datag["var1d"]["shear"])
     CHEASEdata['signeo']      = npy.array(datag["var1d"]["signeo"])
-    CHEASEdata['PPrime']      = 2.0*npy.pi*npy.array(datag["var1d"]["dpdpsi"])
+    CHEASEdata['pprime']      = 2.0*npy.pi*npy.array(datag["var1d"]["dpdpsi"])
 
-    CHEASEdata['P']           = npy.array(datag["var1d"]["p"])
     CHEASEdata['q']           = npy.array(datag["var1d"]["q"])
     CHEASEdata['R_av']        = npy.array(datag["var1d"]["R_av"])
     CHEASEdata['ageom']       = npy.array(datag["var1d"]["ageom"])
     CHEASEdata['Rgeom']       = npy.array(datag["var1d"]["Rgeom"])
     CHEASEdata['Volume']      = npy.array(datag["var1d"]["Volume"])
+    CHEASEdata['pressure']    = npy.array(datag["var1d"]["p"])
     CHEASEdata['GDPSI_av']    = npy.array(datag["var1d"]["GDPSI_av"])
     CHEASEdata['radius_av']   = npy.array(datag["var1d"]["radius_av"])
 
@@ -459,9 +406,9 @@ def read_chease(cheasefpath,setParam={},**kwargs):
     CHEASEdata['nePrime']     = npy.array(datag["var1d"]["dnedpsi"])
     CHEASEdata['niPrime']     = npy.array(datag["var1d"]["dnidpsi"])
 
-    CHEASEdata['T']           = npy.array(datag["var1d"]["f"])
-    CHEASEdata['TTPrime']     = 2.0*npy.pi*npy.array(datag["var1d"]["fdfdpsi"])
-    CHEASEdata['TPrime']      = CHEASEdata['TTPrime']/CHEASEdata['T']
+    CHEASEdata['f']           = npy.array(datag["var1d"]["f"])
+    CHEASEdata['ffprime']     = 2.0*npy.pi*npy.array(datag["var1d"]["fdfdpsi"])
+    CHEASEdata['fprime']      = CHEASEdata['ffprime']/CHEASEdata['f']
 
     CHEASEdata['rmesh']       = npy.array(datag["var1d"]["rmesh"])
     CHEASEdata['zmesh']       = npy.array(datag["var1d"]["zmesh"])
@@ -494,52 +441,51 @@ def read_chease(cheasefpath,setParam={},**kwargs):
     CHEASEdata['dPsidR']      = npy.array(datag["var2d"]["dPsidR"])
 
     if extendCHI:
-       CHEASEdata['R']        = npy.vstack((CHEASEdata['R'],CHEASEdata['R'][0,:]))
-       CHEASEdata['Z']        = npy.vstack((CHEASEdata['Z'],CHEASEdata['Z'][0,:]))
-       CHEASEdata['B']        = npy.vstack((CHEASEdata['B'],CHEASEdata['B'][0,:]))
-       CHEASEdata['J']        = npy.vstack((CHEASEdata['J'],CHEASEdata['J'][0,:]))
-       CHEASEdata['g11']      = npy.vstack((CHEASEdata['g11'],CHEASEdata['g11'][0,:]))
-       CHEASEdata['g22']      = npy.vstack((CHEASEdata['g22'],CHEASEdata['g22'][0,:]))
-       CHEASEdata['g33']      = npy.vstack((CHEASEdata['g33'],CHEASEdata['g33'][0,:]))
-       CHEASEdata['dBdpsi']   = npy.vstack((CHEASEdata['dBdpsi'],CHEASEdata['dBdpsi'][0,:]))
-       CHEASEdata['dBdchi']   = npy.vstack((CHEASEdata['dBdchi'],CHEASEdata['dBdchi'][0,:]))
-       CHEASEdata['dChidZ']   = npy.vstack((CHEASEdata['dChidZ'],CHEASEdata['dChidZ'][0,:]))
-       CHEASEdata['dPsidZ']   = npy.vstack((CHEASEdata['dPsidZ'],CHEASEdata['dPsidZ'][0,:]))
-       CHEASEdata['dChidR']   = npy.vstack((CHEASEdata['dChidR'],CHEASEdata['dChidR'][0,:]))
-       CHEASEdata['dPsidR']   = npy.vstack((CHEASEdata['dPsidR'],CHEASEdata['dPsidR'][0,:]))
+       CHEASEdata['R']      = npy.vstack((CHEASEdata['R'],CHEASEdata['R'][0,:]))
+       CHEASEdata['Z']      = npy.vstack((CHEASEdata['Z'],CHEASEdata['Z'][0,:]))
+       CHEASEdata['B']      = npy.vstack((CHEASEdata['B'],CHEASEdata['B'][0,:]))
+       CHEASEdata['J']      = npy.vstack((CHEASEdata['J'],CHEASEdata['J'][0,:]))
+       CHEASEdata['g11']    = npy.vstack((CHEASEdata['g11'],CHEASEdata['g11'][0,:]))
+       CHEASEdata['g22']    = npy.vstack((CHEASEdata['g22'],CHEASEdata['g22'][0,:]))
+       CHEASEdata['g33']    = npy.vstack((CHEASEdata['g33'],CHEASEdata['g33'][0,:]))
+       CHEASEdata['dBdpsi'] = npy.vstack((CHEASEdata['dBdpsi'],CHEASEdata['dBdpsi'][0,:]))
+       CHEASEdata['dBdchi'] = npy.vstack((CHEASEdata['dBdchi'],CHEASEdata['dBdchi'][0,:]))
+       CHEASEdata['dChidZ'] = npy.vstack((CHEASEdata['dChidZ'],CHEASEdata['dChidZ'][0,:]))
+       CHEASEdata['dPsidZ'] = npy.vstack((CHEASEdata['dPsidZ'],CHEASEdata['dPsidZ'][0,:]))
+       CHEASEdata['dChidR'] = npy.vstack((CHEASEdata['dChidR'],CHEASEdata['dChidR'][0,:]))
+       CHEASEdata['dPsidR'] = npy.vstack((CHEASEdata['dPsidR'],CHEASEdata['dPsidR'][0,:]))
 
    #THE DIMENSION OF ALL THE FOLLOWING QUNATITIES ARE (NRBOX,NZBOX)
-    CHEASEdata['psiRZ']       = npy.array(datag["var2d"]["psiRZ"])
-    CHEASEdata['chiRZ']       = npy.array(datag["var2d"]["chiRZ"])
+    CHEASEdata['psiRZ']    = npy.array(datag["var2d"]["psiRZ"])
+    CHEASEdata['chiRZ']    = npy.array(datag["var2d"]["chiRZ"])
 
-    CHEASEdata['C0']          = npy.trapz(y=CHEASEdata['J']/CHEASEdata['R'],                    x=CHEASEdata['CHI'],axis=0)
-    CHEASEdata['C1']          = npy.trapz(y=CHEASEdata['J'],                                    x=CHEASEdata['CHI'],axis=0)
-    CHEASEdata['C2']          = npy.trapz(y=CHEASEdata['J']/CHEASEdata['R']**2,                 x=CHEASEdata['CHI'],axis=0)
-    CHEASEdata['C3']          = npy.trapz(y=CHEASEdata['J']*CHEASEdata['g11']*CHEASEdata['g33'],x=CHEASEdata['CHI'],axis=0)
+    CHEASEdata['C0']       = npy.trapz(y=CHEASEdata['J']/CHEASEdata['R'],                    x=CHEASEdata['CHI'],axis=0)
+    CHEASEdata['C1']       = npy.trapz(y=CHEASEdata['J'],                                    x=CHEASEdata['CHI'],axis=0)
+    CHEASEdata['C2']       = npy.trapz(y=CHEASEdata['J']/CHEASEdata['R']**2,                 x=CHEASEdata['CHI'],axis=0)
+    CHEASEdata['C3']       = npy.trapz(y=CHEASEdata['J']*CHEASEdata['g11']*CHEASEdata['g33'],x=CHEASEdata['CHI'],axis=0)
 
-    CHEASEdata['y1']          = 1.0+CHEASEdata['C3']/CHEASEdata['C2']/CHEASEdata['T']**2/4.0/npy.pi**2
+    CHEASEdata['y1']       = 1.0+CHEASEdata['C3']/CHEASEdata['C2']/CHEASEdata['f']**2/4.0/npy.pi**2
 
-    CHEASEdata['<B2>']        = npy.trapz(y=CHEASEdata['J']*CHEASEdata['B']**2,x=CHEASEdata['CHI'],axis=0)/CHEASEdata['C1']
-    CHEASEdata['<JdotB>']     =-CHEASEdata['T']*CHEASEdata['PPrime']-CHEASEdata['TPrime']*CHEASEdata['<B2>']/mu0
-    CHEASEdata['JPRL']        = CHEASEdata['<JdotB>']/CHEASEdata['B0EXP']
+    CHEASEdata['<B2>']     = npy.trapz(y=CHEASEdata['J']*CHEASEdata['B']**2,x=CHEASEdata['CHI'],axis=0)/CHEASEdata['C1']
+    CHEASEdata['<JdotB>']  =-CHEASEdata['f']*CHEASEdata['pprime']-CHEASEdata['fprime']*CHEASEdata['<B2>']/mu0
+    CHEASEdata['Jprl']     = CHEASEdata['<JdotB>']/CHEASEdata['B0EXP']
 
-    CHEASEdata['<T/R2>']      = npy.trapz(y=CHEASEdata['J']*CHEASEdata['T']*CHEASEdata['g33'],x=CHEASEdata['CHI'],axis=0)/CHEASEdata['C1']
-    CHEASEdata['IPRL']        = CHEASEdata['R0EXP']*CHEASEdata['<JdotB>']/CHEASEdata['<T/R2>']
+    CHEASEdata['<T/R2>']   = npy.trapz(y=CHEASEdata['J']*CHEASEdata['f']*CHEASEdata['g33'],x=CHEASEdata['CHI'],axis=0)/CHEASEdata['C1']
+    CHEASEdata['Iprl']     = CHEASEdata['R0EXP']*CHEASEdata['<JdotB>']/CHEASEdata['<T/R2>']
 
-    CHEASEdata['ISTR']        =-((CHEASEdata['C2']/CHEASEdata['C0'])*(CHEASEdata['TTPrime']/mu0))
-    CHEASEdata['ISTR']       +=-((CHEASEdata['C1']/CHEASEdata['C0'])*CHEASEdata['PPrime'])
-    CHEASEdata['ISTR']       *= CHEASEdata['R0EXP']**2
+    CHEASEdata['Istr']     =-((CHEASEdata['C2']/CHEASEdata['C0'])*(CHEASEdata['ffprime']/mu0))
+    CHEASEdata['Istr']    +=-((CHEASEdata['C1']/CHEASEdata['C0'])*CHEASEdata['pprime'])
+    CHEASEdata['Istr']    *= CHEASEdata['R0EXP']**2
 
-    CHEASEdata['JPHI']        =-(CHEASEdata['R']*CHEASEdata['PPrime'])-(CHEASEdata['TTPrime']/(mu0*CHEASEdata['R']))
+    CHEASEdata['Jphi']     =-(CHEASEdata['R']*CHEASEdata['pprime'])-(CHEASEdata['ffprime']/(mu0*CHEASEdata['R']))
 
-    CHEASEdata['JTOR']        = npy.trapz(y=CHEASEdata['JPHI']*CHEASEdata['J']/CHEASEdata['R'],x=CHEASEdata['CHI'],axis=0)
-    CHEASEdata['JTORN']       = CHEASEdata['JTOR']*mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['ITOR']        = npy.trapz(y=CHEASEdata['JTOR'],x=CHEASEdata['PSI'],axis=0)
+    CHEASEdata['Jtor']     = npy.trapz(y=CHEASEdata['Jphi']*CHEASEdata['J']/CHEASEdata['R'],x=CHEASEdata['CHI'],axis=0)
+    CHEASEdata['Itor']     = npy.trapz(y=CHEASEdata['Jtor'],x=CHEASEdata['PSI'],axis=0)
 
 
-    CHEASEdata['IBS']         = CHEASEdata['R0EXP']*CHEASEdata['JBS']/CHEASEdata['<T/R2>']
-    CHEASEdata['IOHMIC']      = CHEASEdata['IPRL']-CHEASEdata['IBS']
-    CHEASEdata['JOHMIC']      = CHEASEdata['JPRL']-CHEASEdata['JBS']
+    CHEASEdata['Ibs']      = CHEASEdata['R0EXP']*CHEASEdata['Jbs']/CHEASEdata['<T/R2>']
+    CHEASEdata['Iohmic']   = CHEASEdata['Iprl']-CHEASEdata['Ibs']
+    CHEASEdata['Johmic']   = CHEASEdata['Jprl']-CHEASEdata['Jbs']
 
     extendPSI    = npy.linspace(CHEASEdata['PSI'][0],CHEASEdata['PSI'][-1],10*npy.size(CHEASEdata['PSI']))
     extendPHI    = npy.empty_like(extendPSI)
@@ -559,106 +505,121 @@ def read_chease(cheasefpath,setParam={},**kwargs):
     CHEASEdata['PSIN']     = (CHEASEdata['PSI']-CHEASEdata['PSI'][0])/(CHEASEdata['PSI'][-1]-CHEASEdata['PSI'][0])
     CHEASEdata['CHIN']     = (CHEASEdata['CHI']-CHEASEdata['CHI'][0])/(CHEASEdata['CHI'][-1]-CHEASEdata['CHI'][0])
 
-    CHEASEdata['rmeshN']   = CHEASEdata['rmesh']/CHEASEdata['R0EXP'] 
-    CHEASEdata['zmeshN']   = CHEASEdata['zmesh']/CHEASEdata['R0EXP'] 
-    CHEASEdata['rhopsiN']  = (CHEASEdata['rhopsi']-CHEASEdata['rhopsi'][0])/(CHEASEdata['rhopsi'][-1]-CHEASEdata['rhopsi'][0])
-    CHEASEdata['rhotorN']  = (CHEASEdata['rhotor']-CHEASEdata['rhotor'][0])/(CHEASEdata['rhotor'][-1]-CHEASEdata['rhotor'][0])
-    CHEASEdata['rhotorN']  = npy.sqrt(CHEASEdata['PHIN'])
-    CHEASEdata['rboundN']  = CHEASEdata['rbound']/CHEASEdata['R0EXP'] 
-    CHEASEdata['zboundN']  = CHEASEdata['zbound']/CHEASEdata['R0EXP']
+   #CHEASEdata['rhopsi']   = (CHEASEdata['rhopsi_SI']-CHEASEdata['rhopsi_SI'][0])/(CHEASEdata['rhopsi_SI'][-1]-CHEASEdata['rhopsi_SI'][0])
+   #CHEASEdata['rhotor']   = (CHEASEdata['rhotor_SI']-CHEASEdata['rhotor_SI'][0])/(CHEASEdata['rhotor_SI'][-1]-CHEASEdata['rhotor_SI'][0])
+    CHEASEdata['rhopsi']   = npy.sqrt(CHEASEdata['PSIN'])
+    CHEASEdata['rhotor']   = npy.sqrt(CHEASEdata['PHIN'])
 
     #Implementing Interpolation to EQDSK Grid
     rhopsiflag = False; rhotorflag = False
     if 'nrhomesh' in setParam:
        if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
        elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    else:                                         rhopsiflag = True
 
     eqdskflag    = False
     expeqflag    = False
     interpflag   = False
+    importedflag = False
     for key,value in kwargs.items():
         if   key in ['eqdsk','eqdskdata','eqdskfpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       eqdskdata = read_eqdsk(eqdskfpath=value.strip())
-             if    'rhopsi' in eqdskdata and rhopsiflag:
-                   interprho = eqdskdata['PSIN'][:]; interpflag = True
-             elif  'rhotor' in eqdskdata and rhotorflag:
-                   interprho = eqdskdata['PHIN'][:]; interpflag = True
-             psi    = eqdskdata['PSI'];   phi    = eqdskdata['PHI']
-             rhopsi = eqdskdata['rhopsi'];rhotor = eqdskdata['rhotor']
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   eqdskdata = read_eqdsk(eqdskfpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in eqdskdata: rhopsi = eqdskdata['rhopsi'][:]
+             if 'rhotor' in eqdskdata: rhotor = eqdskdata['rhotor'][:]
+             if 'PSIN'   in eqdskdata: psi    = eqdskdata['PSIN'][:];  interpflag = True
+             if 'PHIN'   in eqdskdata: phi    = eqdskdata['PHIN'][:];  interpflag = True
              eqdskflag = True
+        elif key in ['imported','external','other']:
+             imported = value.copy()
+             if 'rhopsi' in imported: rhopsi = imported['rhopsi'][:]
+             if 'rhotor' in imported: rhotor = imported['rhotor'][:]
+             if 'PSIN'   in imported: psi = imported['PSIN'][:];       interpflag = True
+             else:                    psi = importeddata['rhopsi']**2; interpflag = True
+             if 'PHIN'   in imported: phi = imported['PHIN'][:];       interpflag = True
+             else:                    phi = importeddata['rhotor']**2; interpflag = True
+             importedflag = True
 
     if interpflag:
        if   rhopsiflag:
-            CHEASEdata['q']       = interp(CHEASEdata['PSI'],CHEASEdata['q'],psi)
-            CHEASEdata['T']       = interp(CHEASEdata['PSI'],CHEASEdata['T'],psi)
-            CHEASEdata['P']       = interp(CHEASEdata['PSI'],CHEASEdata['P'],psi)
-            CHEASEdata['Te']      = interp(CHEASEdata['PSI'],CHEASEdata['Te'],psi)
-            CHEASEdata['Ti']      = interp(CHEASEdata['PSI'],CHEASEdata['Ti'],psi)
-            CHEASEdata['ne']      = interp(CHEASEdata['PSI'],CHEASEdata['ne'],psi)
-            CHEASEdata['ni']      = interp(CHEASEdata['PSI'],CHEASEdata['ni'],psi)
-            CHEASEdata['nz']      = interp(CHEASEdata['PSI'],CHEASEdata['nz'],psi)
-            CHEASEdata['IBS']     = interp(CHEASEdata['PSI'],CHEASEdata['IBS'],psi)
-            CHEASEdata['JBS']     = interp(CHEASEdata['PSI'],CHEASEdata['JBS'],psi)
-            CHEASEdata['Zeff']    = interp(CHEASEdata['PSI'],CHEASEdata['Zeff'],psi)
-            CHEASEdata['ISTR']    = interp(CHEASEdata['PSI'],CHEASEdata['ISTR'],psi)
-            CHEASEdata['IPRL']    = interp(CHEASEdata['PSI'],CHEASEdata['IPRL'],psi)
-            CHEASEdata['JPRL']    = interp(CHEASEdata['PSI'],CHEASEdata['JPRL'],psi)
-            CHEASEdata['kappa']   = interp(CHEASEdata['PSI'],CHEASEdata['kappa'],psi)
-            CHEASEdata['shear']   = interp(CHEASEdata['PSI'],CHEASEdata['shear'],psi)
-            CHEASEdata['signeo']  = interp(CHEASEdata['PSI'],CHEASEdata['signeo'],psi)
-            CHEASEdata['TPrime']  = interp(CHEASEdata['PSI'],CHEASEdata['TPrime'],psi)
-            CHEASEdata['IOHMIC']  = interp(CHEASEdata['PSI'],CHEASEdata['IOHMIC'],psi)
-            CHEASEdata['JOHMIC']  = interp(CHEASEdata['PSI'],CHEASEdata['JOHMIC'],psi)
-            CHEASEdata['PPrime']  = interp(CHEASEdata['PSI'],CHEASEdata['PPrime'],psi)
-            CHEASEdata['TTPrime'] = interp(CHEASEdata['PSI'],CHEASEdata['TTPrime'],psi)
-            CHEASEdata['rhopsiN'] = rhopsi[:]
-            CHEASEdata['rhotorN'] = rhotor[:]
-       elif rhotorflag:
-            CHEASEdata['q']       = interp(CHEASEdata['PSI'],CHEASEdata['q'],psi,phi,phi)
-            CHEASEdata['T']       = interp(CHEASEdata['PSI'],CHEASEdata['T'],psi,phi,phi)
-            CHEASEdata['P']       = interp(CHEASEdata['PSI'],CHEASEdata['P'],psi,phi,phi)
-            CHEASEdata['Te']      = interp(CHEASEdata['PSI'],CHEASEdata['Te'],psi,phi,phi)
-            CHEASEdata['Ti']      = interp(CHEASEdata['PSI'],CHEASEdata['Ti'],psi,phi,phi)
-            CHEASEdata['ne']      = interp(CHEASEdata['PSI'],CHEASEdata['ne'],psi,phi,phi)
-            CHEASEdata['ni']      = interp(CHEASEdata['PSI'],CHEASEdata['ni'],psi,phi,phi)
-            CHEASEdata['nz']      = interp(CHEASEdata['PSI'],CHEASEdata['nz'],psi,phi,phi)
-            CHEASEdata['IBS']     = interp(CHEASEdata['PSI'],CHEASEdata['IBS'],psi,phi,phi)
-            CHEASEdata['JBS']     = interp(CHEASEdata['PSI'],CHEASEdata['JBS'],psi,phi,phi)
-            CHEASEdata['Zeff']    = interp(CHEASEdata['PSI'],CHEASEdata['Zeff'],psi,phi,phi)
-            CHEASEdata['ISTR']    = interp(CHEASEdata['PSI'],CHEASEdata['ISTR'],psi,phi,phi)
-            CHEASEdata['IPRL']    = interp(CHEASEdata['PSI'],CHEASEdata['IPRL'],psi,phi,phi)
-            CHEASEdata['JPRL']    = interp(CHEASEdata['PSI'],CHEASEdata['JPRL'],psi,phi,phi)
-            CHEASEdata['kappa']   = interp(CHEASEdata['PSI'],CHEASEdata['kappa'],psi,phi,phi)
-            CHEASEdata['shear']   = interp(CHEASEdata['PSI'],CHEASEdata['shear'],psi,phi,phi)
-            CHEASEdata['signeo']  = interp(CHEASEdata['PSI'],CHEASEdata['signeo'],psi,phi,phi)
-            CHEASEdata['TPrime']  = interp(CHEASEdata['PSI'],CHEASEdata['TPrime'],psi,phi,phi)
-            CHEASEdata['IOHMIC']  = interp(CHEASEdata['PSI'],CHEASEdata['IOHMIC'],psi,phi,phi)
-            CHEASEdata['JOHMIC']  = interp(CHEASEdata['PSI'],CHEASEdata['JOHMIC'],psi,phi,phi)
-            CHEASEdata['PPrime']  = interp(CHEASEdata['PSI'],CHEASEdata['PPrime'],psi,phi,phi)
-            CHEASEdata['TTPrime'] = interp(CHEASEdata['PSI'],CHEASEdata['TTPrime'],psi,phi,phi)
-            CHEASEdata['rhotorN'] = rhopsi[:]
-            CHEASEdata['rhopsiN'] = rhotor[:]
+            CHEASEdata['q']        = interp(CHEASEdata['PSIN'],CHEASEdata['q'],psi)
+            CHEASEdata['f']        = interp(CHEASEdata['PSIN'],CHEASEdata['f'],psi)
+            CHEASEdata['Te']       = interp(CHEASEdata['PSIN'],CHEASEdata['Te'],psi)
+            CHEASEdata['Ti']       = interp(CHEASEdata['PSIN'],CHEASEdata['Ti'],psi)
+            CHEASEdata['ne']       = interp(CHEASEdata['PSIN'],CHEASEdata['ne'],psi)
+            CHEASEdata['ni']       = interp(CHEASEdata['PSIN'],CHEASEdata['ni'],psi)
+            CHEASEdata['nz']       = interp(CHEASEdata['PSIN'],CHEASEdata['nz'],psi)
+            CHEASEdata['Ibs']      = interp(CHEASEdata['PSIN'],CHEASEdata['Ibs'],psi)
+            CHEASEdata['Jbs']      = interp(CHEASEdata['PSIN'],CHEASEdata['Jbs'],psi)
+            CHEASEdata['Zeff']     = interp(CHEASEdata['PSIN'],CHEASEdata['Zeff'],psi)
+            CHEASEdata['Istr']     = interp(CHEASEdata['PSIN'],CHEASEdata['Istr'],psi)
+            CHEASEdata['Iprl']     = interp(CHEASEdata['PSIN'],CHEASEdata['Iprl'],psi)
+            CHEASEdata['Jprl']     = interp(CHEASEdata['PSIN'],CHEASEdata['Jprl'],psi)
+            CHEASEdata['kappa']    = interp(CHEASEdata['PSIN'],CHEASEdata['kappa'],psi)
+            CHEASEdata['shear']    = interp(CHEASEdata['PSIN'],CHEASEdata['shear'],psi)
+            CHEASEdata['signeo']   = interp(CHEASEdata['PSIN'],CHEASEdata['signeo'],psi)
+            CHEASEdata['fprime']   = interp(CHEASEdata['PSIN'],CHEASEdata['fprime'],psi)
+            CHEASEdata['Iohmic']   = interp(CHEASEdata['PSIN'],CHEASEdata['Iohmic'],psi)
+            CHEASEdata['Johmic']   = interp(CHEASEdata['PSIN'],CHEASEdata['Johmic'],psi)
+            CHEASEdata['pprime']   = interp(CHEASEdata['PSIN'],CHEASEdata['pprime'],psi)
+            CHEASEdata['ffprime']  = interp(CHEASEdata['PSIN'],CHEASEdata['ffprime'],psi)
+            CHEASEdata['pressure'] = interp(CHEASEdata['PSIN'],CHEASEdata['pressure'],psi)
 
-    CHEASEdata['RN']       = CHEASEdata['R']/CHEASEdata['R0EXP']
-    CHEASEdata['ZN']       = CHEASEdata['Z']/CHEASEdata['R0EXP']
-    CHEASEdata['BN']       = CHEASEdata['B']/CHEASEdata['B0EXP']
-    CHEASEdata['PN']       = CHEASEdata['P']*mu0/CHEASEdata['B0EXP']**2
-    CHEASEdata['IBSN']     = CHEASEdata['IBS']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['JBSN']     = CHEASEdata['JBS'] *mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['IPRLN']    = CHEASEdata['IPRL']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['JPRLN']    = CHEASEdata['JPRL']*mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['ISTRN']    = CHEASEdata['ISTR']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['JPHIN']    = CHEASEdata['JPHI']*mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['ITORN']    = CHEASEdata['ITOR']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
-    CHEASEdata['IOHMICN']  = CHEASEdata['IPRLN']-CHEASEdata['IBSN']
-    CHEASEdata['JOHMICN']  = CHEASEdata['JPRLN']-CHEASEdata['JBSN']
-    CHEASEdata['PPrimeN']  = CHEASEdata['PPrime']*mu0*CHEASEdata['R0EXP']**2/CHEASEdata['B0EXP']
-    CHEASEdata['TTPrimeN'] = CHEASEdata['TTPrime']/CHEASEdata['B0EXP']
+            CHEASEdata['PSIN']     = psi[:]
+            CHEASEdata['PHIN']     = phi[:]
+            CHEASEdata['rhopsi']   = rhopsi[:]
+            CHEASEdata['rhotor']   = rhotor[:]
+
+       elif rhotorflag:
+            CHEASEdata['q']        = interp(CHEASEdata['PSIN'],CHEASEdata['q'],psi,phi,phi)
+            CHEASEdata['f']        = interp(CHEASEdata['PSIN'],CHEASEdata['f'],psi,phi,phi)
+            CHEASEdata['Te']       = interp(CHEASEdata['PSIN'],CHEASEdata['Te'],psi,phi,phi)
+            CHEASEdata['Ti']       = interp(CHEASEdata['PSIN'],CHEASEdata['Ti'],psi,phi,phi)
+            CHEASEdata['ne']       = interp(CHEASEdata['PSIN'],CHEASEdata['ne'],psi,phi,phi)
+            CHEASEdata['ni']       = interp(CHEASEdata['PSIN'],CHEASEdata['ni'],psi,phi,phi)
+            CHEASEdata['nz']       = interp(CHEASEdata['PSIN'],CHEASEdata['nz'],psi,phi,phi)
+            CHEASEdata['Ibs']      = interp(CHEASEdata['PSIN'],CHEASEdata['Ibs'],psi,phi,phi)
+            CHEASEdata['Jbs']      = interp(CHEASEdata['PSIN'],CHEASEdata['Jbs'],psi,phi,phi)
+            CHEASEdata['Zeff']     = interp(CHEASEdata['PSIN'],CHEASEdata['Zeff'],psi,phi,phi)
+            CHEASEdata['Istr']     = interp(CHEASEdata['PSIN'],CHEASEdata['Istr'],psi,phi,phi)
+            CHEASEdata['Iprl']     = interp(CHEASEdata['PSIN'],CHEASEdata['Iprl'],psi,phi,phi)
+            CHEASEdata['Jprl']     = interp(CHEASEdata['PSIN'],CHEASEdata['Jprl'],psi,phi,phi)
+            CHEASEdata['kappa']    = interp(CHEASEdata['PSIN'],CHEASEdata['kappa'],psi,phi,phi)
+            CHEASEdata['shear']    = interp(CHEASEdata['PSIN'],CHEASEdata['shear'],psi,phi,phi)
+            CHEASEdata['signeo']   = interp(CHEASEdata['PSIN'],CHEASEdata['signeo'],psi,phi,phi)
+            CHEASEdata['fprime']   = interp(CHEASEdata['PSIN'],CHEASEdata['fprime'],psi,phi,phi)
+            CHEASEdata['Iohmic']   = interp(CHEASEdata['PSIN'],CHEASEdata['Iohmic'],psi,phi,phi)
+            CHEASEdata['Johmic']   = interp(CHEASEdata['PSIN'],CHEASEdata['Johmic'],psi,phi,phi)
+            CHEASEdata['pprime']   = interp(CHEASEdata['PSIN'],CHEASEdata['pprime'],psi,phi,phi)
+            CHEASEdata['ffprime']  = interp(CHEASEdata['PSIN'],CHEASEdata['ffprime'],psi,phi,phi)
+            CHEASEdata['pressure'] = interp(CHEASEdata['PSIN'],CHEASEdata['pressure'],psi,phi,phi)
+
+            CHEASEdata['PSIN']     = psi[:]
+            CHEASEdata['PHIN']     = phi[:]
+            CHEASEdata['rhotor']   = rhopsi[:]
+            CHEASEdata['rhopsi']   = rhotor[:]
+
+    if Normalized:
+       CHEASEdata['R']        = CHEASEdata['R']/CHEASEdata['R0EXP']
+       CHEASEdata['Z']        = CHEASEdata['Z']/CHEASEdata['R0EXP']
+       CHEASEdata['B']        = CHEASEdata['B']/CHEASEdata['B0EXP']
+       CHEASEdata['Ibs']      = CHEASEdata['Ibs']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Jbs']      = CHEASEdata['Jbs'] *mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Iprl']     = CHEASEdata['Iprl']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Jprl']     = CHEASEdata['Jprl']*mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Istr']     = CHEASEdata['Istr']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Jphi']     = CHEASEdata['Jphi']*mu0*CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Itor']     = CHEASEdata['Itor']*mu0/CHEASEdata['R0EXP']/CHEASEdata['B0EXP']
+       CHEASEdata['Iohmic']   = CHEASEdata['Iprl']-CHEASEdata['Ibs']
+       CHEASEdata['Johmic']   = CHEASEdata['Jprl']-CHEASEdata['Jbs']
+       CHEASEdata['pprime']   = CHEASEdata['pprime']*mu0*CHEASEdata['R0EXP']**2/CHEASEdata['B0EXP']
+       CHEASEdata['ffprime']  = CHEASEdata['ffprime']/CHEASEdata['B0EXP']
+       CHEASEdata['pressure'] = CHEASEdata['pressure']*mu0/CHEASEdata['B0EXP']**2
  
     return CHEASEdata
 
-def read_eqdsk(eqdskfpath,setParam={},**kwargs):
+def read_eqdsk(eqdskfpath,setParam={},Normalized=False,**kwargs):
     if os.path.isfile(eqdskfpath) == False:
        errorFunc = traceback.extract_stack(limit=2)[-2][3]
        errorLine = traceback.extract_stack(limit=2)[-2][1]
@@ -671,41 +632,62 @@ def read_eqdsk(eqdskfpath,setParam={},**kwargs):
     if 'nrhomesh' in setParam:
         if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
         elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    else:                                          rhopsiflag = True
 
     interpflag   = False
     cheaseflag   = False
+    importedflag = False
     for key,value in kwargs.items():
         if   key in ['chease','cheasedata','cheasefpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       cheasedata = read_chease(cheasefpath=value.strip())
-             elif type(value)==dict:   cheasedata = value.copy()
-             if    'rhopsiN' in cheasedata and rhopsiflag:
-                   interprho = cheasedata['PSIN'][:]; interpflag = True
-             elif  'rhotorN' in cheasedata and rhotorflag:
-                   interprho = cheasedata['PHIN'][:]; interpflag = True
-             psi     = cheasedata['PSI'][:];    phi     = cheasedata['PHI'][:]
-             rhopsiN = cheasedata['rhopsiN'][:];rhotorN = cheasedata['rhotorN'][:]
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   cheasedata = read_chease(cheasefpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in cheasedata: rhopsi = cheasedata['rhopsi'][:]
+             if 'rhotor' in cheasedata: rhotor = cheasedata['rhotor'][:]
+             if 'PSIN'   in cheasedata: psi    = cheasedata['PSIN'][:]; interpflag = True
+             if 'PHIN'   in cheasedata: phi    = cheasedata['PHIN'][:]; interpflag = True
              cheaseflag = True
+        elif key in ['imported','external','other']:
+             imported = value.copy()
+             if 'rhopsi' in imported: rhopsi = imported['rhopsi'][:]
+             if 'rhotor' in imported: rhotor = imported['rhotor'][:]
+             if 'PSIN'   in imported: psi    = imported['PSIN'];      interpflag = True
+             else:                    psi    = imported['rhopsi']**2; interpflag = True
+             if 'PHIN'   in imported: phi    = imported['PHIN'];      interpflag = True
+             else:                    phi    = imported['rhotor']**2; interpflag = True
+             importedflag = True
 
     EQDSKdata = read_efit_file(eqdskfpath)
 
     if interpflag:
        if   rhopsiflag:
-            EQDSKdata['qpsi']     = interp(EQDSKdata['PSI'],EQDSKdata['qpsi'],psi) 
-            EQDSKdata['fpol']     = interp(EQDSKdata['PSI'],EQDSKdata['fpol'],psi)
-            EQDSKdata['pprime']   = interp(EQDSKdata['PSI'],EQDSKdata['pprime'],psi)
-            EQDSKdata['ffprime']  = interp(EQDSKdata['PSI'],EQDSKdata['ffprime'],psi)
-            EQDSKdata['pressure'] = interp(EQDSKdata['PSI'],EQDSKdata['pressure'],psi) 
-            EQDSKdata['rhopsi']   = rhopsiN[:]
-            EQDSKdata['rhotor']   = rhotorN[:]
+            EQDSKdata['q']        = interp(EQDSKdata['PSIN'],EQDSKdata['qpsi'],psi) 
+            EQDSKdata['f']        = interp(EQDSKdata['PSIN'],EQDSKdata['fpol'],psi)
+            EQDSKdata['pprime']   = interp(EQDSKdata['PSIN'],EQDSKdata['pprime'],psi)
+            EQDSKdata['ffprime']  = interp(EQDSKdata['PSIN'],EQDSKdata['ffprime'],psi)
+            EQDSKdata['pressure'] = interp(EQDSKdata['PSIN'],EQDSKdata['pressure'],psi) 
+            EQDSKdata['rhopsi']   = rhopsi[:]
+            EQDSKdata['rhotor']   = rhotor[:]
        elif rhotorflag:
-            EQDSKdata['qpsi']     = interp(EQDSKdata['PSI'],EQDSKdata['qpsi'],psi,phi,phi) 
-            EQDSKdata['fpol']     = interp(EQDSKdata['PSI'],EQDSKdata['fpol'],psi,phi,phi)
-            EQDSKdata['pprime']   = interp(EQDSKdata['PSI'],EQDSKdata['pprime'],psi,phi,phi)
-            EQDSKdata['ffprime']  = interp(EQDSKdata['PSI'],EQDSKdata['ffprime'],psi,phi,phi)
-            EQDSKdata['pressure'] = interp(EQDSKdata['PSI'],EQDSKdata['pressure'],psi,phi,phi)
-            EQDSKdata['rhopsi']   = rhopsiN[:]
-            EQDSKdata['rhotor']   = rhotorN[:]
+            EQDSKdata['q']        = interp(EQDSKdata['PSIN'],EQDSKdata['qpsi'],psi,phi,phi) 
+            EQDSKdata['f']        = interp(EQDSKdata['PSIN'],EQDSKdata['fpol'],psi,phi,phi)
+            EQDSKdata['pprime']   = interp(EQDSKdata['PSIN'],EQDSKdata['pprime'],psi,phi,phi)
+            EQDSKdata['ffprime']  = interp(EQDSKdata['PSIN'],EQDSKdata['ffprime'],psi,phi,phi)
+            EQDSKdata['pressure'] = interp(EQDSKdata['PSIN'],EQDSKdata['pressure'],psi,phi,phi)
+            EQDSKdata['rhopsi']   = rhopsi[:]
+            EQDSKdata['rhotor']   = rhotor[:]
+    else:
+            EQDSKdata['q']        = EQDSKdata['qpsi'][:]
+            EQDSKdata['f']        = EQDSKdata['fpol'][:]
+
+    if Normalized:
+       EQDSKdata['rbound']        = EQDSKdata['rbound']/EQDSKdata['RCTR']
+       EQDSKdata['zbound']        = EQDSKdata['zbound']/EQDSKdata['RCTR']
+       EQDSKdata['rlimit']        = EQDSKdata['rlimit']/EQDSKdata['RCTR']
+       EQDSKdata['zlimit']        = EQDSKdata['zlimit']/EQDSKdata['RCTR']
+       EQDSKdata['pressure']      = EQDSKdata['pressure']*mu0/EQDSKdata['BCTR']**2
+       EQDSKdata['pprime']        = EQDSKdata['pprime']*mu0*EQDSKdata['RCTR']**2/CHEASEdata['BCTR']
+       EQDSKdata['ffprime']       = EQDSKdata['ffprime']/EQDSKdata['BCTR']
 
     return EQDSKdata
 
@@ -723,31 +705,32 @@ def read_expeq(expeqfpath,setParam={},**kwargs):
     if 'nrhomesh' in setParam:
         if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
         elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    else:                                          rhopsiflag = True
 
     eqdskflag    = False
     cheaseflag   = False
     interpflag   = False
+    importedflag = False
     for key,value in kwargs.items():
         if   key in ['chease','cheasedata','cheasefpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       cheasedata = read_chease(cheasefpath=value.strip())
-             elif type(value)==dict:   cheasedata = value.copy()
-             if    'rhopsiN' in cheasedata and rhopsiflag:
-                 interprho = cheasedata['rhopsiN'][:]; interpflag = True
-             elif  'rhotorN' in cheasedata and rhotorflag:
-                 interprho = cheasedata['rhotorN'][:]; interpflag = True
-             rhopsi = cheasedata['rhopsiN']; rhotor = cheasedata['rhotorN'] 
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   cheasedata = read_chease(cheasefpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in cheasedata: rhopsi = cheasedata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in cheasedata: rhotor = cheasedata['rhotor'][:]; interpflag = True
              cheaseflag = True
         elif key in ['eqdsk','eqdskdata','eqdskfpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       eqdskdata = read_eqdsk(eqdskfpath=value.strip())
-             elif  type(value)==dict:  eqdskdata = value.copy()
-             if    'rhopsi' in eqdskdata and rhopsiflag:
-                   interprho = eqdskdata['rhopsi'][:]; interpflag = True
-             elif  'rhotor' in eqdskdata and rhotorflag:
-                   interprho = eqdskdata['rhotor'][:]; interpflag = True
-             rhopsi = eqdskdata['rhopsi']; rhotor = eqdskdata['rhotor'] 
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   eqdskdata = read_eqdsk(eqdskfpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in eqdskdata: rhopsi = eqdskdata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in eqdskdata: rhotor = eqdskdata['rhotor'][:]; interpflag = True
              eqdskflag = True
+        elif key in ['imported','external','other']:
+             imported = value.copy()
+             if 'rhopsi' in imported: rhopsi = imported['rhopsi'][:]; interpflag = True
+             if 'rhotor' in imported: rhotor = imported['rhotor'][:]; interpflag = True
+             importedflag = True
 
     ofh = open(expeqfpath,'r')
     EXPEQOUT = ofh.readlines()
@@ -766,108 +749,106 @@ def read_expeq(expeqfpath,setParam={},**kwargs):
     EXPEQdata['nsttp']         = int(EXPEQOUT[nRZmesh+5].split()[0])
     EXPEQdata['nrhotype']      = int(EXPEQOUT[nRZmesh+5].split()[1])
 
-    if   EXPEQdata['nrhotype'] == 0:
-         EXPEQdata['rhopsiN']  = npy.array(EXPEQOUT[nRZmesh+6+0*nrhomesh:nRZmesh+6+1*nrhomesh],dtype=float)
-    elif EXPEQdata['nrhotype'] == 1:
-         EXPEQdata['rhotorN']  = npy.array(EXPEQOUT[nRZmesh+6+0*nrhomesh:nRZmesh+6+1*nrhomesh],dtype=float)
+    if   EXPEQdata['nrhotype']  == 0:
+         EXPEQdata['rhopsi']    = npy.array(EXPEQOUT[nRZmesh+6+0*nrhomesh:nRZmesh+6+1*nrhomesh],dtype=float)
+    elif EXPEQdata['nrhotype']  == 1:
+         EXPEQdata['rhotor']    = npy.array(EXPEQOUT[nRZmesh+6+0*nrhomesh:nRZmesh+6+1*nrhomesh],dtype=float)
     
-    if   EXPEQdata['nppfun']   == 4:
-         EXPEQdata['pprimeN']  = npy.array(EXPEQOUT[nRZmesh+6+1*nrhomesh:nRZmesh+6+2*nrhomesh],dtype=float)
-    elif EXPEQdata['nppfun']   == 8:
-         EXPEQdata['pN']       = npy.array(EXPEQOUT[nRZmesh+6+1*nrhomesh:nRZmesh+6+2*nrhomesh],dtype=float)
+    if   EXPEQdata['nppfun']    == 4:
+         EXPEQdata['pprime']    = npy.array(EXPEQOUT[nRZmesh+6+1*nrhomesh:nRZmesh+6+2*nrhomesh],dtype=float)
+    elif EXPEQdata['nppfun']    == 8:
+         EXPEQdata['pressure']  = npy.array(EXPEQOUT[nRZmesh+6+1*nrhomesh:nRZmesh+6+2*nrhomesh],dtype=float)
   
-    if   EXPEQdata['nsttp']    == 1:
-         EXPEQdata['ttprimeN'] = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
-    elif EXPEQdata['nsttp']    == 2:
-         EXPEQdata['istrN']    = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
-    elif EXPEQdata['nsttp']    == 3:
-         EXPEQdata['iprlN']    = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
-    elif EXPEQdata['nsttp']    == 4:
-         EXPEQdata['jprlN']    = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
-    elif EXPEQdata['nsttp']    == 5:
-         EXPEQdata['q']        = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
+    if   EXPEQdata['nsttp']     == 1:
+         EXPEQdata['ffprime']   = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
+    elif EXPEQdata['nsttp']     == 2:
+         EXPEQdata['Istr']      = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
+    elif EXPEQdata['nsttp']     == 3:
+         EXPEQdata['Iprl']      = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
+    elif EXPEQdata['nsttp']     == 4:
+         EXPEQdata['Jprl']      = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
+    elif EXPEQdata['nsttp']     == 5:
+         EXPEQdata['q']         = npy.array(EXPEQOUT[nRZmesh+6+2*nrhomesh:nRZmesh+6+3*nrhomesh],dtype=float)
 
     if interpflag:
        if   rhopsiflag and EXPEQdata['nrhotype']==0:
-            if   EXPEQdata['nppfun']   == 4:
-                 EXPEQdata['pprimeN']  = interp(EXPEQdata['rhopsiN'],EXPEQdata['pprimeN'],rhopsi)
-            elif EXPEQdata['nppfun']   == 8:
-                 EXPEQdata['pN']       = interp(EXPEQdata['rhopsiN'],EXPEQdata['pN'],rhopsi)
-            if   EXPEQdata['nsttp']    == 1:
-                 EXPEQdata['ttprimeN'] = interp(EXPEQdata['rhopsiN'],EXPEQdata['ttprimeN'],rhopsi)
-            elif EXPEQdata['nsttp']    == 2:
-                 EXPEQdata['istrN']    = interp(EXPEQdata['rhopsiN'],EXPEQdata['istrN'],rhopsi)
-            elif EXPEQdata['nsttp']    == 3:
-                 EXPEQdata['iprlN']    = interp(EXPEQdata['rhopsiN'],EXPEQdata['iprlN'],rhopsi)
-            elif EXPEQdata['nsttp']    == 4:
-                 EXPEQdata['jprlN']    = interp(EXPEQdata['rhopsiN'],EXPEQdata['jprlN'],rhopsi)
-            elif EXPEQdata['nsttp']    == 5:
-                 EXPEQdata['q']        = interp(EXPEQdata['rhopsiN'],EXPEQdata['q'],rhopsi)
-            EXPEQdata['rhopsiN']       = rhopsi[:]
-            EXPEQdata['rhotorN']       = rhotor[:]
+            if   EXPEQdata['nppfun']    == 4:
+                 EXPEQdata['pprime']    = interp(EXPEQdata['rhopsi'],EXPEQdata['pprime'],rhopsi)
+            elif EXPEQdata['nppfun']    == 8:
+                 EXPEQdata['pressure']  = interp(EXPEQdata['rhopsi'],EXPEQdata['pressure'],rhopsi)
+            if   EXPEQdata['nsttp']     == 1:
+                 EXPEQdata['ffprime']   = interp(EXPEQdata['rhopsi'],EXPEQdata['ffprime'],rhopsi)
+            elif EXPEQdata['nsttp']     == 2:
+                 EXPEQdata['Istr']      = interp(EXPEQdata['rhopsi'],EXPEQdata['Istr'],rhopsi)
+            elif EXPEQdata['nsttp']     == 3:
+                 EXPEQdata['Iprl']      = interp(EXPEQdata['rhopsi'],EXPEQdata['Iprl'],rhopsi)
+            elif EXPEQdata['nsttp']     == 4:
+                 EXPEQdata['Jprl']      = interp(EXPEQdata['rhopsi'],EXPEQdata['Jprl'],rhopsi)
+            elif EXPEQdata['nsttp']     == 5:
+                 EXPEQdata['q']         = interp(EXPEQdata['rhopsi'],EXPEQdata['q'],rhopsi)
+            EXPEQdata['rhopsi']         = rhopsi[:]
+            EXPEQdata['rhotor']         = rhotor[:]
        elif rhotorflag and EXPEQdata['nrhotype']==1:
-            if   EXPEQdata['nppfun']   == 4:
-                 EXPEQdata['pprimeN']  = interp(EXPEQdata['rhotorN'],EXPEQdata['pprimeN'],rhotor)
-            elif EXPEQdata['nppfun']   == 8:
-                 EXPEQdata['pN']       = interp(EXPEQdata['rhotorN'],EXPEQdata['pN'],rhotor)
-            if   EXPEQdata['nsttp']    == 1:
-                 EXPEQdata['ttprimeN'] = interp(EXPEQdata['rhotorN'],EXPEQdata['ttprimeN'],rhotor)
-            elif EXPEQdata['nsttp']    == 2:
-                 EXPEQdata['istrN']    = interp(EXPEQdata['rhotorN'],EXPEQdata['istrN'],rhotor)
-            elif EXPEQdata['nsttp']    == 3:
-                 EXPEQdata['iprlN']    = interp(EXPEQdata['rhotorN'],EXPEQdata['iprlN'],rhotor)
-            elif EXPEQdata['nsttp']    == 4:
-                 EXPEQdata['jprlN']    = interp(EXPEQdata['rhotorN'],EXPEQdata['jprlN'],rhotor)
-            elif EXPEQdata['nsttp']    == 5:
-                 EXPEQdata['q']        = interp(EXPEQdata['rhotorN'],EXPEQdata['q'],rhotor)
-            EXPEQdata['rhopsiN']       = rhopsi[:]
-            EXPEQdata['rhotorN']       = rhotor[:]
+            if   EXPEQdata['nppfun']    == 4:
+                 EXPEQdata['pprime']    = interp(EXPEQdata['rhotor'],EXPEQdata['pprime'],rhotor)
+            elif EXPEQdata['nppfun']    == 8:
+                 EXPEQdata['pressure']  = interp(EXPEQdata['rhotor'],EXPEQdata['pressure'],rhotor)
+            if   EXPEQdata['nsttp']     == 1:
+                 EXPEQdata['ffprime']   = interp(EXPEQdata['rhotor'],EXPEQdata['ffprime'],rhotor)
+            elif EXPEQdata['nsttp']     == 2:
+                 EXPEQdata['Istr']      = interp(EXPEQdata['rhotor'],EXPEQdata['Istr'],rhotor)
+            elif EXPEQdata['nsttp']     == 3:
+                 EXPEQdata['Iprl']      = interp(EXPEQdata['rhotor'],EXPEQdata['Iprl'],rhotor)
+            elif EXPEQdata['nsttp']     == 4:
+                 EXPEQdata['Jprl']      = interp(EXPEQdata['rhotor'],EXPEQdata['Jprl'],rhotor)
+            elif EXPEQdata['nsttp']     == 5:
+                 EXPEQdata['q']         = interp(EXPEQdata['rhotor'],EXPEQdata['q'],rhotor)
+            EXPEQdata['rhopsi']         = rhopsi[:]
+            EXPEQdata['rhotor']         = rhotor[:]
        elif rhopsiflag and EXPEQdata['nrhotype']==1:
-            if   EXPEQdata['nppfun']   == 4:
-                 EXPEQdata['pprimeN']  = interp(EXPEQdata['rhotorN'],EXPEQdata['pprimeN'],rhotor,rhopsi,rhopsi)
-            elif EXPEQdata['nppfun']   == 8:
-                 EXPEQdata['pN']       = interp(EXPEQdata['rhotorN'],EXPEQdata['pN'],rhotor,rhopsi,rhopsi)
-            if   EXPEQdata['nsttp']    == 1:
-                 EXPEQdata['ttprimeN'] = interp(EXPEQdata['rhotorN'],EXPEQdata['ttprimeN'],rhotor,rhopsi,rhopsi)
-            elif EXPEQdata['nsttp']    == 2:
-                 EXPEQdata['istrN']    = interp(EXPEQdata['rhotorN'],EXPEQdata['istrN'],rhotor,rhopsi,rhopsi)
-            elif EXPEQdata['nsttp']    == 3:
-                 EXPEQdata['iprlN']    = interp(EXPEQdata['rhotorN'],EXPEQdata['iprlN'],rhotor,rhopsi,rhopsi)
-            elif EXPEQdata['nsttp']    == 4:
-                 EXPEQdata['jprlN']    = interp(EXPEQdata['rhotorN'],EXPEQdata['jprlN'],rhotor,rhopsi,rhopsi)
-            elif EXPEQdata['nsttp']    == 5:
-                 EXPEQdata['q']        = interp(EXPEQdata['rhotorN'],EXPEQdata['q'],rhotor,rhopsi,rhopsi)
-            EXPEQdata['rhopsiN']       = rhopsi[:]
-            EXPEQdata['rhotorN']       = rhotor[:]
+            if   EXPEQdata['nppfun']    == 4:
+                 EXPEQdata['pprime']    = interp(EXPEQdata['rhotor'],EXPEQdata['pprime'],rhotor,rhopsi,rhopsi)
+            elif EXPEQdata['nppfun']    == 8:
+                 EXPEQdata['pressure']  = interp(EXPEQdata['rhotor'],EXPEQdata['pressure'],rhotor,rhopsi,rhopsi)
+            if   EXPEQdata['nsttp']     == 1:
+                 EXPEQdata['ffprime']   = interp(EXPEQdata['rhotor'],EXPEQdata['ffprime'],rhotor,rhopsi,rhopsi)
+            elif EXPEQdata['nsttp']     == 2:
+                 EXPEQdata['Istr']      = interp(EXPEQdata['rhotor'],EXPEQdata['Istr'],rhotor,rhopsi,rhopsi)
+            elif EXPEQdata['nsttp']     == 3:
+                 EXPEQdata['Iprl']      = interp(EXPEQdata['rhotor'],EXPEQdata['Iprl'],rhotor,rhopsi,rhopsi)
+            elif EXPEQdata['nsttp']     == 4:
+                 EXPEQdata['Jprl']      = interp(EXPEQdata['rhotor'],EXPEQdata['Jprl'],rhotor,rhopsi,rhopsi)
+            elif EXPEQdata['nsttp']     == 5:
+                 EXPEQdata['q']         = interp(EXPEQdata['rhotor'],EXPEQdata['q'],rhotor,rhopsi,rhopsi)
+            EXPEQdata['rhopsi']         = rhopsi[:]
+            EXPEQdata['rhotor']         = rhotor[:]
        elif rhotorflag and EXPEQdata['nrhotype']==0:
-            if   EXPEQdata['nppfun']   == 4:
-                 EXPEQdata['pprimeN']  = interp(EXPEQdata['rhopsiN'],EXPEQdata['pprimeN'],rhopsi,rhotor,rhotor)
-            elif EXPEQdata['nppfun']   == 8:
-                 EXPEQdata['pN']       = interp(EXPEQdata['rhopsiN'],EXPEQdata['pN'],rhopsi,rhotor,rhotor)
-            if   EXPEQdata['nsttp']    == 1:
-                 EXPEQdata['ttprimeN'] = interp(EXPEQdata['rhopsiN'],EXPEQdata['ttprimeN'],rhopsi,rhotor,rhotor)
-            elif EXPEQdata['nsttp']    == 2:
-                 EXPEQdata['istrN']    = interp(EXPEQdata['rhopsiN'],EXPEQdata['istrN'],rhopsi,rhotor,rhotor)
-            elif EXPEQdata['nsttp']    == 3:
-                 EXPEQdata['iprlN']    = interp(EXPEQdata['rhopsiN'],EXPEQdata['iprlN'],rhopsi,rhotor,rhotor)
-            elif EXPEQdata['nsttp']    == 4:
-                 EXPEQdata['jprlN']    = interp(EXPEQdata['rhopsiN'],EXPEQdata['jprlN'],rhopsi,rhotor,rhotor)
-            elif EXPEQdata['nsttp']    == 5:
-                 EXPEQdata['q']        = interp(EXPEQdata['rhopsiN'],EXPEQdata['q'],rhopsi,rhotor,rhotor)
-            EXPEQdata['rhopsiN']       = rhopsi[:]
-            EXPEQdata['rhotorN']       = rhotor[:]
+            if   EXPEQdata['nppfun']    == 4:
+                 EXPEQdata['pprime']    = interp(EXPEQdata['rhopsi'],EXPEQdata['pprime'],rhopsi,rhotor,rhotor)
+            elif EXPEQdata['nppfun']    == 8:
+                 EXPEQdata['pressure']  = interp(EXPEQdata['rhopsi'],EXPEQdata['pressure'],rhopsi,rhotor,rhotor)
+            if   EXPEQdata['nsttp']     == 1:
+                 EXPEQdata['ffprime']   = interp(EXPEQdata['rhopsi'],EXPEQdata['ffprime'],rhopsi,rhotor,rhotor)
+            elif EXPEQdata['nsttp']     == 2:
+                 EXPEQdata['Istr']      = interp(EXPEQdata['rhopsi'],EXPEQdata['Istr'],rhopsi,rhotor,rhotor)
+            elif EXPEQdata['nsttp']     == 3:
+                 EXPEQdata['Iprl']      = interp(EXPEQdata['rhopsi'],EXPEQdata['Iprl'],rhopsi,rhotor,rhotor)
+            elif EXPEQdata['nsttp']     == 4:
+                 EXPEQdata['Jprl']      = interp(EXPEQdata['rhopsi'],EXPEQdata['Jprl'],rhopsi,rhotor,rhotor)
+            elif EXPEQdata['nsttp']     == 5:
+                 EXPEQdata['q']         = interp(EXPEQdata['rhopsi'],EXPEQdata['q'],rhopsi,rhotor,rhotor)
+            EXPEQdata['rhopsi']         = rhopsi[:]
+            EXPEQdata['rhotor']         = rhotor[:]
 
     return EXPEQdata
 
-def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
+def write_expeq(setParam={},outfile=True,**kwargs):
     '''
     nrhomesh=[rho_type(0:rhopsi,1:rhotor),rho_src(0:chease,1:eqdsk)]
     nppfun  =[pressure_type(8:pressure,4:pprime),pressure_src(0:chease,1:eqdsk,2:expeq,3:exptnz,4:iterdb,5:profiles)]
-    nsttp   =[current_type(1:ttprime,2:istar,3:iprl,4:jprl,5:q),current_src(0:chease,1:eqdsk,2:expeq)]
+    nsttp   =[current_type(1:ffprime,2:istar,3:iprl,4:jprl,5:q),current_src(0:chease,1:eqdsk,2:expeq)]
     boundary= boundary_type(0:asis,1,interpolate)
     '''
-
-    counter += 1
 
     eqdskflag    = False
     expeqflag    = False
@@ -875,6 +856,7 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
     cheaseflag   = False
     iterdbflag   = False
     exptnzflag   = False
+    importedflag = False
     profilesflag = False
     for key,value in kwargs.items():
         if key in ['chease','cheasedata','cheasefpath']:
@@ -910,8 +892,12 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
               iterdbpath = value.strip()
               iterdbflag = True
 
+        if key in ['imported','external','others']:
+              imported = value.copy()
+              importedflag = True
 
-    if not (cheaseflag or expeqflag  or eqdskflag or exptnzflag or profilesflag or iterdbflag):
+
+    if not (cheaseflag or expeqflag  or eqdskflag or exptnzflag or profilesflag or iterdbflag or importedflag):
        raise IOError('FATAL: NO VALID INPUT PROFILES AVAILABLE. EXIT!')
 
 
@@ -921,15 +907,18 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
             elif type(setParam['nrhomesh'][0])==str:   setParam['nrhomesh'][0] = setParam['nrhomesh'][0].lower()
             if   type(setParam['nrhomesh'][1])==float: setParam['nrhomesh'][1] = int(setParam['nrhomesh'][1])
             elif type(setParam['nrhomesh'][1])==str:   setParam['nrhomesh'][1] = setParam['nrhomesh'][1].lower()
+            elif      setParam['nrhomesh'][1] ==None:  setParam['nrhomesh'][1] = None
             nrhotype = setParam['nrhomesh'][:]
        elif type(setParam['nrhomesh']) in [int,str,float]:
             if   type(setParam['nrhomesh'])==float: setParam['nrhomesh'] = int(setParam['nrhomesh'])
             elif type(setParam['nrhomesh'])==str:   setParam['nrhomesh'] = setParam['nrhomesh'].lower()
             if   cheaseflag:   nrhotype=[setParam['nrhomesh'],0]
             elif eqdskflag:    nrhotype=[setParam['nrhomesh'],1]
+            elif importedflag: nrhotype=[setParam['nrhomesh'],7]
     else:
             if   cheaseflag:   nrhotype=[0,0]
             elif eqdskflag:    nrhotype=[0,1]
+            elif importedflag: nrhotype=[0,7]
 
 
     if 'nppfun' in setParam.keys():
@@ -948,6 +937,7 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
             elif exptnzflag:   nppfun=[setParam['nppfun'],3]
             elif profilesflag: nppfun=[setParam['nppfun'],4]
             elif iterdbflag:   nppfun=[setParam['nppfun'],5]
+            elif importedflag: nppfun=[setParam['nppfun'],7]
     else:
             if   cheaseflag:   nppfun=[4,0]
             elif eqdskflag:    nppfun=[4,1]
@@ -955,6 +945,7 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
             elif exptnzflag:   nppfun=[4,3]
             elif profilesflag: nppfun=[4,4]
             elif iterdbflag:   nppfun=[4,5]
+            elif importedflag: nppfun=[4,7]
 
     if 'nsttp' in setParam.keys():
        if   type(setParam['nsttp'])==list:
@@ -969,10 +960,12 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
             if   cheaseflag:   nsttp=[setParam['nsttp'],0]
             elif eqdskflag:    nsttp=[setParam['nsttp'],1]
             elif expeqflag:    nsttp=[setParam['nsttp'],2]
+            elif importedflag: nsttp=[setParam['nsttp'],7]
     else:
             if   cheaseflag:   nsttp=[1,0]
             elif eqdskflag:    nsttp=[1,1]
             elif expeqflag:    nsttp=[1,2]
+            elif importedflag: nsttp=[1,7]
 
     if 'boundary' in setParam.keys():
          if   type(setParam['boundary'])==float:
@@ -991,8 +984,10 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
          raise IOError('chease.h5 FILE IS NOT PROVIDED. EXIT!')
     elif nrhotype[1] in [1,'eqdsk'] and not eqdskflag:
          raise IOError('EQDSK FILE IS NOT PROVIDED. EXIT!')
+    elif nrhotype[1] in [7,'imported'] and not eqdskflag:
+         raise IOError('IMPORTED DATA IS NOT PROVIDED. EXIT!')
 
-    if nrhotype[0] in [1,'rhotor'] and nsttp[0] in [1,'ttprime','ttprimen']:
+    if nrhotype[0] in [1,'rhotor'] and nsttp[0] in [1,'ffprime','ffprimen']:
        raise NameError('FATAL: nrhotype (must) = 0 or rhopsi. Exit!')
 
     if   nsttp[1] in [0,'chease'] and not cheaseflag:
@@ -1001,6 +996,8 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
          raise IOError('EQSSK FILE IS NOT PROVIDED. EXIT!')
     elif nsttp[1] in [2,'expeq'] and not expeqflag:
          raise IOError('EXPEQ FILE IS NOT PROVIDED. EXIT!')
+    elif nsttp[1] in [7,'imported'] and not importedflag:
+         raise IOError('IMPORTED DATA IS NOT PROVIDED. EXIT!')
 
     if   nppfun[1] in [0,'chease'] and not cheaseflag:
          raise IOError('chease.h5 FILE IS NOT PROVIDED. EXIT!')
@@ -1014,6 +1011,8 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
          raise IOError('PROFILES FILE IS NOT PROVIDED. EXIT!')
     elif nppfun[1] in [5,'iterdb'] and not iterdbflag:
          raise IOError('ITERDB FILE IS NOT PROVIDED. EXIT!')
+    elif nppfun[1] in [7,'imported'] and not importedflag:
+         raise IOError('IMPORTED DATA IS NOT PROVIDED. EXIT!')
 
     currents = []
     currents.append([2,'istr','istrn','istar','istarn'])
@@ -1025,12 +1024,26 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
     expeq = {}
 
     if   'cheasedata' in locals():
-         expeq['R0EXP'] = cheasedata['R0EXP']
-         expeq['B0EXP'] = cheasedata['B0EXP']
+         expeq['R0EXP']   = cheasedata['R0EXP']
+         expeq['B0EXP']   = cheasedata['B0EXP']
+         expeq['nRZmesh'] = npy.size(cheasedata['rbound'])
+         expeq['rbound']  = cheasedata['rbound']/expeq['R0EXP']
+         expeq['zbound']  = cheasedata['zbound']/expeq['R0EXP']
+         expeq['aspect']  = (max(cheasedata['rbound'])-min(cheasedata['rbound']))
+         expeq['aspect'] /= (max(cheasedata['rbound'])+min(cheasedata['rbound']))
+         expeq['zgeom']   = npy.mean(cheasedata['zmesh'])/expeq['R0EXP']
     elif 'eqdskdata' in locals():
          expeq['R0EXP'] = abs(eqdskdata['RCTR'])
          expeq['B0EXP'] = abs(eqdskdata['BCTR'])
-    else:
+         eqdskParam = {'boundary_type':boundary}
+         rbound,zbound    = find_boundary(eqdskdata,setParam=eqdskParam)
+         expeq['nRZmesh'] = npy.size(rbound)
+         expeq['rbound']  = rbound/expeq['R0EXP']
+         expeq['zbound']  = zbound/expeq['R0EXP']
+         expeq['aspect']  = (max(rbound)-min(rbound))
+         expeq['aspect'] /= (max(rbound)+min(rbound))
+         expeq['zgeom']   = eqdskdata['ZMAX']/expeq['R0EXP']
+    elif 'expeqdata' in locals():
          if   'R0EXP' in setParam.keys():
               expeq['R0EXP'] = setParam['R0EXP']
          else:
@@ -1039,272 +1052,350 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
               expeq['B0EXP'] = setParam['B0EXP']
          else:
               expeq['B0EXP'] = 1.0
-
-    if   nrhotype[1] in [0,'chease'] and cheaseflag:
-         expeq['nRZmesh'] = npy.size(cheasedata['rboundN'])
-         expeq['rbound']  = cheasedata['rboundN'][:]
-         expeq['zbound']  = cheasedata['zboundN'][:]
-
-         expeq['aspect']  = (max(cheasedata['rbound'])-min(cheasedata['rbound']))
-         expeq['aspect'] /= (max(cheasedata['rbound'])+min(cheasedata['rbound']))
-         expeq['zgeom']   = npy.mean(cheasedata['zmesh'])/expeq['R0EXP']
-
-         if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-              expeq['rhopsiN'] = cheasedata['rhopsiN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-              rhopsiflag = True
-              rhotorflag = False
-         elif nrhotype[0] in [1,'rhotor','rhotorn']:
-              expeq['rhotorN'] = cheasedata['rhotorN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-              rhopsiflag = False
-              rhotorflag = True
-    elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-         eqdskParam = {'boundary_type':boundary}
-         rbound,zbound    = find_boundary(eqdskdata,setParam=eqdskParam)
-
-         expeq['nRZmesh'] = npy.size(rbound)
-         expeq['rbound']  = rbound/expeq['R0EXP']
-         expeq['zbound']  = zbound/expeq['R0EXP']
-
-         expeq['aspect']  = (max(rbound)-min(rbound))
-         expeq['aspect'] /= (max(rbound)+min(rbound))
-         expeq['zgeom']   = eqdskdata['ZMAX']/expeq['R0EXP']
-
-         if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-              expeq['rhopsiN'] = eqdskdata['rhopsi'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-              rhopsiflag = True
-              rhotorflag = False
-         elif nrhotype[0] in [1,'rhotor','rhotorn']:
-              expeq['rhotorN'] = eqdskdata['rhotor'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-              rhopsiflag = False
-              rhotorflag = True
-    elif expeqflag:
          expeq['nRZmesh'] = npy.size(expeqdata['rbound'])
          expeq['rbound']  = expeqdata['rbound'][:]
          expeq['zbound']  = expeqdata['zbound'][:]
-
          expeq['aspect']  = expeqdata['aspect']
          expeq['zgeom']   = expeqdata['zgeom']
 
-         if   eqdskflag:
-              if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-                   expeq['rhopsiN'] = eqdskdata['rhopsi'][:]
-                   expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-                   rhopsiflag = True
-                   rhotorflag = False
-              elif nrhotype[0] in [1,'rhotor','rhotorn']:
-                   expeq['rhotorN'] = eqdskdata['rhotor'][:]
-                   expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-                   rhopsiflag = False
-                   rhotorflag = True
-         elif cheaseflag:
-              if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-                   expeq['rhopsiN'] = cheasedata['rhopsiN'][:]
-                   expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-                   rhopsiflag = True
-                   rhotorflag = False
-              elif nrhotype[0] in [1,'rhotor','rhotorn']:
-                   expeq['rhotorN'] = cheasedata['rhotorN'][:]
-                   expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-                   rhopsiflag = False
-                   rhotorflag = True
+    if   nrhotype[0] in [0,'rhopsi','rhopsin']:
+         rhopsiflag = True
+         rhotorflag = False
+    elif nrhotype[0] in [1,'rhotor','rhotorn']:
+         rhopsiflag = False
+         rhotorflag = True
 
     SetParam = {'nrhomesh':nrhotype[0]}
 
+    if   nrhotype[1] in [0,'chease']:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
+         if eqdskflag:
+            eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam,chease=cheasepath)
+         if expeqflag:
+            expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,chease=cheasepath)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,chease=cheasepath)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,chease=cheasepath)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,chease=cheasepath)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam,chease=cheasepath)
+         if   rhopsiflag:
+              expeq['rhopsi'] = cheasedata['rhopsi'][:]
+              expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+         elif rhotorflag:
+              expeq['rhotor'] = cheasedata['rhotor'][:]
+              expeq['nrhomesh']= npy.size(expeq['rhotor'])
+    elif nrhotype[1] in [1,'eqdsk']:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,eqdsk=eqdskpath)
+         if eqdskflag:
+            eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam)
+         if expeqflag:
+            expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,eqdsk=eqdskpath)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,eqdsk=eqdskpath)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,eqdsk=eqdskpath)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,eqdsk=eqdskpath)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam,eqdsk=eqdskpath)
+         if   rhopsiflag:
+              expeq['rhopsi'] = eqdskdata['rhopsi'][:]
+              expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+         elif rhotorflag:
+              expeq['rhotor'] = eqdskdata['rhotor'][:]
+              expeq['nrhomesh']= npy.size(expeq['rhotor'])
+    elif nrhotype[1] in [7,'imported']:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,imported=imported)
+         if eqdskflag:
+            eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam,imported=imported)
+         if expeqflag:
+            expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,imported=imported)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,imported=imported)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,imported=imported)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,imported=imported)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam)
+         if   rhopsiflag:
+              expeq['rhopsi'] = imported['rhopsi'][:]
+              expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+         elif rhotorflag:
+              expeq['rhotor'] = imported['rhotor'][:]
+              expeq['nrhomesh']= npy.size(expeq['rhotor'])
+    elif nrhotype[1] in [None]:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = cheasedata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = cheasedata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+         if eqdskflag:
+            eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = eqdskdata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = eqdskdata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+         if expeqflag:
+            expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = expeqdata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = expeqdata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = exptnzdata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = exptnzdata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = iterdbdata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = iterdbdata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = profilesdata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = profilesdata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam)
+            if   rhopsiflag:
+                 expeq['rhopsi'] = importeddata['rhopsi'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhopsi'])
+            elif rhotorflag:
+                 expeq['rhotor'] = importeddata['rhotor'][:]
+                 expeq['nrhomesh']= npy.size(expeq['rhotor'])
+
 
     if   nppfun[1] in [0,'chease'] and cheaseflag:
-         if   nrhotype[1] in [0,'chease']:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,eqdsk=eqdskpath)
+         if importedflag and 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
          else:
-              raise IOError('No adequate source of rhomesh available!')
-
-         expeq['pedge']   = cheasedata['PN'][-1]
-
+            expeq['pedge'] = mu0*cheasedata['pressure'][-1]/expeq['B0EXP']**2
          if   nppfun[0] in [4,'pprime','pprimen']:
-              expeq['PPrimeN'] = cheasedata['PPrimeN'][:]
+              if importedflag and 'pprime' in importeddata:
+                 expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              else:
+                 expeq['pprime'] = mu0*cheasedata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
          elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
-              expeq['pressureN'] = cheasedata['PN'][:]
-
+              if importedflag and 'pressure' in importeddata:
+                 expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
+              else:
+                 expeq['pressure'] = mu0*cheasedata['pressure']/expeq['B0EXP']**2
     elif nppfun[1] in [1,'eqdsk'] and eqdskflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk']:
-              eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam)
+         if importedflag and 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
          else:
-              raise IOError('No adequate source of rhomesh available!')
-
-         expeq['pedge']   = mu0*eqdskdata['pressure'][-1]/expeq['B0EXP']**2
-
+            expeq['pedge'] = mu0*eqdskdata['pressure'][-1]/expeq['B0EXP']**2
          if   nppfun[0] in [4,'pprime','pprimen']:
-              expeq['PPrimeN'] = mu0*eqdskdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              if importedflag and 'pprime' in importeddata:
+                 expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              else:
+                 expeq['pprime'] = mu0*eqdskdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
          elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
-              expeq['pressureN'] = mu0*eqdskdata['pressure']/expeq['B0EXP']**2
-
+              if importedflag and 'pressure' in importeddata:
+                 expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
+              else:
+                 expeq['pressure'] = mu0*eqdskdata['pressure']/expeq['B0EXP']**2
     elif nppfun[1] in [2,'expeq'] and expeqflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk']  and eqdskflag:
-              expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,eqdsk=eqdskpath)
+         if importedflag and 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
          else:
-              raise IOError('No adequate source of rhomesh available!')
-
-         if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-              expeq['rhopsiN'] = expeqdata['rhopsiN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-         elif nrhotype[0] in [1,'rhotor','rhotorn']:
-              expeq['rhotorN'] = expeqdata['rhotorN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-
-         expeq['pedge']   = expeqdata['pedge']
-
+            expeq['pedge'] = expeqdata['pedge']
          if   nppfun[0] in [4,'pprime','pprimen']:
-              expeq['PPrimeN'] = expeqdata['pprimeN'][:]
+              if importedflag and 'pprime' in importeddata:
+                 expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              else:
+                 expeq['pprime'] = expeqdata['pprime'][:]
          elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
-              expeq['pressureN'] = expeqdata['pN'][:]
-
+              if importedflag and 'pressure' in importeddata:
+                 expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
+              else:
+                 expeq['pressure'] = expeqdata['pressure'][:]
     elif nppfun[1] in [3,'exptnz'] and exptnzflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk']  and eqdskflag:
-              exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,eqdsk=eqdskpath)
+         if importedflag and 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
          else:
-              raise IOError('No adequate source of rhomesh available!')
-
-         if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-              expeq['rhopsiN'] = exptnzdata['rhopsiN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-         elif nrhotype[0] in [1,'rhotor','rhotorn']:
-              expeq['rhotorN'] = exptnzdata['rhotorN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-
-         expeq['pedge']   = mu0*exptnzdata['pressure'][-1]/expeq['B0EXP']**2
-
+            expeq['pedge'] = mu0*exptnzdata['pressure'][-1]/expeq['B0EXP']**2
          if   nppfun[0] in [4,'pprime','pprimen']:
-              expeq['PPrimeN'] = mu0*exptnzdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              if importedflag and 'pprime' in importeddata:
+                 expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              else:
+                 expeq['pprime'] = mu0*exptnzdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
          elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
-              expeq['pressureN'] = mu0*exptnzdata['pressure']/expeq['B0EXP']**2
-
+              if importedflag and 'pressure' in importeddata:
+                 expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
+              else:
+                 expeq['pressure'] = mu0*exptnzdata['pressure']/expeq['B0EXP']**2
     elif nppfun[1] in [4,'profiles'] and profilesflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk']  and eqdskflag:
-              profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,eqdsk=eqdskpath)
+         if importedflag and 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
          else:
-              raise IOError('No adequate source of rhomesh available!')
-
-         if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-              expeq['rhopsiN'] = profilesdata['rhopsiN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-         elif nrhotype[0] in [1,'rhotor','rhotorn']:
-              expeq['rhotorN'] = profilesdata['rhotorN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-
-         expeq['pedge']   = mu0*profilesdata['pressure'][-1]/expeq['B0EXP']**2
-
+            expeq['pedge'] = mu0*profilesdata['pressure'][-1]/expeq['B0EXP']**2
          if   nppfun[0] in [4,'pprime','pprimen']:
-              expeq['PPrimeN'] = mu0*profilesdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              if importedflag and 'pprime' in importeddata:
+                 expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              else:
+                 expeq['pprime'] = mu0*profilesdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
          elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
-              expeq['pressureN'] = mu0*profilesdata['pressure']/expeq['B0EXP']**2
-
+              if importedflag and 'pressure' in importeddata:
+                 expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
+              else:
+                 expeq['pressure'] = mu0*profilesdata['pressure']/expeq['B0EXP']**2
     elif nppfun[1] in [5,'iterdb'] and iterdbflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk']  and eqdskflag:
-              iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,eqdsk=eqdskpath)
-
-         if   nrhotype[0] in [0,'rhopsi','rhopsin']:
-              expeq['rhopsiN'] = iterdbdata['rhopsiN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhopsiN'])
-         elif nrhotype[0] in [1,'rhotor','rhotorn']:
-              expeq['rhotorN'] = iterdbdata['rhotorN'][:]
-              expeq['nrhomesh']= npy.size(expeq['rhotorN'])
-
-         expeq['pedge']   = mu0*iterdbdata['pressure'][-1]/expeq['B0EXP']**2
-
-         if   nppfun[0] in [4,'pprime','pprimen']:
-              expeq['PPrimeN'] = mu0*iterdbdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
-         elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
-              expeq['pressureN'] = mu0*iterdbdata['pressure']/expeq['B0EXP']**2
+         if importedflag and 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
          else:
-              raise IOError('No adequate source of rhomesh available!')
+            expeq['pedge'] = mu0*iterdbdata['pressure'][-1]/expeq['B0EXP']**2
+         if   nppfun[0] in [4,'pprime','pprimen']:
+              if importedflag and 'pprime' in importeddata:
+                 expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+              else:
+                 expeq['pprime'] = mu0*iterdbdata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+         elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
+              if importedflag and 'pressure' in importeddata:
+                 expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
+              else:
+                 expeq['pressure'] = mu0*iterdbdata['pressure']/expeq['B0EXP']**2
+    elif nppfun[1] in [7,'imported'] and importedflag:
+         if 'pressure' in importeddata:
+            expeq['pedge'] = mu0*importeddata['pressure'][-1]/expeq['B0EXP']**2
+         else:
+            expeq['pedge'] = mu0*eqdskdata['pressure'][-1]/expeq['B0EXP']**2
+         if   nppfun[0] in [4,'pprime','pprimen']:
+              expeq['pprime'] = mu0*importeddata['pprime']*expeq['R0EXP']**2/expeq['B0EXP']
+         elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
+              expeq['pressure'] = mu0*importeddata['pressure']/expeq['B0EXP']**2
 
     if   nsttp[1] in [0,'chease'] and cheaseflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,eqdsk=eqdskpath)
-
          if   cheasemode == 1:
-              if   nsttp[0] in [1,'ttprime','ttprimen']:
-                   expeq['TTPrimeN'] = cheasedata['TTPrimeN'][:]
+              if   nsttp[0] in [1,'ffprime','ffprimen']:
+                   if importedflag and 'ffprime' in importeddata:
+                      expeq['ffprime'] = importeddata['ffprime']/expeq['B0EXP']
+                   else:
+                      expeq['ffprime'] = cheasedata['ffprime']/expeq['B0EXP']
               elif nsttp[0] in [2,'istr','istrn','istar','istarn']:
-                   expeq['ISTRN'] = cheasedata['ISTRN'][:]
+                   if importedflag and 'Istr' in importeddata:
+                      expeq['Istr'] = importeddata['Istr']*mu0/expeq['R0EXP']/expeq['B0EXP']
+                   else:
+                      expeq['Istr'] = cheasedata['Istr']*mu0/expeq['R0EXP']/expeq['B0EXP']
               elif nsttp[0] in [3,'iprl','iprln','iparallel','iparalleln']:
-                   expeq['IPRLN'] = cheasedata['IPRLN'][:]
+                   if importedflag and 'Iprl' in importeddata:
+                      expeq['Iprl'] = importeddata['Iprl']*mu0/expeq['R0EXP']/expeq['B0EXP']
+                   else:
+                      expeq['Iprl'] = cheasedata['Iprl']*mu0/expeq['R0EXP']/expeq['B0EXP']
               elif nsttp[0] in [4,'jprl','jprln','jparallel','jparalleln']:
-                   expeq['JPRLN'] = cheasedata['JPRLN'][:]
+                   if importedflag and 'Jprl' in importeddata:
+                      expeq['Jprl'] = importeddata['Jprl']*mu0*expeq['R0EXP']/expeq['B0EXP']
+                   else:
+                      expeq['Jprl'] = cheasedata['Jprl']*mu0*expeq['R0EXP']/expeq['B0EXP']
               elif nsttp[0] in [5,'q','qpsi','qtor']:
-                   expeq['q'] = cheasedata['q'][:]
+                   if importedflag and 'q' in importeddata:
+                      expeq['q'] = importeddata['q'][:]
+                   else:
+                      expeq['q'] = cheasedata['q'][:]
          elif cheasemode == 2:
               correctParam = {'nsttp':nsttp,'ITEXP':setParam['ITEXP']}
               correction   = current_correction(chease=cheasedata,setParam=correctParam)
-              if   nsttp[0] in [1,'ttprime','ttprimen']:
-                   expeq['TTPrimeN'] = correction[:]
+              if   nsttp[0] in [1,'ffprime','ffprimen']:
+                   expeq['ffprime'] = correction[:]
               elif nsttp[0] in [2,'istr','istrn','istar','istarn']:
-                   expeq['ISTRN'] = correction[:]
+                   expeq['Istr'] = correction[:]
               elif nsttp[0] in [3,'iprl','iprln','iparallel','iparalleln']:
-                   expeq['IPRLN'] = correction[:]
+                   expeq['Iprl'] = correction[:]
               elif nsttp[0] in [4,'jprl','jprln','jparallel','jparalleln']:
-                   expeq['JPRLN'] = correction[:]
+                   expeq['Jprl'] = correction[:]
     elif nsttp[1] in [2,'expeq'] and expeqflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              expeqdata = read_expeq(expeqfpath=expeqpath,setParam=SetParam,eqdsk=eqdskpath)
-
          if   cheasemode == 1:
-              if   nsttp[0] in [1,'ttprime','ttprimen']:
-                   expeq['TTPrimeN'] = expeqdata['ttprimeN'][:]
+              if   nsttp[0] in [1,'ffprime','ffprimen']:
+                   if importedflag and 'ffprime' in importeddata:
+                      expeq['ffprime'] = importeddata['ffprime']/expeq['B0EXP']
+                   else:
+                      expeq['ffprime'] = expeqdata['ffprime'][:]
               elif nsttp[0] in [2,'istr','istrn','istar','istarn']:
-                   expeq['ISTRN'] = expeqdata['istrN'][:]
+                   if importedflag and 'Istr' in importeddata:
+                      expeq['Istr'] = importeddata['Istr']*mu0/expeq['R0EXP']/expeq['B0EXP']
+                   else:
+                      expeq['Istr'] = expeqdata['Istr'][:]
               elif nsttp[0] in [3,'iprl','iprln','iparallel','iparalleln']:
-                   expeq['IPRLN'] = expeqdata['iprlN'][:]
+                   if importedflag and 'Iprl' in importeddata:
+                      expeq['Iprl'] = importeddata['Iprl']*mu0/expeq['R0EXP']/expeq['B0EXP']
+                   else:
+                      expeq['Iprl'] = expeqdata['Iprl'][:]
               elif nsttp[0] in [4,'jprl','jprln','jparallel','jparalleln']:
-                   expeq['JPRLN'] = expeqdata['jprlN'][:]
+                   if importedflag and 'Jprl' in importeddata:
+                      expeq['Jprl'] = importeddata['Jprl']*mu0*expeq['R0EXP']/expeq['B0EXP']
+                   else:
+                      expeq['Jprl'] = expeqdata['Jprl'][:]
               elif nsttp[0] in [5,'q','qpsi','qtor']:
-                   expeq['q'] = expeqdata['q'][:]
+                   if importedflag and 'q' in importeddata:
+                      expeq['q'] = importeddata['q']
+                   else:
+                      expeq['q'] = expeqdata['q'][:]
          elif cheasemode == 2:
               correctParam = {'nsttp':nsttp,'ITEXP':setParam['ITEXP']}
               correction   = current_correction(chease=cheasedata,expeq=expeqdata,setParam=correctParam)
-              if   nsttp[0] in [1,'ttprime','ttprimen']:
-                   expeq['TTPrimeN'] = correction[:]
+              if   nsttp[0] in [1,'ffprime','ffprimen']:
+                   expeq['ffprime'] = correction[:]
               elif nsttp[0] in [2,'istr','istrn','istar','istarn']:
-                   expeq['ISTRN'] = correction[:]
+                   expeq['Istr'] = correction[:]
               elif nsttp[0] in [3,'iprl','iprln','iparallel','iparalleln']:
-                   expeq['IPRLN'] = correction[:]
+                   expeq['Iprl'] = correction[:]
               elif nsttp[0] in [4,'jprl','jprln','jparallel','jparalleln']:
-                   expeq['JPRLN'] = correction[:]
+                   expeq['Jprl'] = correction[:]
     elif nsttp[1] in [1,'eqdsk'] and eqdskflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk']:
-              eqdskdata = read_eqdsk(eqdskfpath=eqdskpath,setParam=SetParam)
-
          if   cheasemode==1:
-              if   nsttp[0] in [1,'ttprime','ttprimen']:
-                   expeq['TTPrimeN'] = eqdskdata['ffprime']/expeq['B0EXP']
+              if   nsttp[0] in [1,'ffprime','ffprimen']:
+                   if importedflag and 'ffprime' in importeddata:
+                      expeq['ffprime'] = importeddata['ffprime']/expeq['B0EXP']
+                   else:
+                      expeq['ffprime'] = eqdskdata['ffprime']/expeq['B0EXP']
               elif nsttp[0] in [5,'q','qpsi','qtor']:
-                   expeq['q'] = eqdskdata['qpsi']
+                   if importedflag and 'q' in importeddata:
+                      expeq['q'] = importeddata['q']
+                   else:
+                      expeq['q'] = eqdskdata['q']
               else:
                    raise ValueError("FATAL: nsttp[0] (must) = 1 or 5.")
          elif cheasemode in [2,3]:
               raise ValueError("FATAL: eqdsk option is not accepted with cheasemode = 2 or 3")
-            
+    elif nsttp[1] in [7,'imported'] and importedflag:
+         if   cheasemode == 1:
+              if   nsttp[0] in [1,'ffprime','ffprimen']:
+                   expeq['ffprime'] = importeddata['ffprime']/expeq['B0EXP']
+              elif nsttp[0] in [2,'istr','istrn','istar','istarn']:
+                   expeq['Istr'] = importeddata['Istr']*mu0/expeq['R0EXP']/expeq['B0EXP']
+              elif nsttp[0] in [3,'iprl','iprln','iparallel','iparalleln']:
+                   expeq['Iprl'] = importeddata['Iprl']*mu0/expeq['R0EXP']/expeq['B0EXP']
+              elif nsttp[0] in [4,'jprl','jprln','jparallel','jparalleln']:
+                   expeq['Jprl'] = importeddata['Jprl']*mu0*expeq['R0EXP']/expeq['B0EXP']
+              elif nsttp[0] in [5,'q','qpsi','qtor']:
+                   expeq['q'] = importeddata['q'][:]
+         elif cheasemode in [2,3]:
+              raise ValueError("FATAL: imported option is not accepted with cheasemode = 2 or 3")
+
     if outfile:
        ofh = open("EXPEQ",'w')
        ofh.write('%18.8E\n'           % expeq['aspect'])
@@ -1319,36 +1410,37 @@ def write_expeq(setParam={},counter=0,outfile=True,**kwargs):
 
        if   nrhotype[0] in [0,'rhopsi']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['rhopsiN'][i])
+                ofh.write('%18.8E\n'       % expeq['rhopsi'][i])
        elif nrhotype[0] in [1,'rhotor']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['rhotorN'][i])
+                ofh.write('%18.8E\n'       % expeq['rhotor'][i])
 
        if   nppfun[0] in [4,'pprime','pprimen']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['PPrimeN'][i])
+                ofh.write('%18.8E\n'       % expeq['pprime'][i])
        elif nppfun[0] in [8,'pressure','pressuren','p','pn']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['pressureN'][i])
+                ofh.write('%18.8E\n'       % expeq['pressure'][i])
 
-       if   nsttp[0] in [1,'ttprime','ttprimen']:
+       if   nsttp[0] in [1,'ffprime','ffprimen']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['TTPrimeN'][i])
+                ofh.write('%18.8E\n'       % expeq['ffprime'][i])
        elif nsttp[0] in [2,'istar','istarn','istr','istrn']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['ISTRN'][i])
+                ofh.write('%18.8E\n'       % expeq['Istr'][i])
        elif nsttp[0] in [3,'iprl','iprln','iparallel','iparalleln']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['IPRLN'][i])
+                ofh.write('%18.8E\n'       % expeq['Iprl'][i])
        elif nsttp[0] in [4,'jprl','jprln','jparallel','jparalleln']:
             for i in range(expeq['nrhomesh']):
-                ofh.write('%18.8E\n'       % expeq['JPRLN'][i])
+                ofh.write('%18.8E\n'       % expeq['Jprl'][i])
        elif nsttp[0] in [5,'q']:
             for i in range(expeq['nrhomesh']):
                 ofh.write('%18.8E\n'       % expeq['q'][i])
        ofh.close()
 
     return expeq
+
 
 def find_boundary(eqdsk='',setParam={}):
     if eqdsk:
@@ -1376,7 +1468,7 @@ def find_boundary(eqdsk='',setParam={}):
        rbndtst = int(eqdskdata['RLEN']/(max(eqdskdata['rbound'])-abs(min(eqdskdata['rbound']))))
        zbndtst = int(eqdskdata['ZLEN']/(max(eqdskdata['zbound'])+abs(min(eqdskdata['zbound']))))
        if  rbndtst==1 and zbndtst==1:
-           rbound,zbound = magsurf_solvflines(eqdskdata=eqdskdata,psi=0.9999,eps=1.0e-16)
+           rbound,zbound = magsurf_solvflines(eqdskdata=eqdskdata,psi=0.999,eps=1.0e-16)
        else:
            rbound=npy.zeros(2*len(eqdskdata['rbound'])-1)
            zbound=npy.zeros(2*len(eqdskdata['zbound'])-1)
@@ -1389,6 +1481,201 @@ def find_boundary(eqdsk='',setParam={}):
                zbound[-i] =-eqdskdata['zbound'][i]
 
     return rbound,zbound
+
+
+def read_imported(importeddata,setParam={},**kwargs):
+    rhopsiflag = False; rhotorflag = False
+    if 'nrhomesh' in setParam:
+        if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
+        elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    else:                                          rhopsiflag = True
+
+    eqdskflag    = False
+    cheaseflag   = False
+    interpflag   = False
+    for key,value in kwargs.items():
+        if   key in ['chease','cheasedata','cheasefpath']:
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   cheasedata = read_chease(cheasefpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in cheasedata: rhopsi = cheasedata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in cheasedata: rhotor = cheasedata['rhotor'][:]; interpflag = True
+             cheaseflag = True
+        elif key in ['eqdsk','eqdskdata','eqdskfpath']:
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   eqdskdata = read_eqdsk(eqdskfpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in eqdskdata: rhopsi = eqdskdata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in eqdskdata: rhotor = eqdskdata['rhotor'][:]; interpflag = True
+             eqdskflag = True
+
+    IMPORTEDdata = {}
+    if not importeddata: return IMPORTEDdata
+
+    if 'rhopsi' in importeddata:
+       IMPORTEDdata['rhopsi'] = importeddata['rhopsi'][:]
+       if   rhopsiflag: rhotype = 'rhopsi'
+       elif rhotorflag: rhotype = 'rhotor'
+
+    if 'rhotor' in importeddata:
+       IMPORTEDdata['rhotor'] = importeddata['rhotor'][:]
+       if   rhopsiflag: rhotype = 'rhopsi'
+       elif rhotorflag: rhotype = 'rhotor'
+
+
+    if 'rhotor' not in importeddata or 'rhopsi' not in importeddata:
+       raise IOError('rhopsi and/or rhotor NOT provided. EXIT!')
+
+    if interpflag and 'Te' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['Te'] = interp(IMPORTEDdata['rhopsi'],importeddata['Te'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['Te'] = interp(IMPORTEDdata['rhotor'],importeddata['Te'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['Te'] = interp(IMPORTEDdata['rhopsi'],importeddata['Te'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['Te'] = interp(IMPORTEDdata['rhotor'],importeddata['Te'],rhotor,rhopsi,rhopsi)
+    elif 'Te' in importeddata:
+         IMPORTEDdata['Te'] = importeddata['Te']
+
+    if interpflag and 'ne' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['ne'] = interp(IMPORTEDdata['rhopsi'],importeddata['ne'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['ne'] = interp(IMPORTEDdata['rhotor'],importeddata['ne'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['ne'] = interp(IMPORTEDdata['rhopsi'],importeddata['ne'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['ne'] = interp(IMPORTEDdata['rhotor'],importeddata['ne'],rhotor,rhopsi,rhopsi)
+    elif 'ne' in importeddata:
+         IMPORTEDdata['ne'] = importeddata['ne']
+
+    if interpflag and 'Ti' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['Ti'] = interp(IMPORTEDdata['rhopsi'],importeddata['Ti'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['Ti'] = interp(IMPORTEDdata['rhotor'],importeddata['Ti'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['Ti'] = interp(IMPORTEDdata['rhopsi'],importeddata['Ti'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['Ti'] = interp(IMPORTEDdata['rhotor'],importeddata['Ti'],rhotor,rhopsi,rhopsi)
+    elif 'Ti' in importeddata:
+         IMPORTEDdata['Ti'] = importeddata['Ti']
+
+    if interpflag and 'ni' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['ni'] = interp(IMPORTEDdata['rhopsi'],importeddata['ni'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['ni'] = interp(IMPORTEDdata['rhotor'],importeddata['ni'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['ni'] = interp(IMPORTEDdata['rhopsi'],importeddata['ni'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['ni'] = interp(IMPORTEDdata['rhotor'],importeddata['ni'],rhotor,rhopsi,rhopsi)
+    elif 'ni' in importeddata:
+         IMPORTEDdata['ni'] = importeddata['ni']
+
+    if interpflag and 'q' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['q'] = interp(IMPORTEDdata['rhopsi'],importeddata['q'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['q'] = interp(IMPORTEDdata['rhotor'],importeddata['q'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['q'] = interp(IMPORTEDdata['rhopsi'],importeddata['q'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['q'] = interp(IMPORTEDdata['rhotor'],importeddata['q'],rhotor,rhopsi,rhopsi)
+    elif 'q' in importeddata:
+         IMPORTEDdata['q'] = importeddata['q']
+
+    if interpflag and 'Zeff' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['Zeff'] = interp(IMPORTEDdata['rhopsi'],importeddata['Zeff'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['Zeff'] = interp(IMPORTEDdata['rhotor'],importeddata['Zeff'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['Zeff'] = interp(IMPORTEDdata['rhopsi'],importeddata['Zeff'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['Zeff'] = interp(IMPORTEDdata['rhotor'],importeddata['Zeff'],rhotor,rhopsi,rhopsi)
+    elif 'Zeff' in importeddata:
+         IMPORTEDdata['Zeff'] = importeddata['Zeff']
+
+    if interpflag and 'pressure' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['pressure'] = interp(IMPORTEDdata['rhopsi'],importeddata['pressure'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['pressure'] = interp(IMPORTEDdata['rhotor'],importeddata['pressure'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['pressure'] = interp(IMPORTEDdata['rhopsi'],importeddata['pressure'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['pressure'] = interp(IMPORTEDdata['rhotor'],importeddata['pressure'],rhotor,rhopsi,rhopsi)
+    elif 'pressure' in importeddata:
+         IMPORTEDdata['pressure'] = importeddata['pressure']
+
+    if interpflag and 'pprime' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['pprime'] = interp(IMPORTEDdata['rhopsi'],importeddata['pprime'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['pprime'] = interp(IMPORTEDdata['rhotor'],importeddata['pprime'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['pprime'] = interp(IMPORTEDdata['rhopsi'],importeddata['pprime'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['pprime'] = interp(IMPORTEDdata['rhotor'],importeddata['pprime'],rhotor,rhopsi,rhopsi)
+    elif 'pprime' in importeddata:
+         IMPORTEDdata['pprime'] = importeddata['pprime']
+
+    if interpflag and 'Istr' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['Istr'] = interp(IMPORTEDdata['rhopsi'],importeddata['Istr'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['Istr'] = interp(IMPORTEDdata['rhotor'],importeddata['Istr'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['Istr'] = interp(IMPORTEDdata['rhopsi'],importeddata['Istr'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['Istr'] = interp(IMPORTEDdata['rhotor'],importeddata['Istr'],rhotor,rhopsi,rhopsi)
+    elif 'Istr' in importeddata:
+         IMPORTEDdata['Istr'] = importeddata['Istr']
+
+    if interpflag and 'Iprl' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['Iprl'] = interp(IMPORTEDdata['rhopsi'],importeddata['Iprl'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['Iprl'] = interp(IMPORTEDdata['rhotor'],importeddata['Iprl'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['Iprl'] = interp(IMPORTEDdata['rhopsi'],importeddata['Iprl'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['Iprl'] = interp(IMPORTEDdata['rhotor'],importeddata['Iprl'],rhotor,rhopsi,rhopsi)
+    elif 'Iprl' in importeddata:
+         IMPORTEDdata['Iprl'] = importeddata['Iprl']
+
+    if interpflag and 'Jprl' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['Jprl'] = interp(IMPORTEDdata['rhopsi'],importeddata['Jprl'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['Jprl'] = interp(IMPORTEDdata['rhotor'],importeddata['Jprl'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['Jprl'] = interp(IMPORTEDdata['rhopsi'],importeddata['Jprl'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['Jprl'] = interp(IMPORTEDdata['rhotor'],importeddata['Jprl'],rhotor,rhopsi,rhopsi)
+    elif 'Jprl' in importeddata:
+         IMPORTEDdata['Jprl'] = importeddata['Jprl']
+
+    if interpflag and 'ffprime' in importeddata:
+       if   rhopsiflag and rhotype=='rhopsi':
+            IMPORTEDdata['ffprime'] = interp(IMPORTEDdata['rhopsi'],importeddata['ffprime'],rhopsi)
+       elif rhotorflag and rhotype=='rhotor':
+            IMPORTEDdata['ffprime'] = interp(IMPORTEDdata['rhotor'],importeddata['ffprime'],rhotor)
+       elif rhotorflag and rhotype=='rhopsi':
+            IMPORTEDdata['ffprime'] = interp(IMPORTEDdata['rhopsi'],importeddata['ffprime'],rhopsi,rhotor,rhotor)
+       elif rhopsiflag and rhotype=='rhotor':
+            IMPORTEDdata['ffprime'] = interp(IMPORTEDdata['rhotor'],importeddata['ffprime'],rhotor,rhopsi,rhopsi)
+    elif 'ffprime' in importeddata:
+         IMPORTEDdata['ffprime'] = importeddata['ffprime']
+
+    if interpflag:
+       IMPORTEDdata['rhopsi'] = rhopsi[:]
+       IMPORTEDdata['rhotor'] = rhotor[:]
+
+    return IMPORTEDdata
+
 
 def read_exptnz(exptnzfpath,setParam={},**kwargs):
     if os.path.isfile(exptnzfpath) == False:
@@ -1403,31 +1690,32 @@ def read_exptnz(exptnzfpath,setParam={},**kwargs):
     if 'nrhomesh' in setParam:
         if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
         elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    else:                                          rhopsiflag = True
 
     eqdskflag    = False
     cheaseflag   = False
     interpflag   = False
+    importedflag = False
     for key,value in kwargs.items():
         if   key in ['chease','cheasedata','cheasefpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       cheasedata = read_chease(cheasefpath=value.strip())
-             elif type(value)==dict:   cheasedata = value.copy()
-             if    'rhopsiN' in cheasedata and rhopsiflag:
-                   interprho = cheasedata['rhopsiN'][:]; interpflag = True
-             elif  'rhotorN' in cheasedata and rhotorflag:
-                   interprho = cheasedata['rhotorN'][:]; interpflag = True
-             rhopsi = cheasedata['rhopsiN']; rhotor = cheasedata['rhotorN'] 
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   cheasedata = read_chease(cheasefpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in cheasedata: rhopsi = cheasedata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in cheasedata: rhotor = cheasedata['rhotor'][:]; interpflag = True
              cheaseflag = True
         elif key in ['eqdsk','eqdskdata','eqdskfpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       eqdskdata = read_eqdsk(eqdskfpath=value.strip())
-             elif  type(value)==dict:  eqdskdata = value.copy()
-             if    'rhopsi' in eqdskdata and rhopsiflag:
-                   interprho = eqdskdata['rhopsi'][:]; interpflag = True
-             elif  'rhotor' in eqdskdata and rhotorflag:
-                   interprho = eqdskdata['rhotor'][:]; interpflag = True
-             rhopsi = eqdskdata['rhopsi']; rhotor = eqdskdata['rhotor']
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   eqdskdata = read_eqdsk(eqdskfpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in eqdskdata: rhopsi = eqdskdata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in eqdskdata: rhotor = eqdskdata['rhotor'][:]; interpflag = True
              eqdskflag = True
+        elif key in ['imported','external','other']:
+             imported = value.copy()
+             if 'rhopsi' in imported: rhopsi = imported['rhopsi'][:]; interpflag = True
+             if 'rhotor' in imported: rhotor = imported['rhotor'][:]; interpflag = True
+             importedflag = True
 
     ofh = open(exptnzfpath,'r')
     EXPTNZOUT = ofh.readlines()
@@ -1442,48 +1730,48 @@ def read_exptnz(exptnzfpath,setParam={},**kwargs):
     EXPTNZdata['Zz'] = 6.0
 
     if   rhotype=='rhopsi':
-         EXPTNZdata['rhopsiN'] = npy.array(EXPTNZOUT[0*n_rho+1:1*n_rho+1],dtype=float)
+         EXPTNZdata['rhopsi'] = npy.array(EXPTNZOUT[0*n_rho+1:1*n_rho+1],dtype=float)
     elif rhotype=='rhotor':
-         EXPTNZdata['rhotorN'] = npy.array(EXPTNZOUT[0*n_rho+1:1*n_rho+1],dtype=float)
-    EXPTNZdata['Te']           = npy.array(EXPTNZOUT[1*n_rho+1:2*n_rho+1],dtype=float)
-    EXPTNZdata['ne']           = npy.array(EXPTNZOUT[2*n_rho+1:3*n_rho+1],dtype=float)
-    EXPTNZdata['Zeff']         = npy.array(EXPTNZOUT[3*n_rho+1:4*n_rho+1],dtype=float)
-    EXPTNZdata['Ti']           = npy.array(EXPTNZOUT[4*n_rho+1:5*n_rho+1],dtype=float)
-    EXPTNZdata['ni']           = npy.array(EXPTNZOUT[5*n_rho+1:6*n_rho+1],dtype=float)
+         EXPTNZdata['rhotor'] = npy.array(EXPTNZOUT[0*n_rho+1:1*n_rho+1],dtype=float)
+    EXPTNZdata['Te']          = npy.array(EXPTNZOUT[1*n_rho+1:2*n_rho+1],dtype=float)
+    EXPTNZdata['ne']          = npy.array(EXPTNZOUT[2*n_rho+1:3*n_rho+1],dtype=float)
+    EXPTNZdata['Zeff']        = npy.array(EXPTNZOUT[3*n_rho+1:4*n_rho+1],dtype=float)
+    EXPTNZdata['Ti']          = npy.array(EXPTNZOUT[4*n_rho+1:5*n_rho+1],dtype=float)
+    EXPTNZdata['ni']          = npy.array(EXPTNZOUT[5*n_rho+1:6*n_rho+1],dtype=float)
 
     if interpflag:
        if   rhopsiflag and rhotype=='rhopsi':
-            EXPTNZdata['Te']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['Te'],rhopsi)
-            EXPTNZdata['Ti']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['Ti'],rhopsi)
-            EXPTNZdata['ne']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['ne'],rhopsi) 
-            EXPTNZdata['ni']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['ni'],rhopsi)
-            EXPTNZdata['Zeff']    = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['Zeff'],rhopsi)
-            EXPTNZdata['rhopsiN'] = rhopsi[:]
-            EXPTNZdata['rhotorN'] = rhotor[:]
+            EXPTNZdata['Te']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['Te'],rhopsi)
+            EXPTNZdata['Ti']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['Ti'],rhopsi)
+            EXPTNZdata['ne']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['ne'],rhopsi) 
+            EXPTNZdata['ni']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['ni'],rhopsi)
+            EXPTNZdata['Zeff']   = interp(EXPTNZdata['rhopsi'],EXPTNZdata['Zeff'],rhopsi)
+            EXPTNZdata['rhopsi'] = rhopsi[:]
+            EXPTNZdata['rhotor'] = rhotor[:]
        elif rhotorflag and rhotype=='rhotor':
-            EXPTNZdata['Te']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['Te'],rhotor)
-            EXPTNZdata['Ti']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['Ti'],rhotor)
-            EXPTNZdata['ne']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['ne'],rhotor) 
-            EXPTNZdata['ni']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['ni'],rhotor)
-            EXPTNZdata['Zeff']    = interp(EXPTNZdata['rhotorN'],EXPTNZdata['Zeff'],rhotor)
-            EXPTNZdata['rhopsiN'] = rhopsi[:]
-            EXPTNZdata['rhotorN'] = rhotor[:]
+            EXPTNZdata['Te']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['Te'],rhotor)
+            EXPTNZdata['Ti']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['Ti'],rhotor)
+            EXPTNZdata['ne']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['ne'],rhotor) 
+            EXPTNZdata['ni']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['ni'],rhotor)
+            EXPTNZdata['Zeff']   = interp(EXPTNZdata['rhotor'],EXPTNZdata['Zeff'],rhotor)
+            EXPTNZdata['rhopsi'] = rhopsi[:]
+            EXPTNZdata['rhotor'] = rhotor[:]
        elif rhotorflag and rhotype=='rhopsi':
-            EXPTNZdata['Te']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['Te'],rhopsi,rhotor,rhotor)
-            EXPTNZdata['Ti']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['Ti'],rhopsi,rhotor,rhotor)
-            EXPTNZdata['ne']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['ne'],rhopsi,rhotor,rhotor) 
-            EXPTNZdata['ni']      = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['ni'],rhopsi,rhotor,rhotor)
-            EXPTNZdata['Zeff']    = interp(EXPTNZdata['rhopsiN'],EXPTNZdata['Zeff'],rhopsi,rhotor,rhotor)
-            EXPTNZdata['rhopsiN'] = rhopsi[:]
-            EXPTNZdata['rhotorN'] = rhotor[:]
+            EXPTNZdata['Te']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['Te'],rhopsi,rhotor,rhotor)
+            EXPTNZdata['Ti']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['Ti'],rhopsi,rhotor,rhotor)
+            EXPTNZdata['ne']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['ne'],rhopsi,rhotor,rhotor) 
+            EXPTNZdata['ni']     = interp(EXPTNZdata['rhopsi'],EXPTNZdata['ni'],rhopsi,rhotor,rhotor)
+            EXPTNZdata['Zeff']   = interp(EXPTNZdata['rhopsi'],EXPTNZdata['Zeff'],rhopsi,rhotor,rhotor)
+            EXPTNZdata['rhopsi'] = rhopsi[:]
+            EXPTNZdata['rhotor'] = rhotor[:]
        elif rhopsiflag and rhotype=='rhotor':
-            EXPTNZdata['Te']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['Te'],rhotor,rhopsi,rhopsi)
-            EXPTNZdata['Ti']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['Ti'],rhotor,rhopsi,rhopsi)
-            EXPTNZdata['ne']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['ne'],rhotor,rhopsi,rhopsi) 
-            EXPTNZdata['ni']      = interp(EXPTNZdata['rhotorN'],EXPTNZdata['ni'],rhotor,rhopsi,rhopsi)
-            EXPTNZdata['Zeff']    = interp(EXPTNZdata['rhotorN'],EXPTNZdata['Zeff'],rhotor,rhopsi,rhopsi)
-            EXPTNZdata['rhopsiN'] = rhopsi[:]
-            EXPTNZdata['rhotorN'] = rhotor[:]
+            EXPTNZdata['Te']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['Te'],rhotor,rhopsi,rhopsi)
+            EXPTNZdata['Ti']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['Ti'],rhotor,rhopsi,rhopsi)
+            EXPTNZdata['ne']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['ne'],rhotor,rhopsi,rhopsi) 
+            EXPTNZdata['ni']     = interp(EXPTNZdata['rhotor'],EXPTNZdata['ni'],rhotor,rhopsi,rhopsi)
+            EXPTNZdata['Zeff']   = interp(EXPTNZdata['rhotor'],EXPTNZdata['Zeff'],rhotor,rhopsi,rhopsi)
+            EXPTNZdata['rhopsi'] = rhopsi[:]
+            EXPTNZdata['rhotor'] = rhotor[:]
     elif rhopsiflag and rhotype=='rhotor':
          print("WARNING: setParam['nrhomesh'] = 0 or rhopsi, but the path to a target rhopsi is not provided.")
          print("         Converting the profiles to poloidal (psi) coordinates could not be done, and")
@@ -1503,13 +1791,13 @@ def read_exptnz(exptnzfpath,setParam={},**kwargs):
     EXPTNZdata['pressure']  *= 1.602e-19
 
     if   rhopsiflag:
-         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhopsiN'],fx=EXPTNZdata['pressure'],method='CubicSpline')
+         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhopsi'],fx=EXPTNZdata['pressure'],method='CubicSpline')
     elif rhotorflag:
-         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhopsiN'],fx=EXPTNZdata['pressure'],method='CubicSpline')
+         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhopsi'],fx=EXPTNZdata['pressure'],method='CubicSpline')
     elif rhotype=='rhopsi':
-         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhopsiN'],fx=EXPTNZdata['pressure'],method='CubicSpline')
+         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhopsi'],fx=EXPTNZdata['pressure'],method='CubicSpline')
     elif rhotype=='rhotor':
-         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhotorN'],fx=EXPTNZdata['pressure'],method='CubicSpline')
+         EXPTNZdata['pprime']= derivative(x=EXPTNZdata['rhotor'],fx=EXPTNZdata['pressure'],method='CubicSpline')
 
     return EXPTNZdata
 
@@ -1519,11 +1807,13 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
     eprofile=[eprofile_src(0:chease,3:exptnz,4:profiles,5:iterdb)]
     iprofile=[iprofile_src(0:chease,3:exptnz,4:profiles,5:iterdb)]
     '''
+
     eqdskflag    = False
     interpflag   = False
     cheaseflag   = False
     iterdbflag   = False
     exptnzflag   = False
+    importedflag = False
     profilesflag = False
     for key,value in kwargs.items():
         if key in ['chease','cheasedata','cheasefpath']:
@@ -1556,7 +1846,11 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
               iterdbpath = value.strip()
               iterdbflag = True
 
-    if not (cheaseflag or exptnzflag or profilesflag or iterdbflag):
+        if key in ['imported','external','others']:
+              imported = value.copy()
+              importedflag = True
+
+    if not (cheaseflag or exptnzflag or profilesflag or iterdbflag or importedflag):
        raise IOError('FATAL: NO VALID INPUT PROFILES AVAILABLE. EXIT!')
 
     if 'nrhomesh' in setParam.keys():
@@ -1565,13 +1859,16 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
             elif type(setParam['nrhomesh'][0])==str:   setParam['nrhomesh'][0] = setParam['nrhomesh'][0].lower()
             if   type(setParam['nrhomesh'][1])==float: setParam['nrhomesh'][1] = int(setParam['nrhomesh'][1])
             elif type(setParam['nrhomesh'][1])==str:   setParam['nrhomesh'][1] = setParam['nrhomesh'][1].lower()
+            elif      setParam['nrhomesh'][1] ==None:  setParam['nrhomesh'][1] = None
             nrhotype = setParam['nrhomesh'][:]
        elif type(setParam['nrhomesh'])==int:
             if   cheaseflag:   nrhotype=[setParam['nrhomesh'],0]
             elif eqdskflag:    nrhotype=[setParam['nrhomesh'],1]
+            elif importedflag: nrhotype=[setParam['nrhomesh'],7]
     else:
             if   cheaseflag:   nrhotype=[0,0]
             elif eqdskflag:    nrhotype=[0,1]
+            elif importedflag: nrhotype=[0,7]
 
     if 'eprofile' in setParam.keys(): 
             if   type(setParam['eprofile'])==float: setParam['eprofile'] = int(setParam['eprofile'])
@@ -1582,21 +1879,25 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
             elif exptnzflag:   eprofile=3
             elif profilesflag: eprofile=4
             elif iterdbflag:   eprofile=5
+            elif importedflag: eprofile=7
 
     if 'iprofile' in setParam.keys():
             if   type(setParam['iprofile'])==float: setParam['iprofile'] = int(setParam['iprofile'])
             elif type(setParam['iprofile'])==str:   setParam['iprofile'] = setParam['iprofile'].lower()
             iprofile= setParam['iprofile']
     else:
-             if   cheaseflag:   iprofile=0
-             elif exptnzflag:   iprofile=3
-             elif profilesflag: iprofile=4
-             elif iterdbflag:   iprofile=5
+            if   cheaseflag:   iprofile=0
+            elif exptnzflag:   iprofile=3
+            elif profilesflag: iprofile=4
+            elif iterdbflag:   iprofile=5
+            elif importedflag: iprofile=7
 
     if   nrhotype[1] in [0,'chease'] and not cheaseflag:
          raise IOError("FATAL: nrhotype=chease and chease.h5 file is not available. EXIT!")
     elif nrhotype[1] in [1,'eqdsk'] and not eqdskflag:
          raise IOError("FATAL: nrhotype=eqdsk and eqdsk file is not available. EXIT!")
+    elif nrhotype[1] in [7,'imported'] and not importedflag:
+         raise IOError("FATAL: nrhotype=imported and imported data is not available. EXIT!")
 
     if   eprofile in [0,'chease'] and not cheaseflag:
          raise IOError("FATAL: eprofile=chease and chease.h5 is not available. EXIT!")
@@ -1606,6 +1907,8 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
          raise IOError("FATAL: eprofile=profiples and profiles is not available. EXIT!")
     elif eprofile in [5,'iterdb'] and not iterdbflag:
          raise IOError("FATAL: eprofile=iterdb and iterdb is not available. EXIT!")
+    elif eprofile in [7,'imported'] and not importedflag:
+         raise IOError("FATAL: eprofile=imported and no profiles are imported. EXIT!")
 
     if   iprofile in [0,'chease'] and not cheaseflag:
          raise IOError("FATAL: iprofile=chease and chease.h5 is not available. EXIT!")
@@ -1615,6 +1918,10 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
          raise IOError("FATAL: iprofile=profiples and profiles is not available. EXIT!")
     elif iprofile in [5,'iterdb'] and not iterdbflag:
          raise IOError("FATAL: iprofile=iterdb and iterdb is not available. EXIT!")
+    elif iprofile in [5,'iterdb'] and not iterdbflag:
+         raise IOError("FATAL: iprofile=iterdb and iterdb is not available. EXIT!")
+    elif eprofile in [7,'imported'] and not importedflag:
+         raise IOError("FATAL: iprofile=imported and no profiles are imported. EXIT!")
 
     if   nrhotype[0] in [0,'rhopsi']:
          rhopsiflag = True
@@ -1625,87 +1932,176 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
 
     SetParam={'nrhomesh':nrhotype[0]}
 
+    if   nrhotype[1] in [0,'chease']:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,chease=cheasepath)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,chease=cheasepath)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,chease=cheasepath)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam,chease=cheasepath)
+    elif nrhotype[1] in [1,'eqdsk']:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,eqdsk=eqdskpath)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,eqdsk=eqdskpath)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,eqdsk=eqdskpath)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,eqdsk=eqdskpath)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam,eqdsk=eqdskpath)
+    elif nrhotype[1] in [7,'imported']:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,imported=imported)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,imported=imported)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,imported=imported)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,imported=imported)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam)
+    elif nrhotype[1] in [None]:
+         if cheaseflag:
+            cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
+         if exptnzflag:
+            exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam)
+         if iterdbflag:
+            iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam)
+         if profilesflag:
+            profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam)
+         if importedflag:
+            importeddata = read_imported(importeddata=imported,setParam=SetParam)
+
     exptnz = {}
 
     if   eprofile in [0,'chease'] and cheaseflag:
-         if   nrhotype[1] in [0,'chease']:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,eqdsk=eqdskpath)
-         if   rhopsiflag: exptnz['rhopsiN'] = cheasedata['rhopsiN']
-         elif rhotorflag: exptnz['rhotorN'] = cheasedata['rhotorN']
-         exptnz['Te'] = cheasedata['Te']
-         exptnz['ne'] = cheasedata['ne']
-
+         if   rhopsiflag: exptnz['rhopsi'] = cheasedata['rhopsi']
+         elif rhotorflag: exptnz['rhotor'] = cheasedata['rhotor']
+         if importedflag and 'Te' in importeddata:
+            exptnz['Te'] = importeddata['Te']
+         else:
+            exptnz['Te'] = cheasedata['Te']
+         if importedflag and 'ne' in importeddata:
+            exptnz['ne'] = importeddata['ne']
+         else:
+            exptnz['ne'] = cheasedata['ne']
     elif eprofile in [3,'exptnz'] and exptnzflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,eqdsk=eqdskpath)
-         if   rhopsiflag: exptnz['rhopsiN'] = exptnzdata['rhopsiN']
-         elif rhotorflag: exptnz['rhotorN'] = exptnzdata['rhotorN']
-         exptnz['Te'] = exptnzdata['Te']
-         exptnz['ne'] = exptnzdata['ne']
-
+         if   rhopsiflag: exptnz['rhopsi'] = exptnzdata['rhopsi']
+         elif rhotorflag: exptnz['rhotor'] = exptnzdata['rhotor']
+         if importedflag and 'Te' in importeddata:
+            exptnz['Te'] = importeddata['Te']
+         else:
+            exptnz['Te'] = exptnzdata['Te']
+         if importedflag and 'ne' in importeddata:
+            exptnz['ne'] = importeddata['ne']
+         else:
+            exptnz['ne'] = exptnzdata['ne']
     elif eprofile in [4,'profiles'] and profilesflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,eqdsk=eqdskpath)
-         if   rhopsiflag: exptnz['rhopsiN'] = profilesdata['rhopsiN']
-         elif rhotorflag: exptnz['rhotorN'] = profilesdata['rhotorN']
-         exptnz['Te'] = profilesdata['Te']
-         exptnz['ne'] = profilesdata['ne']
-
+         if   rhopsiflag: exptnz['rhopsi'] = profilesdata['rhopsi']
+         elif rhotorflag: exptnz['rhotor'] = profilesdata['rhotor']
+         if importedflag and 'Te' in importeddata:
+            exptnz['Te'] = importeddata['Te']
+         else:
+            exptnz['Te'] = profilesdata['Te']
+         if importedflag and 'ne' in importeddata:
+            exptnz['ne'] = importeddata['ne']
+         else:
+            exptnz['ne'] = profilesdata['ne']
     elif eprofile in [5,'iterdb'] and iterdbflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,eqdsk=eqdskpath)
-         if   rhopsiflag: exptnz['rhopsiN'] = iterdbdata['rhopsiN']
-         elif rhotorflag: exptnz['rhotorN'] = iterdbdata['rhotorN']
-         exptnz['Te'] = iterdbdata['Te']
-         exptnz['ne'] = iterdbdata['ne']
+         if   rhopsiflag: exptnz['rhopsi'] = iterdbdata['rhopsi']
+         elif rhotorflag: exptnz['rhotor'] = iterdbdata['rhotor']
+         if importedflag and 'Te' in importeddata:
+            exptnz['Te'] = importeddata['Te']
+         else:
+            exptnz['Te'] = iterdbdata['Te']
+         if importedflag and 'ne' in importeddata:
+            exptnz['ne'] = importeddata['ne']
+         else:
+            exptnz['ne'] = iterdbdata['ne']
+    elif eprofile in [7,'imported'] and importedflag:
+         if   rhopsiflag: exptnz['rhopsi'] = importeddata['rhopsiN']
+         elif rhotorflag: exptnz['rhotor'] = importeddata['rhotorN']
+         exptnz['Te'] = importeddata['Te']
+         exptnz['ne'] = importeddata['ne']
 
     if   iprofile in [0,'chease'] and cheaseflag:
-         if   nrhotype[1] in [0,'chease']:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              cheasedata = read_chease(cheasefpath=cheasepath,setParam=SetParam,eqdsk=eqdskpath)
-         exptnz['Ti']   = cheasedata['Ti']
-         exptnz['ni']   = cheasedata['ni']
-         exptnz['nz']   = cheasedata['nz']
-         exptnz['Zeff'] = cheasedata['Zeff']
-
+         if importedflag and 'Ti' in importeddata:
+            exptnz['Ti']   = importeddata['Ti']
+         else:
+            exptnz['Ti']   = cheasedata['Ti']
+         if importedflag and 'ni' in importeddata:
+            exptnz['ni']   = importeddata['ni']
+         else:
+            exptnz['ni']   = cheasedata['ni']
+         if importedflag and 'nz' in importeddata:
+            exptnz['nz']   = importeddata['nz']
+         else:
+            exptnz['nz']   = cheasedata['nz']
+         if importedflag and 'Zeff' in importeddata:
+            exptnz['Zeff'] = importeddata['Zeff']
+         else:
+            exptnz['Zeff'] = cheasedata['Zeff']
     elif iprofile in [3,'exptnz'] and exptnzflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              exptnzdata = read_exptnz(exptnzfpath=exptnzpath,setParam=SetParam,eqdsk=eqdskpath)
-         exptnz['Ti']   = exptnzdata['Ti']
-         exptnz['ni']   = exptnzdata['ni']
-         exptnz['nz']   = exptnzdata['nz']
-         exptnz['Zeff'] = exptnzdata['Zeff']
-
+         if importedflag and 'Ti' in importeddata:
+            exptnz['Ti']   = importeddata['Ti']
+         else:
+            exptnz['Ti']   = exptnzdata['Ti']
+         if importedflag and 'ni' in importeddata:
+            exptnz['ni']   = importeddata['ni']
+         else:
+            exptnz['ni']   = exptnzdata['ni']
+         if importedflag and 'nz' in importeddata:
+            exptnz['nz']   = importeddata['nz']
+         else:
+            exptnz['nz']   = exptnzdata['nz']
+         if importedflag and 'Zeff' in importeddata:
+            exptnz['Zeff'] = importeddata['Zeff']
+         else:
+            exptnz['Zeff'] = exptnzdata['Zeff']
     elif iprofile in [4,'profiles'] and profilesflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              profilesdata = read_profiles(profilesfpath=profilespath,setParam=SetParam,eqdsk=eqdskpath)
-         exptnz['Ti']   = profilesdata['Ti']
-         exptnz['ni']   = profilesdata['ni']
-         exptnz['nz']   = profilesdata['nz']
-         exptnz['Zeff'] = profilesdata['Zeff']
-
+         if importedflag and 'Ti' in importeddata:
+            exptnz['Ti']   = importeddata['Ti']
+         else:
+            exptnz['Ti']   = profilesdata['Ti']
+         if importedflag and 'ni' in importeddata:
+            exptnz['ni']   = importeddata['ni']
+         else:
+            exptnz['ni']   = profilesdata['ni']
+         if importedflag and 'nz' in importeddata:
+            exptnz['nz']   = importeddata['nz']
+         else:
+            exptnz['nz']   = profilesdata['nz']
+         if importedflag and 'Zeff' in importeddata:
+            exptnz['Zeff'] = importeddata['Zeff']
+         else:
+            exptnz['Zeff'] = profilesdata['Zeff']
     elif iprofile in [5,'iterdb'] and iterdbflag:
-         if   nrhotype[1] in [0,'chease'] and cheaseflag:
-              iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,chease=cheasepath)
-         elif nrhotype[1] in [1,'eqdsk'] and eqdskflag:
-              iterdbdata = read_iterdb(iterdbfpath=iterdbpath,setParam=SetParam,eqdsk=eqdskpath)
-         exptnz['Ti']   = iterdbdata['Ti']
-         exptnz['ni']   = iterdbdata['ni']
-         exptnz['nz']   = iterdbdata['nz']
-         exptnz['Zeff'] = iterdbdata['Zeff']
+         if importedflag and 'Ti' in importeddata:
+            exptnz['Ti']   = importeddata['Ti']
+         else:
+            exptnz['Ti']   = iterdbdata['Ti']
+         if importedflag and 'ni' in importeddata:
+            exptnz['ni']   = importeddata['ni']
+         else:
+            exptnz['ni']   = iterdbdata['ni']
+         if importedflag and 'nz' in importeddata:
+            exptnz['nz']   = importeddata['nz']
+         else:
+            exptnz['nz']   = iterdbdata['nz']
+         if importedflag and 'Zeff' in importeddata:
+            exptnz['Zeff'] = importeddata['Zeff']
+         else:
+            exptnz['Zeff'] = iterdbdata['Zeff']
+    elif iprofile in [7,'imported'] and importedflag:
+         exptnz['Ti']   = importeddata['Ti']
+         exptnz['ni']   = importeddata['ni']
+         exptnz['nz']   = importeddata['nz']
+         exptnz['Zeff'] = importeddata['Zeff']
 
     if 'Zi' not in exptnz: exptnz['Zi'] = 1.0
     if 'Zz' not in exptnz: exptnz['Zz'] = 6.0
@@ -1715,19 +2111,19 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
        exptnz['nz']-= exptnz['ni']*exptnz['Zi']**2
        exptnz['nz']/= exptnz['Zz']**2
 
-    if   rhopsiflag: rhosize = npy.size(exptnz['rhopsiN'])
-    elif rhotorflag: rhosize = npy.size(exptnz['rhotorN'])
+    if   rhopsiflag: rhosize = npy.size(exptnz['rhopsi'])
+    elif rhotorflag: rhosize = npy.size(exptnz['rhotor'])
 
     if outfile:
        ofh = open("EXPTNZ",'w')
        if   nrhotype[0] in [0,'rhopsi']:
-            rhosize = npy.size(exptnz['rhopsiN'])
+            rhosize = npy.size(exptnz['rhopsi'])
             ofh.write('%5d rhopsi,  Te,   ne,   Zeff,   Ti,   ni  profiles\n' % rhosize)
-            for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['rhopsiN'][i])
+            for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['rhopsi'][i])
        elif nrhotype[0] in [1,'rhotor']:
-            rhosize = npy.size(exptnz['rhotorN'])
+            rhosize = npy.size(exptnz['rhotor'])
             ofh.write('%5d rhotor,  Te,   ne,   Zeff,   Ti,   ni  profiles\n' % rhosize)
-            for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['rhotorN'][i])
+            for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['rhotor'][i])
        for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['Te'][i])
        for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['ne'][i])
        for i in range(rhosize): ofh.write('%16.6E\n' % exptnz['Zeff'][i])
@@ -1750,40 +2146,43 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
     if 'nrhomesh' in setParam:
         if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
         elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    else:                                          rhopsiflag = True
 
     eqdskflag    = False
-    cheaseflag   = False
     interpflag   = False
+    cheaseflag   = False
+    importedflag = False
     for key,value in kwargs.items():
         if   key in ['chease','cheasedata','cheasefpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       cheasedata = read_chease(cheasefpath=value.strip())
-             elif type(value)==dict:   cheasedata = value.copy()
-             if   'rhopsiN' in cheasedata and rhopsiflag:
-                  interprho = cheasedata['PSIN'][:]; interpflag = True
-             elif 'rhotorN' in cheasedata and rhotorflag:
-                  interprho = cheasedata['PHIN'][:]; interpflag = True
-             else:                                      interpflag = False
-             psi     = cheasedata['PSIN'][:];   phi     = cheasedata['PHIN'][:]
-             rhopsiN = cheasedata['rhopsiN'][:];rhotorN = cheasedata['rhotorN'][:]
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   cheasedata = read_chease(cheasefpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in cheasedata: rhopsi = cheasedata['rhopsi'][:]
+             if 'rhotor' in cheasedata: rhotor = cheasedata['rhotor'][:]
+             if 'PSIN'   in cheasedata: psi    = cheasedata['PSIN'][:];   interpflag = True
+             if 'PHIN'   in cheasedata: phi    = cheasedata['PHIN'][:];   interpflag = True
              cheaseflag = True
         elif key in ['eqdsk','eqdskdata','eqdskfpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       eqdskdata = read_eqdsk(eqdskfpath=value.strip())
-             elif type(value)==dict:   eqdskdata = value.copy()
-             if   'rhopsi' in eqdskdata and rhopsiflag:
-                  interprho = eqdskdata['PSIN'][:]; interpflag = True
-             elif 'rhotor' in eqdskdata and rhotorflag:
-                  interprho = eqdskdata['PHIN'][:]; interpflag = True
-             else:                                    interpflag = False
-             psi     = eqdskdata['PSIN'][:];  phi     = eqdskdata['PHIN'][:]
-             rhopsiN = eqdskdata['rhopsi'][:];rhotorN = eqdskdata['rhotor'][:]
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   eqdskdata = read_eqdsk(eqdskfpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in eqdskdata: rhopsi = eqdskdata['rhopsi'][:]
+             if 'rhotor' in eqdskdata: rhotor = eqdskdata['rhotor'][:]
+             if 'PSIN'   in eqdskdata: psi    = eqdskdata['PSIN'][:];  interpflag = True
+             if 'PHIN'   in eqdskdata: phi    = eqdskdata['PHIN'][:];  interpflag = True
              eqdskflag = True
+        elif key in ['imported','external','other']:
+             imported = value.copy()
+             if 'rhopsi' in imported: rhopsi = imported['rhopsi'][:]
+             if 'rhotor' in imported: rhotor = imported['rhotor'][:]
+             psi    = importeddata['rhopsi']**2;  interpflag = True
+             phi    = importeddata['rhotor']**2;  interpflag = True
+             importedflag = True
 
     profiles,units = read_profiles_file(profilesfpath.strip())
 
     PROFILESdata            = {}
-    PROFILESdata['rhopsiN'] = npy.sqrt(profiles['psinorm'])
+    PROFILESdata['rhopsi']  = npy.sqrt(profiles['psinorm'])
     PROFILESdata['PSIN']    = profiles['psinorm'][:]
     PROFILESdata['Te']      = profiles['te'][:]
     PROFILESdata['ne']      = profiles['ne'][:]
@@ -1793,12 +2192,12 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
     PROFILESdata['nz']      = profiles['nz1'][:]
 
     PROFILESdata['Pb']      = profiles['pb'][:]
-    PROFILESdata['VPOL']    = profiles['vpol1'][:]
-    PROFILESdata['VTOR']    = profiles['vtor1'][:]
+    PROFILESdata['Vpol']    = profiles['vpol1'][:]
+    PROFILESdata['Vtor']    = profiles['vtor1'][:]
 
     PROFILESdata['pressure']= profiles['ptot'][:]
 
-    nrhopsi                 = npy.size(PROFILESdata['rhopsiN'])
+    nrhopsi                 = npy.size(PROFILESdata['rhopsi'])
 
     PROFILESdata['Zi']      = profiles['z'][1]
     PROFILESdata['Zz']      = profiles['z'][0]
@@ -1814,7 +2213,7 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
        Zeff_value = Zeff_array[Zeff_diff==min(Zeff_diff)][0]
        PROFILESdata['Zeff']    = npy.ones(nrhopsi)*Zeff_value
 
-    PROFILESdata['pprime']  = derivative(x=PROFILESdata['rhopsiN']**2,fx=PROFILESdata['pressure'],method='CubicSpline')
+    PROFILESdata['pprime']  = derivative(x=PROFILESdata['PSIN'],fx=PROFILESdata['pressure'],method='CubicSpline')
 
     if   interpflag:
          if   rhopsiflag:
@@ -1824,13 +2223,13 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
               PROFILESdata['ni']      = interp(PROFILESdata['PSIN'],PROFILESdata['ni'],psi)
               PROFILESdata['nz']      = interp(PROFILESdata['PSIN'],PROFILESdata['nz'],psi)
               PROFILESdata['Pb']      = interp(PROFILESdata['PSIN'],PROFILESdata['Pb'],psi)
-              PROFILESdata['VTOR']    = interp(PROFILESdata['PSIN'],PROFILESdata['VTOR'],psi)
-              PROFILESdata['VPOL']    = interp(PROFILESdata['PSIN'],PROFILESdata['VPOL'],psi) 
+              PROFILESdata['Vtor']    = interp(PROFILESdata['PSIN'],PROFILESdata['Vtor'],psi)
+              PROFILESdata['Vpol']    = interp(PROFILESdata['PSIN'],PROFILESdata['Vpol'],psi) 
               PROFILESdata['Zeff']    = interp(PROFILESdata['PSIN'],PROFILESdata['Zeff'],psi)
               PROFILESdata['pprime']  = interp(PROFILESdata['PSIN'],PROFILESdata['pprime'],psi)
               PROFILESdata['pressure']= interp(PROFILESdata['PSIN'],PROFILESdata['pressure'],psi)
-              PROFILESdata['rhopsiN'] = rhopsiN[:]
-              PROFILESdata['rhotorN'] = rhotorN[:]
+              PROFILESdata['rhopsi']  = rhopsi[:]
+              PROFILESdata['rhotor']  = rhotor[:]
          elif rhotorflag:
               PROFILESdata['Te']       = interp(PROFILESdata['PSIN'],PROFILESdata['Te'],psi,phi,phi)
               PROFILESdata['Ti']       = interp(PROFILESdata['PSIN'],PROFILESdata['Ti'],psi,phi,phi)
@@ -1838,13 +2237,13 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
               PROFILESdata['ni']       = interp(PROFILESdata['PSIN'],PROFILESdata['ni'],psi,phi,phi)
               PROFILESdata['nz']       = interp(PROFILESdata['PSIN'],PROFILESdata['nz'],psi,phi,phi)
               PROFILESdata['Pb']       = interp(PROFILESdata['PSIN'],PROFILESdata['Pb'],psi,phi,phi)
-              PROFILESdata['VTOR']     = interp(PROFILESdata['PSIN'],PROFILESdata['VTOR'],psi,phi,phi)
-              PROFILESdata['VPOL']     = interp(PROFILESdata['PSIN'],PROFILESdata['VPOL'],psi,phi,phi)
+              PROFILESdata['Vtor']     = interp(PROFILESdata['PSIN'],PROFILESdata['Vtor'],psi,phi,phi)
+              PROFILESdata['Vpol']     = interp(PROFILESdata['PSIN'],PROFILESdata['Vpol'],psi,phi,phi)
               PROFILESdata['Zeff']     = interp(PROFILESdata['PSIN'],PROFILESdata['Zeff'],psi,phi,phi)
               PROFILESdata['pprime']   = interp(PROFILESdata['PSIN'],PROFILESdata['pprime'],psi,phi,phi)
               PROFILESdata['pressure'] = interp(PROFILESdata['PSIN'],PROFILESdata['pressure'],psi,phi,phi)
-              PROFILESdata['rhopsiN']  = rhopsiN[:]
-              PROFILESdata['rhotorN']  = rhotorN[:]
+              PROFILESdata['rhopsi']   = rhopsi[:]
+              PROFILESdata['rhotor']   = rhotor[:]
     elif rhotorflag and not interpflag:
          print("WARNING: setParam['nrhomesh'] = 1 or rhotor, but the path to a target rhotor is not provided.")
          print("         Converting the profiles to toroidal (phi) coordinates could not be done, and")
@@ -1852,88 +2251,6 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
 
     return PROFILESdata
 
-def read_iterdb_file(filename):
-    '''
-    This Code is Written by: David R. Hatch
-    It reads the iterdb file and returns three dictionaries,
-    each diectionary has five quantities:
-    electron density (NE) and temperature (TE),
-    ion density (NM1) and temperatures (TI),
-    impurity density (NM2), if any,
-    rotational velocity (VROT).
-    The three dictionaries provide the toroidal coordinate (rhotor),
-    profiles, and units for each quantity.
-    '''
-    f=open(filename,'r')
-    data_in=f.read()
-    data_linesplit=data_in.split('\n')
-
-    keep_going=1
-    i=0
-    while keep_going:
-        test=re.search(';-# OF X PTS',data_linesplit[i])
-        if test:
-            num=data_linesplit[i].split()[0]
-            num=float(num)
-            num=int(num)
-            keep_going=(1==2)
-        if i == len(data_linesplit):
-            keep_going=(1==2)
-        i=i+1
-
-    lnum=0
-    try_again=1
-    prof_out = {}
-    rhot_out = {}
-    units_out = {}
-    while try_again:
-        lnum,try_again,quantity,units,rhot,arr=get_next(data_linesplit,lnum,num)
-        prof_out[quantity]=arr
-        units_out[quantity]=units
-        rhot_out[quantity]=rhot
-    return rhot_out,prof_out,units_out
-
-def get_next(data_linesplit,lnum,num):
-    sec_num_lines = num/6
-    if num % 6 != 0:
-        sec_num_lines += 1
-    keep_going=1
-    while keep_going:
-        test=re.search('-DEPENDENT VARIABLE LABEL',data_linesplit[lnum])
-        if test :
-            quantity=data_linesplit[lnum].split()[0]
-            units=data_linesplit[lnum].split()[1]
-        test=re.search('DATA FOLLOW',data_linesplit[lnum])
-        if test:
-            keep_going=(1==2)
-        lnum=lnum+1
-
-    rhot=npy.empty(0)
-    lnum0 = lnum
-    for j in range(lnum0,lnum0+int(sec_num_lines)):
-        for k in range(6):
-            str_temp=data_linesplit[j][1+k*13:1+(k+1)*13]
-            if(str_temp):
-                temp=npy.array(data_linesplit[j][1+k*13:1+(k+1)*13],dtype='float')
-                rhot=npy.append(rhot,temp)
-        lnum=lnum+1
-    lnum=lnum+1
-
-    arr=npy.empty(0)
-    lnum0 = lnum
-    for j in range(lnum0,lnum0+int(sec_num_lines)):
-        for k in range(6):
-            str_temp=data_linesplit[j][1+k*13:1+(k+1)*13]
-            if(str_temp):
-                temp=npy.array(data_linesplit[j][1+k*13:1+(k+1)*13],dtype='float')
-                arr=npy.append(arr,temp)
-        lnum=lnum+1
-
-    lnum_out=lnum
-    try_again=1
-    if len(data_linesplit)-lnum < 10:
-        try_again=False
-    return lnum_out, try_again,quantity,units,rhot,arr
 
 def read_iterdb(iterdbfpath,setParam={},**kwargs):
     if os.path.isfile(iterdbfpath) == False:
@@ -1948,67 +2265,80 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
     if   'nrhomesh' in setParam:
          if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
          elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
+    elif kwargs.items():
+         rhopsiflag = True
+    else:
+         rhotorflag = True
 
     rhotors,profiles,units = read_iterdb_file(iterdbfpath)
 
     '''
     Normalizing the rhotor vectors before using them to interpolate the physical quantities
     '''
-    rhotorNE    = (rhotors['NE']-rhotors['NE'][0])/(rhotors['NE'][-1]-rhotors['NE'][0])
-    rhotorTE    = (rhotors['TE']-rhotors['TE'][0])/(rhotors['TE'][-1]-rhotors['TE'][0])
-    rhotorNM1   = (rhotors['NM1']-rhotors['NM1'][0])/(rhotors['NM1'][-1]-rhotors['NM1'][0])
-    rhotorTI    = (rhotors['TI']-rhotors['TI'][0])/(rhotors['TI'][-1]-rhotors['TI'][0])
-    if 'NM2' in profiles:
-     rhotorNM2  = (rhotors['NM2']-rhotors['NM2'][0])/(rhotors['NM2'][-1]-rhotors['NM2'][0])
-    if 'VROT' in profiles:
-     rhotorVROT = (rhotors['VROT']-rhotors['VROT'][0])/(rhotors['VROT'][-1]-rhotors['VROT'][0])
+    if int(rhotors['NE'][-1]) == 1:
+       rhotorNE    = rhotors['NE'][:]
+       rhotorTE    = rhotors['TE'][:]
+       rhotorNM1   = rhotors['NM1'][:]
+       rhotorTI    = rhotors['TI'][:]
+       if 'NM2' in profiles:
+          rhotorNM2  = rhotors['NM2'][:]
+       if 'VROT' in profiles:
+          rhotorVROT = rhotors['VROT'][:]
+    else:
+       rhotorNE    = (rhotors['NE']-rhotors['NE'][0])/(rhotors['NE'][-1]-rhotors['NE'][0])
+       rhotorTE    = (rhotors['TE']-rhotors['TE'][0])/(rhotors['TE'][-1]-rhotors['TE'][0])
+       rhotorNM1   = (rhotors['NM1']-rhotors['NM1'][0])/(rhotors['NM1'][-1]-rhotors['NM1'][0])
+       rhotorTI    = (rhotors['TI']-rhotors['TI'][0])/(rhotors['TI'][-1]-rhotors['TI'][0])
+       if 'NM2' in profiles:
+        rhotorNM2  = (rhotors['NM2']-rhotors['NM2'][0])/(rhotors['NM2'][-1]-rhotors['NM2'][0])
+       if 'VROT' in profiles:
+        rhotorVROT = (rhotors['VROT']-rhotors['VROT'][0])/(rhotors['VROT'][-1]-rhotors['VROT'][0])
 
     eqdskflag    = False
     cheaseflag   = False
     interpflag   = False
+    importedflag = False
     for key,value in kwargs.items():
         if   key in ['chease','cheasedata','cheasefpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       cheasedata = read_chease(cheasefpath=value.strip())
-             elif type(value)==dict:   cheasedata = value.copy()
-             if   'rhopsiN' in cheasedata and rhopsiflag:
-                  interprho = cheasedata['rhopsiN'][:]; interpflag = True
-             elif 'rhotorN' in cheasedata and rhotorflag:
-                  interprho = cheasedata['rhotorN'][:]; interpflag = True
-             rhopsi = cheasedata['rhopsiN'][:];rhotor = cheasedata['rhotorN'][:]
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   cheasedata = read_chease(cheasefpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in cheasedata: rhopsi = cheasedata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in cheasedata: rhotor = cheasedata['rhotor'][:]; interpflag = True
              cheaseflag = True
         elif key in ['eqdsk','eqdskdata','eqdskfpath']:
-             if   type(value)==str and os.path.isfile(value.strip()):
-                                       eqdskdata = read_eqdsk(eqdskfpath=value.strip())
-             elif type(value)==dict:   eqdskdata = value.copy()
-             if   'rhopsi' in eqdskdata and rhopsiflag:
-                  interprho = eqdskdata['rhopsi'][:]; interpflag = True
-             elif 'rhotor' in eqdskdata and rhotorflag:
-                  interprho = eqdskdata['rhotor'][:]; interpflag = True
-             rhopsi = eqdskdata['rhopsi'][:]; rhotor = eqdskdata['rhotor'][:]
+             if    type(value)==str and os.path.isfile(value.strip()):
+                   eqdskdata = read_eqdsk(eqdskfpath=value.strip())
+             else: raise IOError('%s file not found!' % value.strip())
+             if 'rhopsi' in eqdskdata: rhopsi = eqdskdata['rhopsi'][:]; interpflag = True
+             if 'rhotor' in eqdskdata: rhotor = eqdskdata['rhotor'][:]; interpflag = True
              eqdskflag = True
+        elif key in ['imported','external','other']:
+             imported = value.copy()
+             if 'rhopsi' in imported: rhopsi = imported['rhopsi'][:]; interpflag = True
+             if 'rhotor' in imported: rhotor = imported['rhotor'][:]; interpflag = True
+             importedflag = True
         else:
-             interprho  = rhotorNE[:]
+             rhotor  = rhotorNE[:]
 
     ITERDBdata       = {}
     ITERDBdata['Zi'] = 1.0
     ITERDBdata['Zz'] = 6.0
 
     if   rhopsiflag and interpflag:
-         ITERDBdata['rhopsiN'] = rhopsi
-         ITERDBdata['rhotorN'] = rhotor
+         ITERDBdata['rhopsi'] = rhopsi
+         ITERDBdata['rhotor'] = rhotor
     elif rhotorflag and interpflag:
-         ITERDBdata['rhopsiN'] = rhopsi
-         ITERDBdata['rhotorN'] = rhotor
+         ITERDBdata['rhopsi'] = rhopsi
+         ITERDBdata['rhotor'] = rhotor
     elif rhopsiflag and not interpflag:
          print("WARNING: setParam['nrhomesh'] = 0 or rhopsi, but the path to a target rhopsi is not provided.")
          print("         Converting the profiles to poloidal (psi) coordinates could not be done, and")
          print("         all profiles are provided in the toroidal (phi) coordinates.")
     else:
-         ITERDBdata['rhopsiN'] = interp(rhotor,rhopsi,rhotorNE)
-         ITERDBdata['rhotorN'] = rhotorNE
+         ITERDBdata['rhotor'] = rhotorNE
 
-    nrhosize = npy.size(interprho)
+    nrhosize = npy.size(ITERDBdata['rhotor'])
 
     if   rhopsiflag and interpflag:
          ITERDBdata['Te']      = interp(rhotors['TE'],profiles['TE'],rhotor,rhopsi,rhopsi)
@@ -2020,9 +2350,9 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
          else:
             ITERDBdata['nz']   = npy.zeros(nrhosize)
          if 'VROT' in profiles :
-            ITERDBdata['VROT']   = interp(rhotors['VROT'],profiles['VROT'],rhotor,rhopsi,rhopsi)
+            ITERDBdata['Vrot']   = interp(rhotors['VROT'],profiles['VROT'],rhotor,rhopsi,rhopsi)
          else:
-            ITERDBdata['VROT'] = npy.zeros(nrhosize)
+            ITERDBdata['Vrot'] = npy.zeros(nrhosize)
     elif rhotorflag and interpflag:
          ITERDBdata['ne']      = interp(rhotors['NE'],profiles['NE'],rhotor)
          ITERDBdata['Te']      = interp(rhotors['TE'],profiles['TE'],rhotor)
@@ -2033,9 +2363,9 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
          else:
             ITERDBdata['nz']   = npy.zeros(nrhosize)
          if 'VROT' in profiles :
-            ITERDBdata['VROT'] = interp(rhotors['VROT'],profiles['VROT'],rhotor)
+            ITERDBdata['Vrot'] = interp(rhotors['VROT'],profiles['VROT'],rhotor)
          else:
-            ITERDBdata['VROT'] = npy.zeros(nrhosize)
+            ITERDBdata['Vrot'] = npy.zeros(nrhosize)
     else:
          ITERDBdata['ne']      = interp(rhotors['NE'],profiles['NE'],rhotorNE)
          ITERDBdata['Te']      = interp(rhotors['TE'],profiles['TE'],rhotorNE)
@@ -2046,9 +2376,9 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
          else:
             ITERDBdata['nz']   = npy.zeros(nrhosize)
          if 'VROT' in profiles :
-            ITERDBdata['VROT'] = interp(rhotors['VROT'],profiles['VROT'],rhotorNE)
+            ITERDBdata['Vrot'] = interp(rhotors['VROT'],profiles['VROT'],rhotorNE)
          else:
-            ITERDBdata['VROT'] = npy.zeros(nrhosize)
+            ITERDBdata['Vrot'] = npy.zeros(nrhosize)
 
     ITERDBdata['Zeff']    = ITERDBdata['ni']*ITERDBdata['Zi']**2
     ITERDBdata['Zeff']   += ITERDBdata['nz']*ITERDBdata['Zz']**2
@@ -2060,9 +2390,9 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
     ITERDBdata['pressure']  *= 1.602e-19
 
     if   rhopsiflag and interpflag:
-         ITERDBdata['pprime']= derivative(x=ITERDBdata['rhopsiN'],fx=ITERDBdata['pressure'],method='CubicSpline')
+         ITERDBdata['pprime']= derivative(x=ITERDBdata['rhopsi'],fx=ITERDBdata['pressure'],method='CubicSpline')
     else:
-         ITERDBdata['pprime']= derivative(x=ITERDBdata['rhotorN'],fx=ITERDBdata['pressure'],method='CubicSpline')
+         ITERDBdata['pprime']= derivative(x=ITERDBdata['rhotor'],fx=ITERDBdata['pressure'],method='CubicSpline')
 
     return ITERDBdata
 
@@ -2076,7 +2406,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
        report = True
 
     if not os.path.isfile(OSPATH):
-       srhpath    = os.path.join(OSPATH,'*.h5')
+       srhpath    = os.path.join(OSPATH,'chease*.h5')
        h5list     = sorted(glob(srhpath))
     else:
        h5list     = [OSPATH]
@@ -2114,119 +2444,118 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
               PROFILESdata = read_profiles(proflist[0])
 
            EDENfig = plt.figure("Electron Density")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['ne'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           plt.plot(EXPTNZdata['rhopsiN'],EXPTNZdata['ne'],linestyle=':',label='EXPTNZ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['ne'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
+           plt.plot(EXPTNZdata['rhopsi'],EXPTNZdata['ne'],linestyle=':',label='EXPTNZ-'+caselabel[-6:-3])
            plt.title('Electron Density Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$n_e$')
            plt.legend()
        
            GDNEfig = plt.figure("Electron Density Gradient")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['nePrime'],label=caselabel)
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['nePrime'],label=caselabel)
            plt.title('Electron Density Gradient Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$\\nabla{n_e}$')
            plt.legend()
        
            ETMPfig = plt.figure("Electron Temperature")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['Te'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           plt.plot(EXPTNZdata['rhopsiN'],EXPTNZdata['Te'],linestyle='-',label='EXPTNZ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['Te'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
+           plt.plot(EXPTNZdata['rhopsi'],EXPTNZdata['Te'],linestyle=':',label='EXPTNZ-'+caselabel[-6:-3])
            plt.title('Electron Temperature Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$T_e$')
            plt.legend()
 
            GDTEfig = plt.figure("Electron Temperature Gradient")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['TePrime'],label=caselabel)
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['TePrime'],label=caselabel)
            plt.title('Electron Temperature Gradient Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$\\nabla{T_e}$')
            plt.legend()
        
            SFTYfig = plt.figure("Safety Factor (q)")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['q'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           plt.plot(EQDSKdata['rhopsi'], EQDSKdata['qpsi'], linestyle=':',label='EQDSK')
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['q'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
            if 'q' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['q'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['q'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
+           plt.plot(EQDSKdata['rhopsi'], EQDSKdata['q'], linestyle=':',label='EQDSK')
            plt.title("Safety Factor Profiles")
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel("q")
            plt.legend()
 
-           EQDSKPressure = mu0*EQDSKdata['pressure']/EQDSKdata['BCTR']**2
-           EXPTNZPressure = mu0*EXPTNZdata['pressure']/EQDSKdata['BCTR']**2
-           if proflist:
-              PROFILESPressure = mu0*PROFILESdata['pressure']/EQDSKdata['BCTR']**2
            TPPRfig = plt.figure("Plasma Pressure")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['PN'],  linestyle='solid', label='CHESAE-'+caselabel[-6:-3])
-           plt.plot(EQDSKdata['rhopsi'], EQDSKPressure,      linestyle='dotted', label='EQDSK')
-           plt.plot(EXPTNZdata['rhopsiN'],EXPTNZPressure,    linestyle='dashdot',label='EXPTNZ-'+caselabel[-6:-3])
-           if proflist:
-              plt.plot(PROFILESdata['rhopsiN'],PROFILESPressure,linestyle=(0,(5,1)),label='PROFILES')
-           if 'pN' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['pN'],linestyle='dashed',label='EXPEQ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['pressure'],  linestyle='solid', label='CHESAE-'+caselabel[-6:-3])
+           plt.plot(EQDSKdata['rhopsi'], EQDSKdata['pressure'],   linestyle='dotted', label='EQDSK')
+           if 'PROFILESdata' in locals() and 'pressure' in PROFILESdata:
+              plt.plot(PROFILESdata['rhopsi'],PROFILESdata['pressure'],linestyle=(0,(5,1)),label='PROFILES')
+           if 'EXPTNZdata' in locals() and 'pressure' in EXPTNZdata:
+              plt.plot(EXPTNZdata['rhopsi'],EXPTNZdata['pressure'],  linestyle='dashdot',label='EXPTNZ-'+caselabel[-6:-3])
+           if 'EXPEQdata' in locals() and 'pressure' in EXPEQdata:
+              EXPEQdata['pressure'] = EXPEQdata['pressure']*CHEASEdata['B0EXP']**2/mu0
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['pressure'],linestyle='dashed',label='EXPEQ-'+caselabel[-6:-3])
            plt.title('Plasma Pressure Profiles')
            plt.xlabel('$\\rho_{psi_N}$')
            plt.ylabel('$P$')
            plt.legend()
        
-           EQDSKPPrime = mu0*EQDSKdata['pprime']*EQDSKdata['RCTR']**2/EQDSKdata['BCTR']
-           EXPTNZPPrime = mu0*EXPTNZdata['pprime']*EQDSKdata['RCTR']**2/EQDSKdata['BCTR']
-           if proflist:
-              PROFILESPPrime = mu0*PROFILESdata['pprime']*EQDSKdata['RCTR']**2/EQDSKdata['BCTR']
            PPRMfig = plt.figure("P'")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['PPrimeN'], linestyle='solid', label='CHESAE-'+caselabel[-6:-3])
-           plt.plot(EQDSKdata['rhopsi'], EQDSKPPrime,            linestyle='dotted', label='EQDSK')
-          #plt.plot(EXPTNZdata['rhopsiN'],EXPTNZPPrime,          linestyle='dashdot',label='EXPTNZ-'+caselabel[-6:-3])
-           if proflist:
-              plt.plot(PROFILESdata['rhopsiN'],PROFILESPPrime,      linestyle=(0,(5,1)),label='PROFILES')
-           if 'pprimeN' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['pprimeN'],linestyle='dashed',label='EXPEQ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['pprime'], linestyle='solid', label='CHESAE-'+caselabel[-6:-3])
+           plt.plot(EQDSKdata['rhopsi'], EQDSKdata['pprime'],  linestyle='dotted', label='EQDSK')
+           if 'PROFILESdata' in locals() and 'pprime' in PROFILESdata:
+              plt.plot(PROFILESdata['rhopsi'],PROFILESdata['pprime'],linestyle=(0,(5,1)),label='PROFILES')
+           if 'EXPTNZdata' in locals() and 'pprime' in EXPTNZdata:
+              plt.plot(EXPTNZdata['rhopsi'],EXPTNZdata['pprime'],linestyle=(0,(5,1)),label='EXPTNZ')
+           if 'EXPEQdata' in locals() and 'pprime' in EXPEQdata:
+              EXPEQdata['pprime'] = EXPEQdata['pprime']*CHEASEdata['B0EXP']/mu0/CHEASEdata['R0EXP']**2
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['pprime'],linestyle='dashed',label='EXPEQ-'+caselabel[-6:-3])
            plt.title("P' Profiles")
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel("P'")
            plt.legend()
        
-           EQDSKTTPrime = EQDSKdata['ffprime']/EQDSKdata['BCTR']
-           TTPMfig = plt.figure("TT'")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['TTPrimeN'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           plt.plot(EQDSKdata['rhopsi'], EQDSKTTPrime,          linestyle=':',label='EQDSK')
-           if 'ttprimeN' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['ttprimeN'],linestyle='-',label='EXPEQ-'+caselabel[-6:-3])
+           TTPMfig = plt.figure("FF'")
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['ffprime'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
+           plt.plot( EQDSKdata['rhopsi'], EQDSKdata['ffprime'],linestyle=':',label='EQDSK')
+           if 'EXPEQdata' in locals() and 'ffprime' in EXPEQdata:
+              EXPEQdata['ffprime'] = EXPEQdata['ffprime']*CHEASEdata['B0EXP']
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['ffprime'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
            plt.title("TT' Profiles")
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel("TT'")
            plt.legend()
        
            ISTRfig = plt.figure("I*")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['ISTRN'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           if 'istrN' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['istrN'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['Istr'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
+           if 'EXPEQdata' in locals() and 'Istr' in EXPEQdata:
+              EXPEQdata['Istr'] = EXPEQdata['Istr']*CHEASEdata['R0EXP']*CHEASEdata['B0EXP']/mu0
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['Istr'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
            plt.title("I* Profiles")
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel("I*")
            plt.legend()
        
            ICRTfig = plt.figure("Parallel Current")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['IPRLN'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           if 'iprlN' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['iprlN'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['Iprl'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
+           if 'EXPEQdata' in locals() and 'Iprl' in EXPEQdata:
+              EXPEQdata['Iprl'] = EXPEQdata['Iprl']*CHEASEdata['R0EXP']*CHEASEdata['B0EXP']/mu0
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['Iprl'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
            plt.title('Parallel Current Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$I_{||}$')
            plt.legend()
        
            JCRTfig = plt.figure("Parallel Current Density")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['JPRLN'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
-           if 'jprlN' in EXPEQdata:
-              plt.plot(EXPEQdata['rhopsiN'],EXPEQdata['jprlN'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['Jprl'],linestyle='-',label='CHESAE-'+caselabel[-6:-3])
+           if 'EXPEQdata' in locals() and 'Jprl' in EXPEQdata:
+              EXPEQdata['Jprl'] = EXPEQdata['Jprl']*CHEASEdata['B0EXP']/CHEASEdata['B0EXP']/mu0
+              plt.plot(EXPEQdata['rhopsi'],EXPEQdata['Jprl'],linestyle='--',label='EXPEQ-'+caselabel[-6:-3])
            plt.title('Parallel Current Density Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$J_{||}$')
            plt.legend()
        
            SCRTfig = plt.figure("Bootstrap Currents")
-           plt.plot(CHEASEdata['rhopsiN'],CHEASEdata['JBSN'],label='$J_{BS}$-'+caselabel)
+           plt.plot(CHEASEdata['rhopsi'],CHEASEdata['Jbs'],label='$J_{BS}$-'+caselabel)
            plt.title('Bootstrap Current Density Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$J_{BS}$')
@@ -2234,19 +2563,19 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
        
            (CHEASEdata['PSIN2D'],CHEASEdata['CHIN2D']) = npy.meshgrid(CHEASEdata['PSIN'],CHEASEdata['CHIN'])
            BF2Dfig = plt.figure("Magnetic Field, B($\psi$,$\chi$)")
-           plt.contour(CHEASEdata['CHIN2D'],CHEASEdata['PSIN2D'],CHEASEdata['BN'])
+           plt.contour(CHEASEdata['CHIN2D'],CHEASEdata['PSIN2D'],CHEASEdata['B'])
            plt.title('Magnetic Field Profiles')
            plt.xlabel('$\chi$')
            plt.ylabel('$\psi$')
        
            JPHIfig = plt.figure("Toroidal Current")
-           plt.contour(CHEASEdata['CHIN2D'],CHEASEdata['PSIN2D'],CHEASEdata['JPHIN'],cmap=plt.cm.hot)
+           plt.contour(CHEASEdata['CHIN2D'],CHEASEdata['PSIN2D'],CHEASEdata['Jphi'],cmap=plt.cm.hot)
            plt.title('Toroidal Current Profiles')
            plt.xlabel('$\\rho_{\psi_N}$')
            plt.ylabel('$J_{\phi}$')
        
            BFRZfig = plt.figure("Magnetic Field, B(R,Z}")
-           plt.contour(CHEASEdata['RN'],CHEASEdata['ZN'],CHEASEdata['BN'])
+           plt.contour(CHEASEdata['R'],CHEASEdata['Z'],CHEASEdata['B'])
            plt.title('Magnetic Field Profiles, B(R,Z}')
            plt.xlabel('$R$')
            plt.ylabel('$Z$')
@@ -2313,7 +2642,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
            plt.close(EDENfig)
            
            PPRMfig = plt.figure("P'")
-           plt.plot(CHEASEdata['PSIN'],CHEASEdata['PPrimeN'])
+           plt.plot(CHEASEdata['PSIN'],CHEASEdata['pprime'])
            plt.title("P' Profiles")
            plt.xlabel('$\psi$')
            plt.ylabel("P'")
@@ -2321,11 +2650,11 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
            plt.close(PPRMfig)
        
            TTPMfig = plt.figure("TT'")
-           plt.plot(CHEASEdata['PSIN'],CHEASEdata['TTPrimeN'])
-           plt.title("TT' Profiles")
+           plt.plot(CHEASEdata['PSIN'],CHEASEdata['ffprime'])
+           plt.title("FF' Profiles")
            plt.xlabel('$\psi$')
            plt.ylabel("TT'")
-           TTPMfig.savefig(reportpath+"chease_ttprime.png")
+           TTPMfig.savefig(reportpath+"chease_ffprime.png")
            plt.close(TTPMfig)
        
            SFTYfig = plt.figure("Safety Factor (q)")
@@ -2348,7 +2677,13 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
 
     return 1
 
-def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
+
+def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}):
+    if   sys.version_info[0] > 3:
+         PYTHON3 = True; PYTHON2 = False
+    elif sys.version_info[0] < 3:
+         PYTHON2 = True; PYTHON3 = False
+
     CGRN = '\x1b[32m'
     CYLW = '\x1b[33m'
     CBLU = '\x1b[34m'
@@ -2376,19 +2711,21 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
                        if glob('./EXPEQ'):                 os.system('rm EXPEQ')
                        if glob('./EXPTNZ'):                os.system('rm EXPTNZ')
                        if glob('./*_EQDSK'):               os.system('rm *_EQDSK')
-                       if glob('./*_EXPTNZ'):              os.system('rm *_EXPTNZ')
                        if glob('./*CHEASE'):               os.system('rm *CHEASE')
                        if glob('./*ITERDB'):               os.system('rm *ITERDB')
-                       if glob('./*PROFILES'):             os.system('rm *PROFILES')
+                       if glob('./*_EXPTNZ'):              os.system('rm *_EXPTNZ')
                        if glob('./ogyropsi*'):             os.system('rm ogyropsi*')
+                       if glob('./*PROFILES'):             os.system('rm *PROFILES')
+                       if glob('./chease_iter*'):          os.system('rm chease_iter*')
                        if glob('./EXPEQ_EQDSK*'):          os.system('rm EXPEQ_EQDSK*')
                        if glob('./EXPEQ_EXPEQ*'):          os.system('rm EXPEQ_EXPEQ*')
+                       if glob('./EXPEQ_iter*.IN'):        os.system('rm EXPEQ_iter*.IN')
+                       if glob('./EXPTNZ_iter*.IN'):       os.system('rm EXPTNZ_iter*.IN')
                        if glob('./chease_namelist*'):      os.system('rm chease_namelist*')
                        if glob('./chease_parameters.csv'): os.system('rm chease_parameters.csv')
-                       continue
+                       sys.exit()
                     elif  selection == 4: sys.exit()
                     else: break
-
               else: raise(NameError)
           except NameError:
              print(CRED+'Select between 1,2,3, and 4 options.'+CEND)
@@ -2410,6 +2747,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
     n = 0 or 'chease'
     n = 1 or 'eqdsk'
     n = 2 or 'expeq'
+    n = 7 or 'imported'
 
     "rhomesh_src   = n" where n in meshgrid options
     Meshgrid Source options:
@@ -2426,6 +2764,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
     n = 3 or 'exptnz'
     n = 4 or 'profiles'
     n = 5 or 'iterdb'
+    n = 7 or 'imported'
     '''
 
     srcValsKeys     = srcVals.keys()
@@ -2443,7 +2782,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
          else:
               rhomesh_src    = srcVals['rhomesh_src']
     else:
-              rhomesh_src    = 1
+              rhomesh_src    = None
 
     current_update = False
     if   'current_src' in srcVals:
@@ -2453,7 +2792,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
          else:
               current_src    = srcVals['current_src']
     else:
-              current_src    = 1
+              current_src    = None
 
     pressure_update = False
     if   'pressure_src' in srcVals:
@@ -2463,7 +2802,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
          else:
               pressure_src    = srcVals['pressure_src']
     else:
-              pressure_src    = 1
+              pressure_src    = None
 
     eprofiles_update = False
     if   'eprofiles_src' in srcVals:
@@ -2473,7 +2812,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
          else:
               eprofiles_src    = srcVals['eprofiles_src']
     else:
-              eprofiles_src    = 3
+              eprofiles_src    = None
 
     iprofiles_update = False
     if   'iprofiles_src' in srcVals:
@@ -2483,7 +2822,8 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
          else:
               iprofiles_src    = srcVals['iprofiles_src']
     else:
-              iprofiles_src    = 3
+              iprofiles_src    = None
+
 
     eqdskrequired    = False
     expeqrequired    = False
@@ -2494,12 +2834,14 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
 
     if   rhomesh_src  in [0,'chease']:   cheaserequired   = True
     elif rhomesh_src  in [1,'eqdsk']:    eqdskrequired    = True
+    elif rhomesh_src  in [7,'imported']: importedrequired = True
 
     if   current_src  in [0,'chease']:   cheaserequired   = True
     elif current_src  in [1,'eqdsk']:    eqdskrequired    = True
     elif current_src  in [2,'expeq']:    expeqrequired    = True
+    elif current_src  in [7,'imported']: importedrequired = True
 
-    if not (cheaserequired or eqdskrequired):
+    if not (cheaserequired or eqdskrequired or expeqrequired):
        raise IOError('FATAL: No Geometry File is provided!')
 
     if   pressure_src in [0,'chease']:   cheaserequired   = True
@@ -2508,18 +2850,21 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
     elif pressure_src in [3,'exptnz']:   exptnzrequired   = True
     elif pressure_src in [4,'profiles']: profilesrequired = True
     elif pressure_src in [5,'iterdb']:   iterdbrequired   = True
+    elif pressure_src in [7,'imported']: importedrequired = True
 
     if   eprofiles_src in [0,'chease']:   cheaserequired   = True
     elif eprofiles_src in [3,'exptnz']:   exptnzrequired   = True
     elif eprofiles_src in [4,'profiles']: profilesrequired = True
     elif eprofiles_src in [5,'iterdb']:   iterdbrequired   = True
+    elif eprofiles_src in [7,'imported']: importedrequired = True
 
     if   iprofiles_src in [0,'chease']:   cheaserequired   = True
     elif iprofiles_src in [3,'exptnz']:   exptnzrequired   = True
     elif iprofiles_src in [4,'profiles']: profilesrequired = True
     elif iprofiles_src in [5,'iterdb']:   iterdbrequired   = True
+    elif iprofiles_src in [7,'imported']: importedrequired = True
 
-    if not (exptnzrequired or profilesrequired or iterdbrequired):
+    if not (cheaserequired or exptnzrequired or profilesrequired or iterdbrequired):
        raise IOError('FATAL: No Profiles File is provided!')
 
     if selection == 1:
@@ -2541,21 +2886,36 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
        if glob('./*PROFILES')!=[]: PROFILESexist = True
        else:                       PROFILESexist = False
 
-       if 'removeinputs' in cheaseVals:
-          if type(cheaseVals['removeinputs'])==str:
-             removeinputs = cheaseVals['removeinputs'].lower()
-          else:
-             removeinputs = cheaseVals['removeinputs']
+       if   'removeinputs' in cheaseVals:
+            if type(cheaseVals['removeinputs'])==str:
+              removeinputs = cheaseVals['removeinputs'].lower()
+            else:
+              removeinputs = cheaseVals['removeinputs']
+       elif EXPEQexist or EXPTNZexist or EQDSKexist or ITERDBexist or PROFILESexist:
+            os.system('ls')
+            if   PYTHON3:
+               removeinputs = str(input(CRED+'Remove input files from a previous run (yes/no)? '+CEND)).lower()
+            elif PYTHON2:
+               removeinputs = raw_input(CRED+'Remove input files from a previous run (yes/no)? '+CEND).lower()
        else:
-          if EXPEQexist or EXPTNZexist or EQDSKexist or ITERDBexist or PROFILESexist:
-             os.system('ls')
-             if   sys.version_info[0] > 3:
-                removeinputs = str(input(CRED+'Remove input files from a previous run (yes/no)? '+CEND)).lower()
-             elif sys.version_info[0] < 3:
-                removeinputs = raw_input(CRED+'Remove input files from a previous run (yes/no)? '+CEND).lower()
-          else:
-             removeinputs = True
+            removeinputs = True
  
+       if removeinputs in ['yes','y',1,True]:
+          removeoutputs = True
+          if glob('./*_PROFILES'): os.system('rm ./*_PROFILES')
+          if glob('./*_EXPTNZ'):   os.system('rm ./*_EXPTNZ')
+          if glob('./*_CHEASE'):   os.system('rm ./*_CHEASE')
+          if glob('./*_ITERDB'):   os.system('rm ./*_ITERDB')
+          if glob('./*_EQDSK'):    os.system('rm ./*_EQDSK')
+          if glob('./*_EXPEQ'):    os.system('rm ./*_EXPEQ')
+          PROFILESexist = False
+          CHEASEexist   = False
+          EXPTNZexist   = False
+          ITERDBexist   = False
+          EXPEQexist    = False
+          EQDSKexist    = False
+          if os.path.isfile('./chease_parameters.csv'): os.system('rm chease_parameters.csv')
+
        while True:
              print(CYLW+'Select CHEASE running mode:'+CEND)
              print(CYLW+'(1) Check Equilibrium Preservation Over Multiple Iterations.'+CEND)
@@ -2573,309 +2933,372 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
                 print(CRED+'Select between 1, 2, and 3 options.'+CEND)
                 continue
     
-       namelistParam           = {}
-       if 'removeoutputs' in cheaseVals:
-          if type(cheaseVals['removeoutputs'])==str:
-             removeoutputs = cheaseVals['removeoutputs'].lower()
+       namelistParam = {}
+       namelistUpdate = False
+       if namelistVals:
+          namelistValsKeys = namelistVals.keys()
+          if type(namelistVals[namelistVals.keys()[0]]) in [float,int,complex]:
+             for ikey in namelistVals.keys():
+                 namelistParam[ikey] = namelistVals[ikey]
           else:
-             removeoutputs = cheaseVals['removeoutputs']
-          print(CBLU+'Remove output files of previous a run (yes/no)? '+str(removeoutputs)+CEND)
-       elif removeinputs in ['yes','y',1,True]:
-          removeoutputs = True
+             namelistrecs   = len(namelistVals[namelistVals.keys()[0]])
+             if namelistrecs > 1: namelistUpdate = True
+             for ikey in namelistVals.keys():
+                 namelistParam[ikey] = namelistVals[ikey][0]
+
+       if   'removeoutputs' in cheaseVals:
+            if type(cheaseVals['removeoutputs'])==str:
+               removeoutputs = cheaseVals['removeoutputs'].lower()
+            else:
+               removeoutputs = cheaseVals['removeoutputs']
+            print(CBLU+'Remove output files of previous a run (yes/no)? '+str(removeoutputs)+CEND)
        else:
-          os.system('ls')
-          if   sys.version_info[0] >=3:
-             removeoutputs = str(input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND)).lower()
-          elif sys.version_info[0] < 3:
-             removeoutputs = raw_input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND).lower()
+            os.system('ls')
+            if   PYTHON3:
+                 removeoutputs = str(input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND)).lower()
+            elif PYTHON2:
+                 removeoutputs = raw_input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND).lower()
 
        if removeoutputs in ['yes','y',1,True]:
-          if glob('./NGA'):                   os.system('rm NGA')
-          if glob('./NDES'):                  os.system('rm NDES')
-          if glob('./*OUT*'):                 os.system('rm *OUT*')
-          if glob('./*.pdf'):                 os.system('rm *.pdf')
-          if glob('./EXPEQ'):                 os.system('rm EXPEQ')
-          if glob('./EXPTNZ'):                os.system('rm EXPTNZ')
-          if glob('./*CHEASE'):               os.system('rm *CHEASE')
-          if glob('./*ITERDB'):               os.system('rm *ITERDB')
-          if glob('./*PROFILES'):             os.system('rm *PROFILES')
-          if glob('./ogyropsi*'):             os.system('rm ogyropsi*')
-          if glob('./EXPEQ_EQDSK*'):          os.system('rm EXPEQ_EQDSK*')
-          if glob('./EXPEQ_EXPEQ*'):          os.system('rm EXPEQ_EXPEQ*')
-          if glob('./chease_namelist*'):      os.system('rm chease_namelist*')
+          if glob('./NGA'):              os.system('rm NGA')
+          if glob('./NDES'):             os.system('rm NDES')
+          if glob('./*OUT*'):            os.system('rm *OUT*')
+          if glob('./*.pdf'):            os.system('rm *.pdf')
+          if glob('./EXPEQ'):            os.system('rm EXPEQ')
+          if glob('./EXPTNZ'):           os.system('rm EXPTNZ')
+          if glob('./ogyropsi*'):        os.system('rm ogyropsi*')
+          if glob('./chease_iter*'):     os.system('rm chease_iter*')
+          if glob('./EXPEQ_EQDSK*'):     os.system('rm EXPEQ_EQDSK*')
+          if glob('./EXPEQ_EXPEQ*'):     os.system('rm EXPEQ_EXPEQ*')
+          if glob('./EXPEQ_iter*.IN'):   os.system('rm EXPEQ_iter*.IN')
+          if glob('./EXPTNZ_iter*.IN'):  os.system('rm EXPTNZ_iter*.IN')
+          if glob('./chease_namelist*'): os.system('rm chease_namelist*')
           print(CRED+'List of Available CHEASE Files:'+CEND)
           os.system('ls')
     
-       if len(glob('./*_EQDSK'))==0 or len(glob('./chease_parameters.csv'))==0:
-          shotlist = sorted(glob('./shots/*'))
-          if 'shotpath' in cheaseVals:
-             shotrec = cheaseVals['shotpath']
-             if os.path.isdir(shotrec):
-                 shotpath = shotrec
-                 if shotpath[-1]!='/': shotpath+='/'
-                 slashpos = findall(shotpath,'/')
-                 if len(slashpos)>=2:
-                     shotfile = shotpath[slashpos[-2]+1:-1]
-                 else:
-                     shotfile = shotpath[0:]
-             elif type(shotrec)==int:
-                 print('Select Shot Number: %d' %shotrec)
-                 shotpath = shotlist[shotrec-1]
-                 shotfile = shotlist[shotrec-1][8:]
-             else:
-                 raise IOError(shotrec+' IS NOT A DIRECTORY OR SHOT NUMBER. Exit!')
+       shotlist = sorted(glob('./shots/*'))
+       if 'shotpath' in cheaseVals:
+          shotrec = cheaseVals['shotpath']
+          if os.path.isdir(shotrec):
+              shotpath = shotrec
+              if shotpath[-1]!='/': shotpath+='/'
+              slashpos = findall(shotpath,'/')
+              if len(slashpos)>=2:
+                  shotfile = shotpath[slashpos[-2]+1:-1]
+              else:
+                  shotfile = shotpath[0:]
+          elif type(shotrec)==int:
+              print('Select Shot Number: %d' %shotrec)
+              shotpath = shotlist[shotrec-1]
+              shotfile = shotlist[shotrec-1][8:]
           else:
-             while True:
-                print(CYLW+'List of the available shots:'+CEND)
-                for ishot in range(len(shotlist)):
-                    print(CYLW+'(%02d) %s' % (ishot+1,shotlist[ishot][8:])+CEND)
-                try:
-                   shotrec = int(input('Select Shot Number: '))
-                   if shotrec-1 in range(len(shotlist)):
-                      print(CGRN+'Chease runs the %s shot.' % shotlist[shotrec-1][8:]+CEND)
-                      shotpath = shotlist[shotrec-1]
-                      shotfile = shotlist[shotrec-1][8:]
-                      break
-                   else:
-                      raise(NameError)
-                except NameError:
-                   print(CRED+'Choose ONLY from the %0d available shots.' % len(shotlist)+CEND)
-                   continue
-          if os.path.isfile('%s/chease_parameters.csv' % (shotpath)):
-             os.system('cp %s/chease_parameters.csv .' % shotpath)
-             namelist = namelistcreate('chease_parameters.csv',0,namelistParam)
-          else:
-             raise IOError('chease namelist file NOT FOUND in the given path!')
-
-          if   'NFUNRHO'  in namelist: rhomesh_type = int(namelist['NFUNRHO'][0])
-          elif 'NRHOMESH' in namelist: rhomesh_type = int(namelist['NRHOMESH'][0])
-          else:                        rhomesh_type = 0
-
-          if   'NPPFUN'   in namelist: pressure_type = int(namelist['NPPFUN'][0])
-          else:                        pressure_type = 4
-
-          if   'NSTTP'    in namelist: current_type  = int(namelist['NSTTP'][0])
-          else:                        current_type  = 1
-
-          if   eqdskrequired and os.path.isfile('%s/%s_EQDSK' % (shotpath,shotfile)):
-               os.system('cp   %s/%s_EQDSK .'          % (shotpath,shotfile))
-               eqdskfpath =      '%s_EQDSK'            %          (shotfile)
-          elif eqdskrequired:
-               raise IOError('EQDSK file NOT FOUND in the given path!')
-
-          if   cheaserequired and os.path.isfile('%s/%s_CHEASE' % (shotpath,shotfile)):
-               os.system('cp   %s/%s_CHEASE .'         % (shotpath,shotfile))
-               cheasefpath =     '%s_CHEASE'           %          (shotfile)
-          elif cheaserequired:
-               raise IOError('CHEASE file NOT FOUND in the given path!')
-
-          if   expeqrequired and os.path.isfile(  '%s/%s_EXPEQ' % (shotpath,shotfile)):
-               os.system('cp     %s/%s_EXPEQ ./EXPEQ'    % (shotpath,shotfile))
-               expeqfpath = 'EXPEQ'
-          elif expeqrequired:
-               raise IOError('EXPEQ file NOT FOUND in the given path!')
-
-          exptnzParam              = {}
-          exptnzParam['nrhomesh']  = [rhomesh_type,rhomesh_src]
-          exptnzParam['eprofiles'] = eprofiles_src
-          exptnzParam['iprofiles'] = iprofiles_src
-
-          if int(namelist['NBSEXPQ'][0]) != 0:
-             if   exptnzrequired   and os.path.isfile('%s/%s_EXPTNZ'  %(shotpath,shotfile)):
-                  os.system('cp   %s/%s_EXPTNZ .'    % (shotpath,shotfile))
-                  exptnzfpath =     '%s_EXPTNZ'      %          (shotfile)
-                  if   rhomesh_src in [0,'chease']:
-                       write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,chease=cheasefpath)
-                  elif rhomesh_src in [1,'eqdsk']:
-                       write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,eqdsk=eqdskfpath)
-             elif exptnzrequired:
-                  raise IOError('EXPTNZ file NOT FOUND in the given path!')
-
-             if   profilesrequired and os.path.isfile('%s/%s_PROFILES'%(shotpath,shotfile)):
-                  os.system('cp   %s/%s_PROFILES .'  % (shotpath,shotfile))
-                  profilesfpath =   '%s_PROFILES'    %          (shotfile)
-                  if   rhomesh_src in [0,'chease']:
-                       write_exptnz(setParam=exptnzParam,profiles=profilesfpath,chease=cheasefpath)
-                  elif rhomesh_src in [1,'eqdsk']:
-                       write_exptnz(setParam=exptnzParam,profiles=profilesfpath,eqdsk=eqdskfpath)
-             elif profilesrequired:
-                  raise IOError('Profiles file NOT FOUND in the given path!')
-
-             if   iterdbrequired   and os.path.isfile('%s/%s_ITERDB'  %(shotpath,shotfile)):
-                  os.system('cp   %s/%s_ITERDB .'    % (shotpath,shotfile))
-                  iterdbfpath =     '%s_ITERDB'      %          (shotfile)
-                  if   rhomesh_src in [0,'chease']:
-                       write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,chease=cheasefpath)
-                  elif rhomesh_src in [1,'eqdsk']:
-                       write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,eqdsk=eqdskfpath)
-             elif iterdbrequired:
-                  raise IOError('ITERDB file NOT FOUND in the given path!')
-
-       elif removeinputs in ['yes','y',1,True]:
-          if glob('./*_EQDSK'):               os.system('rm *_EQDSK')
-          if glob('./*_EXPTNZ'):              os.system('rm *_EXPTNZ')
-          if glob('./*_PROFILES'):            os.system('rm *_PROFILES')
-          if glob('./chease_parameters.csv'): os.system('rm chease_parameters.csv')
-          shotlist = sorted(glob('./shots/*'))
-          if 'shotpath' in cheaseVals:
-             shotrec = cheaseVals['shotpath']
-             if os.path.isdir(shotrec):
-                 shotpath = shotrec
-                 if shotpath[-1]!='/': shotpath+='/'
-                 slashpos = findall(shotpath,'/')
-                 if len(slashpos)>=2:
-                     shotfile = shotpath[slashpos[-2]+1:-1]
-                 else:
-                     shotfile = shotpath[0:]
-             elif type(shotrec)==int:
-                 print('Select Shot Number: %d' %shotrec)
-                 shotpath = shotlist[shotrec-1]
-                 shotfile = shotlist[shotrec-1][8:]
-             else:
-                 raise IOError(shotrec+' IS NOT A DIRECTORY OR SHOT NUMBER. Exit!')
-          else:
-             while True:
-                print(CYLW+'List of the available shots:'+CEND)
-                for ishot in range(len(shotlist)):
-                    print(CYLW+'(%02d) %s' % (ishot+1,shotlist[ishot][8:])+CEND)
-                try:
-                      shotrec = int(input('Select Shot Number: '))
-                      if shotrec-1 in range(len(shotlist)):
-                         print(CGRN+'Chease runs the %s shot.' % shotlist[shotrec-1][8:]+CEND)
-                         shotpath = shotlist[shotrec-1]
-                         shotfile = shotlist[shotrec-1][8:]
-                         break
-                      else:
-                         raise(NameError)
-                except NameError:
-                   print(CRED+'Choose ONLY from the %0d available shots.' % len(shotlist)+CEND)
-                   continue
-          if os.path.isfile('%s/chease_parameters.csv' % (shotpath)):
-             os.system('cp %s/chease_parameters.csv .' % shotpath)
-             namelist = namelistcreate('chease_parameters.csv',0,namelistParam)
-          else:
-             raise IOError('chease namelist file NOT FOUND in the given path!')
-
-          if   'NFUNRHO'  in namelist: rhomesh_type = int(namelist['NFUNRHO'][0])
-          elif 'NRHOMESH' in namelist: rhomesh_type = int(namelist['NRHOMESH'][0])
-          else:                        rhomesh_type = 0
-
-          if   'NPPFUN'   in namelist: pressure_type = int(namelist['NPPFUN'][0])
-          else:                        pressure_type = 4
-
-          if   'NSTTP'    in namelist: current_type  = int(namelist['NSTTP'][0])
-          else:                        current_type  = 1
-
-          if   eqdskrequired and os.path.isfile('%s/%s_EQDSK' % (shotpath,shotfile)):
-               os.system('cp   %s/%s_EQDSK .'          % (shotpath,shotfile))
-               eqdskfpath =      '%s_EQDSK'            %          (shotfile)
-          elif eqdskrequired:
-             raise IOError('EQDSK file NOT FOUND in the given path!')
-
-          if   cheaserequired and os.path.isfile('%s/%s_CHEASE' % (shotpath,shotfile)):
-               os.system('cp   %s/%s_CHEASE .'         % (shotpath,shotfile))
-               cheasefpath =     '%s_CHEASE'           %          (shotfile)
-          elif cheaserequired:
-               raise IOError('CHEASE file NOT FOUND in the given path!')
-
-          if   expeqrequired and os.path.isfile('%s/%s_EXPEQ' % (shotpath,shotfile)):
-               os.system('cp     %s/%s_EXPEQ ./EXPEQ'    % (shotpath,shotfile))
-               expeqfpath = 'EXPEQ'
-          elif expeqrequired:
-               raise IOError('EXPEQ file NOT FOUND in the given path!')
-
-          exptnzParam              = {}
-          exptnzParam['nrhomesh']  = [rhomesh_type,rhomesh_src]
-          exptnzParam['eprofiles'] = eprofiles_src
-          exptnzParam['iprofiles'] = iprofiles_src
-
-          if int(namelist['NBSEXPQ'][0]) != 0:
-             if   exptnzrequired   and os.path.isfile('%s/%s_EXPTNZ'  %(shotpath,shotfile)):
-                  os.system('cp   %s/%s_EXPTNZ .'    % (shotpath,shotfile))
-                  exptnzfpath =     '%s_EXPTNZ'      %          (shotfile)
-                  if   rhomesh_src in [0,'chease']:
-                       write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,chease=cheasefpath)
-                  elif rhomesh_src in [1,'eqdsk']:
-                       write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,eqdsk=eqdskfpath)
-             elif exptnzrequired:
-                  raise IOError('EXPTNZ file NOT FOUND in the given path!')
-
-             if   profilesrequired and os.path.isfile('%s/%s_PROFILES' %(shotpath,shotfile)):
-                  os.system('cp   %s/%s_PROFILES .'  % (shotpath,shotfile))
-                  profilesfpath =   '%s_PROFILES'    %          (shotfile)
-                  if   rhomesh_src in [0,'chease']:
-                       write_exptnz(setParam=exptnzParam,profiles=profilesfpath,chease=cheasefpath)
-                  elif rhomesh_src in [1,'eqdsk']:
-                       write_exptnz(setParam=exptnzParam,profiles=profilesfpath,eqdsk=eqdskfpath)
-             elif profilesrequired:
-                  raise IOError('Profiles file NOT FOUND in the given path!')
-
-             if   iterdbrequired   and os.path.isfile('%s/%s_ITERDB'   %(shotpath,shotfile)):
-                  os.system('cp   %s/%s_ITERDB .'    % (shotpath,shotfile))
-                  iterdbfpath =     '%s_ITERDB'      %          (shotfile)
-                  if   rhomesh_src in [0,'chease']:
-                       write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,chease=cheasefpath)
-                  elif rhomesh_src in [1,'eqdsk']:
-                       write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,eqdsk=eqdskfpath)
-             elif iterdbrequired:
-                  raise IOError('ITERDB file NOT FOUND in the given path!')
+              raise IOError(shotrec+' IS NOT A DIRECTORY OR SHOT NUMBER. Exit!')
        else:
-          namelist = namelistcreate('chease_parameters.csv',0,namelistParam)
-          if   'NFUNRHO'  in namelist: rhomesh_type = int(namelist['NFUNRHO'][0])
-          elif 'NRHOMESH' in namelist: rhomesh_type = int(namelist['NRHOMESH'][0])
-          else:                        rhomesh_type = 0
+          while True:
+             print(CYLW+'List of the available shots:'+CEND)
+             for ishot in range(len(shotlist)):
+                 print(CYLW+'(%02d) %s' % (ishot+1,shotlist[ishot][8:])+CEND)
+             try:
+                shotrec = int(input('Select Shot Number: '))
+                if shotrec-1 in range(len(shotlist)):
+                   print(CGRN+'Chease runs the %s shot.' % shotlist[shotrec-1][8:]+CEND)
+                   shotpath = shotlist[shotrec-1]
+                   if shotpath[-1]!='/': shotpath+='/'
+                   shotfile = shotlist[shotrec-1][8:]
+                   break
+                else:
+                   raise(NameError)
+             except NameError:
+                print(CRED+'Choose ONLY from the %0d available shots.' % len(shotlist)+CEND)
+                continue
 
-          if   'NPPFUN'   in namelist: pressure_type = int(namelist['NPPFUN'][0])
-          else:                        pressure_type = 4
+       if os.path.isfile('%s/%s_EXPEQ' % (shotpath,shotfile)):    EXPEQexist = True
+       if os.path.isfile('%s/%s_EQDSK' % (shotpath,shotfile)):    EQDSKexist = True
+       if os.path.isfile('%s/%s_CHEASE' % (shotpath,shotfile)):   CHEASEexist = True
+       if os.path.isfile('%s/%s_EXPTNZ' % (shotpath,shotfile)):   EXPTNZexist = True
+       if os.path.isfile('%s/%s_ITERDB' % (shotpath,shotfile)):   ITERDBexist = True
+       if os.path.isfile('%s/%s_PROFILES' % (shotpath,shotfile)): PROFILESexist = True
 
-          if   'NSTTP'    in namelist: current_type  = int(namelist['NSTTP'][0])
-          else:                        current_type  = 1
 
-          if   cheaserequired   and os.path.isfile('%s/%s_CHEASE'      %(shotpath,shotfile)):
-               os.system('cp   %s/%s_CHEASE .'    % (shotpath,shotfile))
-               cheasefpath =     '%s_CHEASE'      %          (shotfile)
-          elif cheaserequired:
-               raise IOError('CHEASE file NOT FOUND in the given path!')
+       if eprofiles_src == None:
+           if   EXPTNZexist:   eprofiles_src = 3; exptnzrequired = True
+           elif PROFILESexist: eprofiles_src = 4; proflilesrequired = True
+           elif ITERDBexist:   eprofiles_src = 5; iterdbrequired = True
+           elif CHEASEexist:   eprofiles_src = 0; cheaserequired = True
 
-          if   eqdskrequired    and os.path.isfile('%s/%s_EQDSK'   %(shotpath,shotfile)):
-               os.system('cp   %s/%s_EQDSK .'     % (shotpath,shotfile))
-               eqdskfpath =      '%s_EQDSK'       %          (shotfile)
-          elif eqdskrequired:
-               raise IOError('EQDSK file NOT FOUND in the given path!')
+       if iprofiles_src == None:
+           if   EXPTNZexist:   iprofiles_src = 3; exptnzrequired = True
+           elif PROFILESexist: iprofiles_src = 4; profilesrequired = True
+           elif ITERDBexist:   iprofiles_src = 5; iterdbrequired = True
+           elif CHEASEexist:   iprofiles_src = 0; cheaserequired = True
 
-          if   expeqrequired    and os.path.isfile('%s/%s_EXPEQ'   %(shotpath,shotfile)):
-               os.system('cp   %s/%s_EXPEQ .'     % (shotpath,shotfile))
-               expeqfpath =      '%s_EXPEQ'       %          (shotfile)
-          elif expeqrequired:
-               raise IOError('EXPEQ file NOT FOUND in the given path!')
+       if pressure_src == None:
+           if   EQDSKexist:    pressure_src = 1;  eqdskrequired = True
+           elif EXPEQexist:    pressure_src = 2;  expeqrequired = True
+           elif EXPTNZexist:   pressure_src = 3;  exptnzrequired = True
+           elif PROFILESexist: pressure_src = 4;  profilesrequired = True
+           elif ITERDBexist:   pressure_src = 5;  iterdbrequired = True
+           elif CHEASEexist:   pressure_src = 0;  cheaserequired = True
 
-          if   exptnzrequired   and os.path.isfile('%s/%s_EXPTNZ'   %(shotpath,shotfile)):
-               os.system('cp   %s/%s_EXPTNZ .'    % (shotpath,shotfile))
-               exptnzfpath =     '%s_EXPTNZ'      %          (shotfile)
-          elif exptnzrequired:
-               raise IOError('EXPTNZ file NOT FOUND in the given path!')
+       if current_src == None:
+           if   EQDSKexist:    current_src = 1;   eqdskrequired = True
+           elif EXPEQexist:    current_src = 2;   expeqrequired = True
+           elif CHEASEexist:   current_src = 0;   cheaserequired = True
 
-          if   profilesrequired and os.path.isfile('%s/%s_PROFILES' %(shotpath,shotfile)):
-               os.system('cp   %s/%s_PROFILES .'  % (shotpath,shotfile))
-               profilesfpath =   '%s_PROFILES'    %          (shotfile)
-          elif profilesrequired:
-               raise IOError('Profiles file NOT FOUND in the given path!')
+       namelist = namelistcreate(setParam=namelistParam)
 
-          if   iterdbrequired   and os.path.isfile('%s/%s_ITERDB'   %(shotpath,shotfile)):
-               os.system('cp   %s/%s_ITERDB .'    % (shotpath,shotfile))
-               iterdbfpath =     '%s_ITERDB'      %          (shotfile)
-          elif iterdbrequired:
-               raise IOError('ITERDB file NOT FOUND in the given path!')
+       if   'NFUNRHO'  in namelist: rhomesh_type = int(namelist['NFUNRHO'])
+       elif 'NRHOMESH' in namelist: rhomesh_type = int(namelist['NRHOMESH'])
+       else:                        rhomesh_type = 0
 
+       if   'NPPFUN'   in namelist: pressure_type = int(namelist['NPPFUN'])
+       else:                        pressure_type = 8
+
+       if   'NSTTP'    in namelist: current_type  = int(namelist['NSTTP'])
+       else:                        current_type  = 1
+
+       if rhomesh_src in [7,'imported']:
+          if   'rhopsi' not in importedVals and 'rhotor' not in importedVals:
+               raise ValueError('importedVals MUST contain rhopsi and rhotor with rhomesh_src = 7 or "imported"')
+       if eprofiles_src in [7,'imported']:
+          if   'Te' not in importedVals and 'ne' not in importedVals:
+               raise ValueError('importedVals MUST contain Te and ne with eprofiles_src = 7 or "imported"')
+       if iprofiles_src in [7,'imported']:
+          if   'Ti' not in importedVals and 'ni' not in importedVals and 'Zeff' not in importedVals:
+               raise ValueError('importedVals MUST contain Ti, ni, and Zeff with iprofiles_src = 7 or "imported"')
+       if pressure_src in [7,'imported']:
+          if   pressure_type in [8,'pressure'] and 'pressure' not in importedVals:
+               raise ValueError('importedVals MUST contain pressure with pressure_src = 7 or "imported"')
+          elif pressure_type in [4,'pprime']   and 'pprime'   not in importedVals:
+               raise ValueError('importedVals MUST contain pprime with pressure_src = 7 or "imported"')
+       if current_src in [7,'imported']:
+          if   current_type in [1,'ffprime'] and 'ffprime' in importedVals:
+               raise ValueError('importedVals MUST contain ffprime current_src = 7 or "imported"')
+          elif current_type in [2,'istr'] and 'Istr' in importedVals:
+               raise ValueError('importedVals MUST contain Istr current_src = 7 or "imported"')
+          elif current_type in [3,'iprl'] and 'Iprl' in importedVals:
+               raise ValueError('importedVals MUST contain Iprl current_src = 7 or "imported"')
+          elif current_type in [4,'jprl'] and 'Jprl' in importedVals:
+               raise ValueError('importedVals MUST contain Jprl current_src = 7 or "imported"')
+          elif current_type in [5,'q'] and 'q' in importedVals:
+               raise ValueError('importedVals MUST contain q current_src = 7 or "imported"')
+
+       if   eqdskrequired and EQDSKexist:
+            os.system('cp   %s/%s_EQDSK .'          % (shotpath,shotfile))
+            eqdskfpath =      '%s_EQDSK'            %          (shotfile)
+       elif eqdskrequired:
+            raise IOError('EQDSK file NOT FOUND in the given path!')
+
+       if   cheaserequired and CHEASEexist:
+            os.system('cp   %s/%s_CHEASE .'         % (shotpath,shotfile))
+            cheasefpath =     '%s_CHEASE'           %          (shotfile)
+       elif cheaserequired:
+            raise IOError('CHEASE file NOT FOUND in the given path!')
+
+       if   expeqrequired and EXPEQexist:
+            os.system('cp     %s/%s_EXPEQ ./EXPEQ'    % (shotpath,shotfile))
+            expeqfpath = 'EXPEQ'
+       elif expeqrequired:
+            raise IOError('EXPEQ file NOT FOUND in the given path!')
+
+       if   exptnzrequired  and EXPTNZexist:
+            os.system('cp   %s/%s_EXPTNZ .'    % (shotpath,shotfile))
+            exptnzfpath =     '%s_EXPTNZ'      %          (shotfile)
+       elif exptnzrequired:
+            raise IOError('EXPTNZ file NOT FOUND in the given path!')
+
+       if   profilesrequired and PROFILESexist:
+            os.system('cp   %s/%s_PROFILES .'  % (shotpath,shotfile))
+            profilesfpath =   '%s_PROFILES'    %          (shotfile)
+       elif profilesrequired:
+            raise IOError('Profiles file NOT FOUND in the given path!')
+
+       if   iterdbrequired and ITERDBexist:
+            os.system('cp   %s/%s_ITERDB .'    % (shotpath,shotfile))
+            iterdbfpath =     '%s_ITERDB'      %          (shotfile)
+       elif iterdbrequired:
+            raise IOError('ITERDB file NOT FOUND in the given path!')
+
+       if   cheaserequired and CHEASEexist:
+            os.system('cp   %s/%s_CHEASE .'    % (shotpath,shotfile))
+            iterdbfpath =     '%s_CHEASE'      %          (shotfile)
+       elif cheaserequired:
+            raise IOError('CHEASE file NOT FOUND in the given path!')
+
+       if int(namelist['NBSEXPQ']) != 0:
+          exptnzParam              = {}
+          exptnzParam['nrhomesh']  = [rhomesh_type,rhomesh_src]
+          exptnzParam['eprofiles'] = eprofiles_src
+          exptnzParam['iprofiles'] = iprofiles_src
+
+          if   rhomesh_src in [0,'chease']:
+               if   eprofiles_src in [0,'chease']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+          elif rhomesh_src in [1,'eqdsk']:
+               if   eprofiles_src in [0,'chease']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,imported=importedVals)
+          elif rhomesh_src in [7,'imported',None]:
+               if   eprofiles_src in [0,'chease']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [0,'chease']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,profiles=profilesfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,profiles=profilesfpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [4,'profiles'] and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [0,'chease']:
+                    write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [3,'exptnz']:
+                    write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [4,'profiles']:
+                    write_exptnz(setParam=exptnzParam,profiles=profilesfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [5,'iterdb']:
+                    write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,imported=importedVals)
+               elif eprofiles_src in [7,'imported'] and iprofiles_src in [7,'imported']:
+                    write_exptnz(setParam=exptnzParam,imported=importedVals)
+
+
+       os.system('ls')
        if cheaseVals!={}:
           runchease = 'yes'
           print(CBLU+'Do you want to continue? (yes/no)? '+str(runchease)+CEND)
        else:
-          os.system('ls')
-          if   sys.version_info[0] >=3:
-             runchease = str(input(CBLU+'Do you want to continue? (yes/no)? '+CEND)).lower()
-          elif sys.version_info[0] < 3:
-             runchease = raw_input(CBLU+'Do you want to continue? (yes/no)? '+CEND).lower()
+          while True:
+             if   PYTHON3:
+                  runchease = str(input(CBLU+'Do you want to continue? (yes/no)? '+CEND)).lower()
+             elif PYTHON2:
+                  runchease = raw_input(CBLU+'Do you want to continue? (yes/no)? '+CEND).lower()
+             if    runchease in ['yes','y','no','n',1,True,False]: break
+             else: print('Enter a valid value (y,yes,no,n)');      continue
+
        if runchease not in ['yes','y',1,True]: sys.exit()
 
        eqdskdata = read_eqdsk(eqdskfpath=eqdskfpath)
@@ -2893,60 +3316,241 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
        expeqParam['R0EXP']      =  R0EXP
        expeqParam['B0EXP']      =  B0EXP
 
-       if   int(namelist['NEQDSK'][0]) == 1:
+       if   int(namelist['NEQDSK']) == 1:
             print('Reading from EQDSK file.')
             os.system('cp *_EQDSK  EXPEQ')
-       elif int(namelist['NEQDSK'][0]) == 0:
+       elif int(namelist['NEQDSK']) == 0:
             print('Reading from EXPEQ file.')
-            if not os.path.isfile('./EXPEQ'):
-               if   pressure_src in [1,'eqdsk']:
-                    expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath)
-               elif pressure_src in [3,'exptnz']:
-                    expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath)
-               elif pressure_src in [4,'profiles']:
-                    expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath)
-               elif pressure_src in [5,'iterdb']:
-                    expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath)
+            if not os.path.isfile('EXPEQ'):
+               if   rhomesh_src in [0,'chease']:
+                    if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+
+               elif rhomesh_src in [1,'eqdsk']:
+                    if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals) 
+
+               elif rhomesh_src in [7,'imported',None]:
+                    if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [0,'chease']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [1,'eqdsk']    and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [2,'expeq']    and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,exptnz=exptnzfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [3,'exptnz']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,exptnz=exptnzfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,profiles=profilesfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [4,'profiles'] and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,profiles=profilesfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,iterdb=iterdbfpath,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [5,'iterdb']   and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,iterdb=iterdbfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [0,'chease']:
+                         expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [1,'eqdsk']:
+                         expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [2,'expeq']:
+                         expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,imported=importedVals)
+                    elif pressure_src in [7,'imported'] and current_src in [7,'imported']:
+                         expeqdata = write_expeq(setParam=expeqParam,imported=importedVals)
 
        namelistParam['R0EXP'] = R0EXP
        namelistParam['B0EXP'] = B0EXP
 
-       namelistParam['CSSPEC'] = 0.0
-       if namelist['NSTTP'] == 5: 
-           if   current_src in [0,'chease']:
-                if   rhomesh_src in [0,'chease']:
-                     cheasedata = read_chease(cheasefpath=cheasefpath)
-                elif rhomesh_src in [1,'eqdsk']:
-                     cheasedata = read_chease(cheasefpath=cheasefpath,eqdsk=eqdskfpath)
-                namelistParam['QSPEC']  = cheasedata['q'][0]
-           elif current_src in [1,'eqdsk']:
-                if   rhomesh_src in [0,'chease']:
-                     eqdskdata = read_eqdsk(eqdskfpath=eqdskfpath)
-                elif rhomesh_src in [1,'eqdsk']:
-                     eqdskdata = read_eqdsk(eqdskfpath=eqdskfpath,chease=cheasefpath)
-                namelistParam['QSPEC']  = eqdskdata['qpsi'][0]
-           elif current_src in [2,'expeq']:
-                if   rhomesh_src in [0,'chease']:
-                     expeqdata = read_expeq(expeqfpath=expeqfpath,chease=cheasefpath)
-                elif rhomesh_src in [1,'eqdsk']:
-                     expeqdata = read_expeq(expeqfpath=expeqfpath,eqdsk=eqdskfpath)
-                namelistParam['QSPEC']  = expeqdata['q'][0]
+       if   current_src in [0,'chease']:
+            if   rhomesh_src in [0,'chease',None]:
+                 cheasedata = read_chease(cheasefpath=cheasefpath)
+            elif rhomesh_src in [1,'eqdsk']:
+                 cheasedata = read_chease(cheasefpath=cheasefpath,eqdsk=eqdskfpath)
+            if 'q' in importedVals:
+               namelistParam['QSPEC'] = importedVals['q'][0]
+            else:
+               namelistParam['QSPEC'] = cheasedata['q'][0]
+            namelistParam['CSSPEC'] = 0.0
+       elif current_src in [1,'eqdsk']:
+            if   rhomesh_src in [0,'chease']:
+                 eqdskdata = read_eqdsk(eqdskfpath=eqdskfpath,chease=cheasefpath)
+            elif rhomesh_src in [1,'eqdsk',None]:
+                 eqdskdata = read_eqdsk(eqdskfpath=eqdskfpath)
+            if 'q' in importedVals:
+               namelistParam['QSPEC'] = importedVals['q'][0]
+            else:
+               namelistParam['QSPEC'] = eqdskdata['q'][0]
+            namelistParam['CSSPEC'] = 0.0
+       elif current_src in [2,'expeq']:
+            if   rhomesh_src in [0,'chease']:
+                 expeqdata = read_expeq(expeqfpath=expeqfpath,chease=cheasefpath)
+            elif rhomesh_src in [1,'eqdsk']:
+                 expeqdata = read_expeq(expeqfpath=expeqfpath,eqdsk=eqdskfpath)
+            elif rhomesh_src in [None]:
+                 expeqdata = read_expeq(expeqfpath=expeqfpath)
+            if   'q' in importedVals:
+                 namelistParam['QSPEC'] = importedVals['q'][0]
+            elif 'q' in expeqdata:
+                 namelistParam['QSPEC'] = expeqdata['q'][0]
+            namelistParam['CSSPEC'] = 0.0
        namelistParam['NCSCAL'] = 4
-       namelist = namelistcreate('chease_parameters.csv',0,namelistParam)
+
+       namelist = namelistcreate(setParam=namelistParam)
        
-       cheasefname = sorted(glob('./ogyropsi_*.h5'))
+       cheasefname = sorted(glob('./chease_*.h5'))
        if   len(cheasefname)==0:
             it=0
             exit_status = os.system('./chease_hdf5 chease_namelist > iter%03d.OUT' % it)
            #exit_status = os.system('./chease_hdf5 chease_namelist')
            #exit_status = subprocess.call(['./chease_hdf5','chease_namelist'])
             if abs(exit_status) > 0: sys.exit()
-            if os.path.isfile('./chease_namelist'): os.system('mv ./chease_namelist ./chease_namelist_iter%03d' % it)
-            if os.path.isfile('./ogyropsi.dat'): os.system('mv ./ogyropsi.dat ogyropsi_iter%03d.dat' % it)
-            if os.path.isfile('./ogyropsi.h5'): os.system('mv ./ogyropsi.h5 ogyropsi_iter%03d.h5' % it)
-            if os.path.isfile('./EXPEQ.OUT'): os.system('mv ./EXPEQ.OUT EXPEQ_iter%03d.OUT' % it)
-            if os.path.isfile('./EXPTNZ.OUT'): os.system('mv ./EXPTNZ.OUT EXPTNZ_iter%03d.OUT' % it)
-            if os.path.isfile('./EXPEQ_EXPEQ.IN'): os.system('mv ./EXPEQ_EXPEQ.IN EXPEQ_EXPEQ_iter%03d.IN' % it)
+            if os.path.isfile('./chease_namelist'): os.system('cp ./chease_namelist ./chease_namelist_iter%03d' % it)
+            if os.path.isfile('./ogyropsi.dat'):    os.system('cp ./ogyropsi.dat chease_iter%03d.dat'         % it)
+            if os.path.isfile('./ogyropsi.h5'):     os.system('cp ./ogyropsi.h5 chease_iter%03d.h5'           % it)
+            if os.path.isfile('./EXPEQ'):           os.system('cp ./EXPEQ EXPEQ_iter%03d.IN'                    % it)
+            if os.path.isfile('./EXPTNZ'):          os.system('cp ./EXPTNZ EXPTNZ_iter%03d.IN'                  % it)
+            if os.path.isfile('./EXPEQ.OUT'):       os.system('cp ./EXPEQ.OUT EXPEQ_iter%03d.OUT'               % it)
+            if os.path.isfile('./EXPTNZ.OUT'):      os.system('cp ./EXPTNZ.OUT EXPTNZ_iter%03d.OUT'             % it)
+            if os.path.isfile('./EXPEQ_EXPEQ.IN'):  os.system('cp ./EXPEQ_EXPEQ.IN EXPEQ_EXPEQ_iter%03d.IN'     % it)
+            if os.path.isfile('./EQDSK_EXPEQ.IN'):  os.system('cp ./EQDSK_EXPEQ.IN EQDSK_EXPEQ_iter%03d.IN'     % it)
        else:
             it=int(cheasefname[-1][-6:-3])+1
 
@@ -3019,12 +3623,9 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
           elif iterdbrequired:
              raise IOError('ITERDB file NOT FOUND in the given path!')
 
-       if 'NPROPT' in namelist:
-          current_type = int(namelist['NPROPT'][min(len(namelist['NPROPT'])-1,it+1)])
-       else:
-          current_type = int(namelist['NSTTP'][min(len(namelist['NSTTP'])-1,it+1)])
-       pressure_type   = int(namelist['NPPFUN'][min(len(namelist['NPPFUN'])-1,it+1)])
-       rhomesh_type    = int(namelist['NRHOMESH'][min(len(namelist['NRHOMESH'])-1,it+1)])
+       current_type    = int(namelist['NSTTP'])
+       pressure_type   = int(namelist['NPPFUN'])
+       rhomesh_type    = int(namelist['NRHOMESH'])
 
        expeqParam['nsttp']      = [current_type,current_src]
        expeqParam['nppfun']     = [pressure_type,pressure_src]
@@ -3036,12 +3637,12 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
        exptnzParam['eprofiles'] = eprofiles_src
        exptnzParam['iprofiles'] = iprofiles_src
 
-       cheasefpath = 'ogyropsi_iter%03d.h5' % it
+       cheasefpath = 'chease_iter%03d.h5' % it
        cheasedata = read_chease(cheasefpath=cheasefpath)
 
-       ITErr = (cheasedata['ITOR']-ITEXP)/ITEXP
+       ITErr = (cheasedata['Itor']-ITEXP)/ITEXP
        print('Iter  = ', it)
-       print('ITOR  = ', cheasedata['ITOR'])
+       print('ITOR  = ', cheasedata['Itor'])
        print('ITEXP = ', ITEXP)
        print('ITErr = ', abs(ITErr))
     
@@ -3050,7 +3651,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
 
            expeqfpath  = 'EXPEQ_iter%03d.OUT'   % it
            exptnzfpath = 'EXPTNZ_iter%03d.OUT'  % it
-           cheasefpath = 'ogyropsi_iter%03d.h5' % it
+           cheasefpath = 'chease_iter%03d.h5' % it
 
            if   rhomesh_src in [0,'chease']:
                 if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
@@ -3059,36 +3660,56 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath)
                 elif pressure_src in [0,'chease']   and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath)
+                elif pressure_src in [0,'chease']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
                 elif pressure_src in [1,'eqdsk']    and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath)
                 elif pressure_src in [1,'eqdsk']    and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath)
                 elif pressure_src in [1,'eqdsk']    and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,eqdsk=eqdskfpath)
+                elif pressure_src in [1,'eqdsk']    and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
                 elif pressure_src in [2,'expeq']    and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath)
                 elif pressure_src in [2,'expeq']    and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,eqdsk=eqdskfpath)
                 elif pressure_src in [2,'expeq']    and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath)
+                elif pressure_src in [2,'expeq']    and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
                 elif pressure_src in [3,'exptnz']   and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath)
                 elif pressure_src in [3,'exptnz']   and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,exptnz=exptnzfpath)
                 elif pressure_src in [3,'exptnz']   and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,exptnz=exptnzfpath)
+                elif pressure_src in [3,'exptnz']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
                 elif pressure_src in [4,'profiles'] and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath)
                 elif pressure_src in [4,'profiles'] and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,profiles=profilesfpath)
                 elif pressure_src in [4,'profiles'] and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,profiles=profilesfpath)
+                elif pressure_src in [4,'profiles'] and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
                 elif pressure_src in [5,'iterdb']   and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath)
                 elif pressure_src in [5,'iterdb']   and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,iterdb=iterdbfpath)
                 elif pressure_src in [5,'iterdb']   and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,iterdb=iterdbfpath)
+                elif pressure_src in [5,'iterdb']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,eqdsk=eqdskfpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
 
            elif rhomesh_src in [1,'eqdsk']:
                 if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
@@ -3097,97 +3718,294 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={}):
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath)
                 elif pressure_src in [0,'chease']   and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,chease=cheasefpath)
+                elif pressure_src in [0,'chease']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
                 elif pressure_src in [1,'eqdsk']    and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath)
                 elif pressure_src in [1,'eqdsk']    and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath)
                 elif pressure_src in [1,'eqdsk']    and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath)
+                elif pressure_src in [1,'eqdsk']    and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
                 elif pressure_src in [2,'expeq']    and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,chease=cheasefpath)
                 elif pressure_src in [2,'expeq']    and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath)
                 elif pressure_src in [2,'expeq']    and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath)
+                elif pressure_src in [2,'expeq']    and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
                 elif pressure_src in [3,'exptnz']   and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,exptnz=exptnzfpath)
                 elif pressure_src in [3,'exptnz']   and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath)
                 elif pressure_src in [3,'exptnz']   and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,exptnz=exptnzfpath)
+                elif pressure_src in [3,'exptnz']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
                 elif pressure_src in [4,'profiles'] and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,profiles=profilesfpath)
                 elif pressure_src in [4,'profiles'] and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath)
                 elif pressure_src in [4,'profiles'] and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,profiles=profilesfpath)
+                elif pressure_src in [4,'profiles'] and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
                 elif pressure_src in [5,'iterdb']   and current_src in [0,'chease']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,iterdb=iterdbfpath)
                 elif pressure_src in [5,'iterdb']   and current_src in [1,'eqdsk']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath)
                 elif pressure_src in [5,'iterdb']   and current_src in [2,'expeq']:
                      expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,iterdb=iterdbfpath)
+                elif pressure_src in [5,'iterdb']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [7,'imported'] and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+
+           elif rhomesh_src in [7,'imported',None]:
+                if   pressure_src in [0,'chease']   and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [0,'chease']   and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [0,'chease']   and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [0,'chease']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [1,'eqdsk']    and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [1,'eqdsk']    and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                elif pressure_src in [1,'eqdsk']    and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [1,'eqdsk']    and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,imported=importedVals)
+                elif pressure_src in [2,'expeq']    and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,chease=cheasefpath,imported=importedVals)
+                elif pressure_src in [2,'expeq']    and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [2,'expeq']    and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [2,'expeq']    and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [3,'exptnz']   and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                elif pressure_src in [3,'exptnz']   and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+                elif pressure_src in [3,'exptnz']   and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,exptnz=exptnzfpath,imported=importedVals)
+                elif pressure_src in [3,'exptnz']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,exptnz=exptnzfpath,imported=importedVals)
+                elif pressure_src in [4,'profiles'] and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                elif pressure_src in [4,'profiles'] and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+                elif pressure_src in [4,'profiles'] and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,profiles=profilesfpath,imported=importedVals)
+                elif pressure_src in [4,'profiles'] and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,profiles=profilesfpath,imported=importedVals)
+                elif pressure_src in [5,'iterdb']   and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [5,'iterdb']   and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [5,'iterdb']   and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,expeq=expeqfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [5,'iterdb']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [7,'imported']   and current_src in [0,'chease']:
+                     expeqdata = write_expeq(setParam=expeqParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [7,'imported']   and current_src in [1,'eqdsk']:
+                     expeqdata = write_expeq(setParam=expeqParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif pressure_src in [7,'imported']   and current_src in [2,'expeq']:
+                     expeqdata = write_expeq(setParam=expeqParam,expeq=expeqfpath,imported=importedVals)
+                elif pressure_src in [7,'imported']   and current_src in [7,'imported']:
+                     expeqdata = write_expeq(setParam=expeqParam,imported=importedVals)
+
 
            if   rhomesh_src in [0,'chease']: 
-                if   eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
+                if   eprofiles_src in [0,'chease']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath)
                 elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [4,'profiles']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,profiles=profilesfpath)
                 elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [5,'iterdb']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath)
                 elif eprofiles_src in [4,'profiles'] and iprofiles_src in [3,'exptnz']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,exptnz=exptnzfpath)
                 elif eprofiles_src in [4,'profiles'] and iprofiles_src in [4,'profiles']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath)
                 elif eprofiles_src in [4,'profiles'] and iprofiles_src in [5,'iterdb']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath)
                 elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [3,'exptnz']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,exptnz=exptnzfpath)
                 elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [4,'profiles']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,profiles=profilesfpath)
                 elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [5,'iterdb']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+
            elif rhomesh_src in [1,'eqdsk']: 
-                if   eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
+                if   eprofiles_src in [0,'chease']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,exptnz=exptnzfpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,profiles=profilesfpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,exptnz=exptnzfpath)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath)
                 elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [4,'profiles']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,profiles=profilesfpath)
                 elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [5,'iterdb']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,profiles=profilesfpath)
                 elif eprofiles_src in [4,'profiles'] and iprofiles_src in [3,'exptnz']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,exptnz=exptnzfpath)
                 elif eprofiles_src in [4,'profiles'] and iprofiles_src in [4,'profiles']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath)
                 elif eprofiles_src in [4,'profiles'] and iprofiles_src in [5,'iterdb']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,iterdb=iterdbfpath)
                 elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [3,'exptnz']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,exptnz=exptnzfpath)
                 elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [4,'profiles']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,profiles=profilesfpath)
                 elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [5,'iterdb']:
                      exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,chease=cheasefpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,eqdsk=eqdskfpath,imported=importedVals)
+
+           elif rhomesh_src in [7,'imported',None]:
+                if   eprofiles_src in [0,'chease']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [0,'chease']   and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [3,'exptnz']   and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [4,'profiles'] and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,profiles=profilesfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [5,'iterdb']   and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [0,'chease']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,chease=cheasefpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [3,'exptnz']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,exptnz=exptnzfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [4,'profiles']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,profiles=profilesfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [5,'iterdb']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,iterdb=iterdbfpath,imported=importedVals)
+                elif eprofiles_src in [7,'imported'] and iprofiles_src in [7,'imported']:
+                     exptnzdata = write_exptnz(setParam=exptnzParam,imported=importedVals)
+
 
            namelistParam['QSPEC'] = cheasedata['q'][0]
 
+           if namelistUpdate:
+              irun = min(namelistrecs-1,it+1)
+              for ikey in namelistVals.keys():
+                  namelistParam[ikey] = namelistVals[ikey][irun]
 
-           namelist = namelistcreate('chease_parameters.csv',min(len(namelist['fname'])-1,it+1),namelistParam)
-           os.system('cp ./chease_namelist chease_namelist_iter%3d' % (min(len(namelist['fname'])-1,it+1)))
+           namelist = namelistcreate(setParam=namelistParam)
+           os.system('cp chease_namelist chease_namelist_iter%03d' % (it+1))
+
            exit_status = os.system('./chease_hdf5 chease_namelist > iter%03d.OUT' % (it+1))
           #exit_status = os.system('./chease_hdf5 chease_namelist')
           #exit_status = subprocess.call(['./chease_hdf5','chease_namelist'])
            if abs(exit_status) > 0: sys.exit()
-           if os.path.isfile('./ogyropsi.dat'):   os.system('mv ./ogyropsi.dat ogyropsi_iter%03d.dat'     % (it+1))
-           if os.path.isfile('./ogyropsi.h5'):    os.system('mv ./ogyropsi.h5 ogyropsi_iter%03d.h5'       % (it+1))
-           if os.path.isfile('./EXPEQ.OUT'):      os.system('mv ./EXPEQ.OUT EXPEQ_iter%03d.OUT'           % (it+1))
-           if os.path.isfile('./EXPTNZ.OUT'):     os.system('mv ./EXPTNZ.OUT EXPTNZ_iter%03d.OUT'         % (it+1))
-           if os.path.isfile('./EXPEQ_EXPEQ.IN'): os.system('mv ./EXPEQ_EXPEQ.IN EXPEQ_EXPEQ_iter%03d.IN' % (it+1))
+           if os.path.isfile('./ogyropsi.dat'):   os.system('cp ./ogyropsi.dat chease_iter%03d.dat'     % (it+1))
+           if os.path.isfile('./ogyropsi.h5'):    os.system('cp ./ogyropsi.h5 chease_iter%03d.h5'       % (it+1))
+           if os.path.isfile('./EXPEQ'):          os.system('cp ./EXPEQ EXPEQ_iter%03d.IN'                % (it+1))
+           if os.path.isfile('./EXPTNZ'):         os.system('cp ./EXPTNZ EXPTNZ_iter%03d.IN'              % (it+1))
+           if os.path.isfile('./EXPEQ.OUT'):      os.system('cp ./EXPEQ.OUT EXPEQ_iter%03d.OUT'           % (it+1))
+           if os.path.isfile('./EXPTNZ.OUT'):     os.system('cp ./EXPTNZ.OUT EXPTNZ_iter%03d.OUT'         % (it+1))
+           if os.path.isfile('./EXPEQ_EXPEQ.IN'): os.system('cp ./EXPEQ_EXPEQ.IN EXPEQ_EXPEQ_iter%03d.IN' % (it+1))
+           if os.path.isfile('./EQDSK_EXPEQ.IN'): os.system('cp ./EQDSK_EXPEQ.IN EQDSK_EXPEQ_iter%03d.IN' % (it+1))
 
-           cheasepath = 'ogyropsi_iter%03d.h5' % (it+1)
+           cheasepath = 'chease_iter%03d.h5' % (it+1)
            cheasedata = read_chease(cheasefpath=cheasepath)
 
-           ITErr = (cheasedata['ITOR']-ITEXP)/ITEXP
+           ITErr = (cheasedata['Itor']-ITEXP)/ITEXP
            print('Iter  = ', it+1)
-           print('ITOR = ', cheasedata['ITOR'])
+           print('ITOR = ', cheasedata['Itor'])
            print('ITEXP = ', ITEXP)
            print('ITErr = ', abs(ITErr))
     

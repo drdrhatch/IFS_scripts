@@ -46,6 +46,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
     inrgf=nrgdata.keys()[0]
     if    inrgf[-3:] == 'dat': inrgfpath = inrgf[:-7]
     else:                      inrgfpath = inrgf[:-8]
+
     if 'report' not in reportpath:
        if not os.path.isdir(inrgfpath+"report"):
           os.system('mkdir '+inrgfpath+"report")
@@ -82,7 +83,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
     for inrgf in nrgdata:
         if 'dat' in inrgf:
            isimfpath = inrgf[:-7]
-           inrgfpath = inrgf[-7:]
+           inrgfpath = inrgf[-7:-4]
            inrgfext  = inrgf[-4:]
         else:
            isimfpath = inrgf[:-8]
@@ -96,7 +97,12 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
            titletxt = '(k_y=%6.3f)' % (parameters['box']['kymin'])
 
         if siunits:
-           geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
+           if   parameters['geometry']['magn_geometry'] == 'tracer_efit':
+                geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
+           elif parameters['geometry']['magn_geometry'] == 's_alpha':
+                geomfpath  = "%ss_alpha%s" %(isimfpath,inrgfext)
+           elif parameters['geometry']['magn_geometry'] == 'chease':
+                geomfpath  = "%schease%s" %(isimfpath,inrgfext)
            area = genetools.calculate_surface_area(parameters=parameters,geometry=geomfpath)
 
         time = npy.array(nrgdata[inrgf]['time'])
@@ -107,61 +113,57 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
            if parameters['general']['nonlinear']:
               nonlinear = True
               avg_bgn_t_ind = int(npy.size(time)*fraction)
-             #avg_bgn_t = time[avg_bgn_t_ind] 
         bgn_t_ind = npy.argmin(abs(npy.array(time)-bgn_t))
         end_t_ind = npy.argmin(abs(npy.array(time)-end_t))
         ntimes    = end_t_ind-bgn_t_ind+1
 
         for ispecs in specstype:
+            dens     = nrgdata[inrgf][ispecs]['n']
             nfig     = plt.figure('n-'+inrgfpath)
             axhand01 = nfig.add_subplot(1,1,1)
-            dens     = nrgdata[inrgf][ispecs]['n']
             axhand01.plot(time[bgn_t_ind:end_t_ind+1],dens[bgn_t_ind:end_t_ind+1],label=ispecs)
             axhand01.set_title('n%s' %(titletxt))
-            axhand01.set_xlabel('Time')
+            axhand01.set_xlabel('Time ($c_s/a)$')
             axhand01.set_ylabel('Density')
-            if logplots: axhand01.set_yscale('symlog')
             axhand01.legend()
 
+            upara    = nrgdata[inrgf][ispecs]['upara']
             uparafig = plt.figure('upara-'+inrgfpath)
             axhand02 = uparafig.add_subplot(1,1,1)
-            upara    = nrgdata[inrgf][ispecs]['upara']
             axhand02.plot(time[bgn_t_ind:end_t_ind+1],upara[bgn_t_ind:end_t_ind+1],label=ispecs)
             axhand02.set_title('$U_{||}%s$' %(titletxt))
-            axhand02.set_xlabel('Time')
+            axhand02.set_xlabel('Time ($c_s/a)$')
             axhand02.set_ylabel('Parallel Velocity')
-            if logplots: axhand02.set_yscale('symlog')
             axhand02.legend()
 
             if mergeplots:
+               Tpara    = nrgdata[inrgf][ispecs]['Tpara']
+               Tperp    = nrgdata[inrgf][ispecs]['Tperp']
                Tfig     = plt.figure('T-'+inrgfpath)
                axhand03 = Tfig.add_subplot(1,1,1)
-               Tpara = nrgdata[inrgf][ispecs]['Tpara']
                axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tpara[bgn_t_ind:end_t_ind+1],linestyle='-', label='$T_{\\parallel,%s}$' % ispecs)
-               Tperp = nrgdata[inrgf][ispecs]['Tperp']
                axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],linestyle='--',label='$T_{\\perp,%s}$' % ispecs)
                axhand03.set_title('$T_{\\parallel,\\perp}%s$' %(titletxt))
-               axhand03.set_xlabel('Time')
+               axhand03.set_xlabel('Time ($c_s/a)$')
                axhand03.set_ylabel('Temperature')
-               if logplots: axhand03.set_yscale('symlog')
                axhand03.legend()
             else:
+               Tpara    = nrgdata[inrgf][ispecs]['Tpara']
                Tparafig = plt.figure('Tpara-'+inrgfpath)
                axhand03 = Tparafig.add_subplot(1,1,1)
-               Tpara = nrgdata[inrgf][ispecs]['Tpara']
                axhand03.plot(time[bgn_t_ind:end_t_ind+1],T[parabgn_t_ind:end_t_ind+1],label=ispecs)
                axhand03.set_title('$T_{\\parallel}%s$' %(titletxt))
-               axhand03.set_xlabel('Time')
+               axhand03.set_xlabel('Time ($c_s/a)$')
                axhand03.set_ylabel('Parallel Temperature')
                if logplots: axhand03.set_yscale('symlog')
                axhand03.legend()
 
+               Tperp    = nrgdata[inrgf][ispecs]['Tperp']
                Tperpfig = plt.figure('Tperp-'+inrgfpath)
                axhand03 = Tperpfig.add_subplot(1,1,1)
-               Tperp = nrgdata[inrgf][ispecs]['Tperp']
                axhand03.plot(time[bgn_t_ind:end_t_ind+1],Tperp[bgn_t_ind:end_t_ind+1],label=ispecs)
                axhand03.set_title('$T_{\\perp}%s$' %(titletxt))
-               axhand03.set_xlabel('Time')
+               axhand03.set_xlabel('Time ($c_s/a)$')
                axhand03.set_ylabel('Transverse Temperature')
                if logplots: axhand03.set_yscale('symlog')
                axhand03.legend()
@@ -172,10 +174,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                if siunits:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area
-                 #PFluxes*= 1.0e6/(1.0e3*1.0e-19)
-                 #PFluxem*= 1.0e6/(1.0e3*1.0e-19)
                   axhand04.set_ylabel('Particle Flux (Particles/s)')
-                 #axhand04.set_ylabel('Particle Flux (MW/keV)')
                else:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']
@@ -187,17 +186,14 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                   axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
                   axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
                axhand04.set_title('$\\Gamma_{es,em}%s$' %(titletxt))
-               axhand04.set_xlabel('Time')
-               if logplots: axhand04.set_yscale('symlog')
+               axhand04.set_xlabel('Time ($c_s/a)$')
                axhand04.legend()
             else:
                PFluxesfig = plt.figure('PFluxes-'+inrgfpath)
                axhand04 = PFluxesfig.add_subplot(1,1,1)
                if siunits:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']*area
-                 #PFluxes*= 1.0e6/(1.0e3*1.0e-19)
                   axhand04.set_ylabel('Electrostatic Particle Flux (Particles/s)')
-                 #axhand04.set_ylabel('Electrostatic Particle Flux (MW/keV)')
                else:
                   PFluxes = nrgdata[inrgf][ispecs]['PFluxes']
                   axhand04.set_ylabel('Electrostatic Particle Flux')
@@ -206,7 +202,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                else:
                   axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxes[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{es,%s}$=%7.5e' % (ispecs,PFluxes[-1]))
                axhand04.set_title('$\\Gamma_{es}%s$' %(titletxt))
-               axhand04.set_xlabel('Time')
+               axhand04.set_xlabel('Time ($c_s/a)$')
                if logplots: axhand04.set_yscale('symlog')
                axhand04.legend()
 
@@ -214,9 +210,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                axhand04 = PFluxemfig.add_subplot(1,1,1)
                if siunits:
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']*area
-                 #PFluxem*= 1.0e6/(1.0e3*1.0e-19)
                   axhand04.set_ylabel('Electromagnetic Particle Flux (Particles/s)')
-                 #axhand04.set_ylabel('Electromagnetic Particle Flux (MW/keV)')
                else:
                   PFluxem = nrgdata[inrgf][ispecs]['PFluxem']
                   axhand04.set_ylabel('Electromagnetic Particle Flux')
@@ -225,7 +219,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                else:
                   axhand04.plot(time[bgn_t_ind:end_t_ind+1],PFluxem[bgn_t_ind:end_t_ind+1],label='$\\Gamma_{em,%s}$=%7.5e' % (ispecs,PFluxem[-1]))
                axhand04.set_title('$\\Gamma_{em}%s$' %(titletxt))
-               axhand04.set_xlabel('Time')
+               axhand04.set_xlabel('Time ($c_s/a)$')
                if logplots: axhand04.set_yscale('symlog')
                axhand04.legend()
 
@@ -249,8 +243,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                   axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],linestyle='-',label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
                   axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
                axhand05.set_title('$Q_{es,em}%s$' %(titletxt))
-               axhand05.set_xlabel('Time')
-               if logplots: axhand05.set_yscale('symlog')
+               axhand05.set_xlabel('Time ($c_s/a)$')
                axhand05.legend()
             else:
                HFluxesfig = plt.figure('HFluxes-'+inrgfpath)
@@ -267,7 +260,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                else:
                   axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxes[bgn_t_ind:end_t_ind+1],label='$Q_{es,%s}$=%7.5e' % (ispecs,HFluxes[-1]))
                axhand05.set_title('$Q_{es}%s$' %(titletxt))
-               axhand05.set_xlabel('Time')
+               axhand05.set_xlabel('Time ($c_s/a)$')
                if logplots: axhand05.set_yscale('symlog')
                axhand05.legend()
 
@@ -285,7 +278,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                else:
                   axhand05.plot(time[bgn_t_ind:end_t_ind+1],HFluxem[bgn_t_ind:end_t_ind+1],label='$Q_{em,%s}$=%7.5e' % (ispecs,HFluxem[-1]))
                axhand05.set_title('$Q_{em}%s$' %(titletxt))
-               axhand05.set_xlabel('Time')
+               axhand05.set_xlabel('Time ($c_s/a)$')
                if logplots: axhand05.set_yscale('symlog')
                axhand05.legend()
 
@@ -307,8 +300,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                   axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],linestyle='-',label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
                   axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],linestyle=':',label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
                axhand06.set_title('$\\Pi_{es,em}%s$' %(titletxt))
-               axhand06.set_xlabel('Time')
-               if logplots: axhand06.set_yscale('symlog')
+               axhand06.set_xlabel('Time ($c_s/a)$')
                axhand06.legend()
             else:
                Viscosesfig = plt.figure('Viscoses-'+inrgfpath)
@@ -324,7 +316,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                else:
                   axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscoses[bgn_t_ind:end_t_ind+1],label='$\\Pi_{es,%s}$=%7.5e' % (ispecs,Viscoses[-1]))
                axhand06.set_title('$\\Pi_{es}%s$' %(titletxt))
-               axhand06.set_xlabel('Time')
+               axhand06.set_xlabel('Time ($c_s/a)$')
                if logplots: axhand06.set_yscale('symlog')
                axhand06.legend()
 
@@ -341,9 +333,17 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
                else:
                   axhand06.plot(time[bgn_t_ind:end_t_ind+1],Viscosem[bgn_t_ind:end_t_ind+1],label='$\\Pi_{em,%s}$=%7.5e' % (ispecs,Viscosem[-1]))
                axhand06.set_title('$\\Pi_{em}%s$' %(titletxt))
-               axhand06.set_xlabel('Time')
+               axhand06.set_xlabel('Time ($c_s/a)$')
                if logplots: axhand06.set_yscale('symlog')
                axhand06.legend()
+
+        if logplots:
+           axhand01.set_yscale('symlog')
+           axhand02.set_yscale('symlog')
+           axhand03.set_yscale('symlog')
+           axhand04.set_yscale('symlog')
+           axhand05.set_yscale('symlog')
+           axhand06.set_yscale('symlog')
 
         if display: plt.show()
 
@@ -455,7 +455,12 @@ def plot_neoclass(neoclassdata,reportpath='',setParam={}):
         if 'x0' in parameters['box']:
            titletxt = '(x_0=%7.5f)' % parameters['box']['x0']
 
-        geomfpath  = "%stracer_efit%s" %(isimfpath,ineoclassfext)
+        if   parameters['geometry']['magn_geometry'] == 'tracer_efit':
+             geomfpath  = "%stracer_efit%s" %(isimfpath,inrgfext)
+        elif parameters['geometry']['magn_geometry'] == 's_alpha':
+             geomfpath  = "%ss_alpha%s" %(isimfpath,inrgfext)
+        elif parameters['geometry']['magn_geometry'] == 'chease':
+             geomfpath  = "%schease%s" %(isimfpath,inrgfext)
         area = genetools.calculate_surface_area(parameters=parameters,geometry=geomfpath)
 
         bgnind = 3000
@@ -762,12 +767,15 @@ def plot_mom(mom,param={},reportpath=''):
 def plot_field(field,param={},reportpath='',setParam={}):
    #Developed by Ehab Hassan on 2019-03-14
     ifieldf=field.keys()[0]
+    if    ifieldf[-3:] == 'dat': ifieldfpath = ifieldf[:-9]
+    else:                        ifieldfpath = ifieldf[:-10]
+    if ifieldfpath[-1] != '/':   ifieldfpath+= "/"
     if 'report' not in reportpath:
-       if not os.path.isdir(ifieldf[:-10]+"report"):
-          os.system('mkdir '+ifieldf[:-10]+"report")
-          reportpath = ifieldf[:-10]+"report/"
+       if not os.path.isdir(ifieldfpath+"report"):
+          os.system('mkdir '+ifieldfpath+"report")
+          reportpath = ifieldfpath+"report/"
        else:
-          reportpath = ifieldf[:-10]+"report/"
+          reportpath = ifieldfpath+"report/"
     elif reportpath[-1] != "/":
        reportpath += "/"
 
@@ -785,10 +793,13 @@ def plot_field(field,param={},reportpath='',setParam={}):
         if 'x_local' in param['general']:
             if param['general']['x_local']:
                 x_local = True
+                ky = param['box']['kymin']
             else:
                 x_local = False
+                n0 = param['box']['n0_global']
         else:
             x_local = True
+            ky = param['box']['kymin']
 
         if x_local:
            nx      = field[ifieldf]['nx']
@@ -805,8 +816,10 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
            if 'n0_global' in param['box']:
                phase = -npy.e**(-2.0*npy.pi*(0.0+1.0J)*param['box']['n0_global']*param['geometry']['q0'])
-           else:
+           elif 'lx' in param['box']:
                phase = -npy.e**(-npy.pi*(0.0+1.0J)*param['geometry']['shat']*param['box']['kymin']*param['box']['lx'])
+           else:
+               phase = -1.0
 
            shatsgn = int(npy.sign(param['geometry']['shat']))
            for i in range(nx/2):
@@ -818,8 +831,16 @@ def plot_field(field,param={},reportpath='',setParam={}):
                   if i < nx/2:
                        apar1d[(nx/2-i-1)*nz:(nx/2-i)*nz]=apar[:,0,-(i+1)*shatsgn]*phase**(-(i+1))
 
-           phi1d  = phi1d/phi[nz/2,0,0]
-           apar1d = apar1d/apar[nz/2,0,0]
+           if 'n0_global' in param['box']:
+              nphi = param['box']['n0_global']
+           else:
+              nphi = 0
+
+           if nfields>1:
+              phi1d  = phi1d/phi[nz/2,0,0]
+              apar1d = apar1d/apar[nz/2,0,0]
+           else:
+              phi1d  = phi1d/phi[nz/2,0,0]
 
            phinds = (abs(phi1d)>=1.0e-4)
            PHIfig = plt.figure('Phi_'+ifieldf[-4:])
@@ -827,61 +848,72 @@ def plot_field(field,param={},reportpath='',setParam={}):
            axhand.plot(zgrid[phinds],npy.real(phi1d[phinds]),color='red',label=r'$Re[\phi]$')
            axhand.plot(zgrid[phinds],npy.imag(phi1d[phinds]),color='blue',label=r'$Im[\phi]$')
            axhand.plot(zgrid[phinds],npy.abs(phi1d[phinds]),color='black',label=r'$|\phi|$')
-           axhand.set_title(r'$\phi(k_y=%1.3f)$' % float(param['box']['kymin']) )
-           axhand.set_xlabel(r'$z/\pi$',size=18)
-           axhand.legend()
-
-           aparinds = (abs(apar1d)>=1.0e-4)
-           APARfig = plt.figure('Apar_'+ifieldf[-4:])
-           axhand = APARfig.add_subplot(1,1,1)
-           axhand.plot(zgrid[aparinds],npy.real(apar1d[aparinds]),color='red',label=r'$Re[A_{||}]$')
-           axhand.plot(zgrid[aparinds],npy.imag(apar1d[aparinds]),color='blue',label=r'$Im[A_{||}]$')
-           axhand.plot(zgrid[aparinds],npy.abs(apar1d[aparinds]),color='black',label=r'$|A_{||}|$')
-           axhand.set_title(r'$A_{||}(k_y=%1.3f)$' % float(param['box']['kymin']))
-           axhand.set_xlabel(r'$z/\pi$',size=18)
-           axhand.legend()
-
-           if 'dat' in ifieldf:
-              omegafpath = ifieldf[:-9]+'omega'+ifieldf[-4:]
+           if nphi:
+              axhand.set_title(r'$\phi(k_y=%1.3f,n_{\phi} = %5d)$' % (ky,nphi))
            else:
-              omegafpath = ifieldf[:-10]+'omega'+ifieldf[-5:]
-
-           if os.path.isfile(omegafpath):
-               om = np.genfromtxt(omegafpath)
-           omega_complex = (om[2]*(0.0+1.0J) + om[1])
-
-          ##Note:  the complex frequency is (gamma + i*omega)
-           if 'dat' in ifieldf:
-              geomfpath = ifieldf[:-9]+param['geometry']['magn_geometry']+ifieldf[-4:]
-           else:
-              geomfpath = ifieldf[:-10]+param['geometry']['magn_geometry']+ifieldf[-5:]
-           gpars,geometry = read_geometry_local(geomfpath)
-           jacxB = geometry['gjacobian']*geometry['gBfield']
-
-           gradphi = fd_d1_o4(phi1d,zgrid)
-           for i in range(int(param['box']['nx0'])):
-               gradphi[int(param['box']['nz0'])*i:int(param['box']['nz0'])*(i+1)] = gradphi[int(param['box']['nz0'])*i:int(param['box']['nz0'])*(i+1)]/jacxB[:]/npy.pi
-
-           genlist = list(zip(abs(npy.real(gradphi))>=1.0e-6,abs(npy.real(omega_complex*apar1d))>=1.0e-6,abs(npy.imag(gradphi))>=1.0e-6,abs(npy.imag(omega_complex*apar1d))>=1.0e-6))
-           geninds = [(i or j or k or l) for (i,j,k,l) in genlist]
-           wAPARfig = plt.figure('wApar_dPhi_'+ifieldf[-4:])
-           axhand = wAPARfig.add_subplot(1,1,1)
-           axhand.plot(zgrid[geninds],npy.real(gradphi)[geninds],'-',color = 'red',label=r'$Re[\nabla \phi]$')
-           axhand.plot(zgrid[geninds],npy.imag(gradphi)[geninds],'-.',color = 'red',label=r'$Im[\nabla \phi]$')
-           axhand.plot(zgrid[geninds],-npy.real(omega_complex*apar1d)[geninds],'-',color = 'black',label=r'$Re[\omega A_{||}]$')
-           axhand.plot(zgrid[geninds],-npy.imag(omega_complex*apar1d)[geninds],'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
-           axhand.set_title(r'$\nabla\phi,\partial_tA_{||}(k_y=%1.3f)$' % float(param['box']['kymin']))
+              axhand.set_title(r'$\phi(k_y=%1.3f)$' % (ky))
            axhand.set_xlabel(r'$z/\pi$',size=18)
            axhand.legend()
+
+           if nfields>1:
+              aparinds = (abs(apar1d)>=1.0e-4)
+              APARfig = plt.figure('Apar_'+ifieldf[-4:])
+              axhand = APARfig.add_subplot(1,1,1)
+              axhand.plot(zgrid[aparinds],npy.real(apar1d[aparinds]),color='red',label=r'$Re[A_{||}]$')
+              axhand.plot(zgrid[aparinds],npy.imag(apar1d[aparinds]),color='blue',label=r'$Im[A_{||}]$')
+              axhand.plot(zgrid[aparinds],npy.abs(apar1d[aparinds]),color='black',label=r'$|A_{||}|$')
+              if nphi:
+                 axhand.set_title(r'$A_{||}(k_y=%1.3f,n_{\phi} = %5d)$' % (ky,nphi))
+              else:
+                 axhand.set_title(r'$A_{||}(k_y=%1.3f)$' % (ky))
+              axhand.set_xlabel(r'$z/\pi$',size=18)
+              axhand.legend()
+
+              if 'dat' in ifieldf:
+                 omegafpath = ifieldf[:-9]+'omega'+ifieldf[-4:]
+              else:
+                 omegafpath = ifieldf[:-10]+'omega'+ifieldf[-5:]
+
+              if os.path.isfile(omegafpath):
+                  om = np.genfromtxt(omegafpath)
+              omega_complex = (om[2]*(0.0+1.0J) + om[1])
+
+          #   #Note:  the complex frequency is (gamma + i*omega)
+              if 'dat' in ifieldf:
+                 geomfpath = ifieldf[:-9]+param['geometry']['magn_geometry']+ifieldf[-4:]
+              else:
+                 geomfpath = ifieldf[:-10]+param['geometry']['magn_geometry']+ifieldf[-5:]
+              gpars,geometry = read_geometry_local(geomfpath)
+              jacxB = geometry['gjacobian']*geometry['gBfield']
+
+              gradphi = fd_d1_o4(phi1d,zgrid)
+              for i in range(int(param['box']['nx0'])):
+                  gradphi[int(param['box']['nz0'])*i:int(param['box']['nz0'])*(i+1)] = gradphi[int(param['box']['nz0'])*i:int(param['box']['nz0'])*(i+1)]/jacxB[:]/npy.pi
+
+              genlist = list(zip(abs(npy.real(gradphi))>=1.0e-6,abs(npy.real(omega_complex*apar1d))>=1.0e-6,abs(npy.imag(gradphi))>=1.0e-6,abs(npy.imag(omega_complex*apar1d))>=1.0e-6))
+              geninds = [(i or j or k or l) for (i,j,k,l) in genlist]
+              wAPARfig = plt.figure('wApar_dPhi_'+ifieldf[-4:])
+              axhand = wAPARfig.add_subplot(1,1,1)
+              axhand.plot(zgrid[geninds],npy.real(gradphi)[geninds],'-',color = 'red',label=r'$Re[\nabla \phi]$')
+              axhand.plot(zgrid[geninds],npy.imag(gradphi)[geninds],'-.',color = 'red',label=r'$Im[\nabla \phi]$')
+              axhand.plot(zgrid[geninds],-npy.real(omega_complex*apar1d)[geninds],'-',color = 'black',label=r'$Re[\omega A_{||}]$')
+              axhand.plot(zgrid[geninds],-npy.imag(omega_complex*apar1d)[geninds],'-.',color = 'black',label=r'$Im[\omega A_{||}]$')
+              if nphi:
+                 axhand.set_title(r'$\nabla\phi,\partial_tA_{||}(k_y=%1.3f,n_{\phi} = %5d)$' % (ky,nphi))
+              else:
+                 axhand.set_title(r'$\nabla\phi,\partial_tA_{||}(k_y=%1.3f)$' % (ky))
+              axhand.set_xlabel(r'$z/\pi$',size=18)
+              axhand.legend()
 
            if display: plt.show()
 
            PHIfig.savefig(reportpath+'phi_mode_%s.png' % (ifieldf[-4:]))
            plt.close(PHIfig)
-           APARfig.savefig(reportpath+'apar_mode_%s.png' % (ifieldf[-4:]))
-           plt.close(APARfig)
-           wAPARfig.savefig(reportpath+'wApar_dPhi_mode_%s.png' % (ifieldf[-4:]))
-           plt.close(wAPARfig)
+           if nfields>1:
+              APARfig.savefig(reportpath+'apar_mode_%s.png' % (ifieldf[-4:]))
+              plt.close(APARfig)
+              wAPARfig.savefig(reportpath+'wApar_dPhi_mode_%s.png' % (ifieldf[-4:]))
+              plt.close(wAPARfig)
 
         elif not x_local:
            nx      = field[ifieldf]['nx']
@@ -948,7 +980,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
               cbar=PHI2Dfig.colorbar(cp)
               cbar.set_label(r'$|\phi|$')
               axhand.set_ylabel(r'$z/\pi$',fontsize=13)
-              axhand.set_title(r'Electric Potential ($\phi$)',fontsize=13)
+              axhand.set_title(r'Electric Potential ($\phi(n_{tor}=%4d)$)' % n0,fontsize=13)
               axhand = PHI2Dfig.add_subplot(3,1,2)
               cp=axhand.contourf(xgrid,zgrid,npy.real(phi_bnd[:,0,:]),70)
               cbar=PHI2Dfig.colorbar(cp)
@@ -981,7 +1013,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
                   axhand.axvline(xgrid[ix],color='black')
               axhand.set_xlabel(r'$\rho_{tor}$',fontsize=13)
               axhand.set_ylabel(r'$\phi_{m}$',fontsize=13)
-              axhand.set_title(r'$\phi_m$')
+              axhand.set_title(r'$\phi_m(n_{tor}=%4d)$' % n0)
 
            zgrid = np.arange(nz)/float(nz-1)*(2.0-(2.0/nz))-1.0
 
@@ -1006,7 +1038,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
                   axhand.axvline(xgrid[ix],color='black')
               axhand.set_xlabel(r'$\rho_{tor}$',fontsize=13)
               axhand.set_ylabel(r'$A_{||m}$',fontsize=13)
-              axhand.set_title(r'$A_{||m}$')
+              axhand.set_title(r'$A_{||m}(n_{tor}=%4d)$' % n0)
 
            if plot_ballooning:
               APAR2Dfig = plt.figure('Apar2d_'+ifieldf[-4:])
@@ -1018,7 +1050,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
               cbar=APAR2Dfig.colorbar(cp)
               cbar.set_label(r'$|A_{||}|$')
               axhand.set_ylabel(r'$z/\pi$',fontsize=13)
-              axhand.set_title(r'Magnetic Potential ($A_{||}$)',fontsize=13)
+              axhand.set_title(r'Magnetic Potential ($A_{||}(n_{tor}=%4d)$)' % n0,fontsize=13)
               axhand = APAR2Dfig.add_subplot(3,1,2)
               cp=axhand.contourf(xgrid,zgrid,npy.real(apar[:,0,:]),70)
               cbar=APAR2Dfig.colorbar(cp)
@@ -1123,18 +1155,32 @@ def plot_field(field,param={},reportpath='',setParam={}):
 
               if display: plt.show()
 
-              PHI2Dfig.savefig(reportpath+'phi_mode_%s_2d.png' % (ifieldf[-4:]))
-              plt.close(PHI2Dfig)
-              PHI1Dfig.savefig(reportpath+'phi_mode_%s.png' % (ifieldf[-4:]))
-              plt.close(PHI1Dfig)
-              APAR1Dfig.savefig(reportpath+'apar_mode_%s.png' % (ifieldf[-4:]))
-              plt.close(APAR1Dfig)
-              APAR2Dfig.savefig(reportpath+'apar_mode_%s_2d.png' % (ifieldf[-4:]))
-              plt.close(APAR2Dfig)
-              REPAR2Dfig.savefig(reportpath+'real_Epar_mode_%s_2d.png' % (ifieldf[-4:]))
-              plt.close(REPAR2Dfig)
-              IEPAR2Dfig.savefig(reportpath+'imag_Epar_mode_%s_2d.png' % (ifieldf[-4:]))
-              plt.close(IEPAR2Dfig)
+              if '.dat'==ifieldf[-4:]:
+                 PHI2Dfig.savefig(reportpath+'phi_mode_2d.png')
+                 plt.close(PHI2Dfig)
+                 PHI1Dfig.savefig(reportpath+'phi_mode.png')
+                 plt.close(PHI1Dfig)
+                 APAR1Dfig.savefig(reportpath+'apar_mode.png')
+                 plt.close(APAR1Dfig)
+                 APAR2Dfig.savefig(reportpath+'apar_mode_2d.png')
+                 plt.close(APAR2Dfig)
+                 REPAR2Dfig.savefig(reportpath+'real_Epar_mode_2d.png')
+                 plt.close(REPAR2Dfig)
+                 IEPAR2Dfig.savefig(reportpath+'imag_Epar_mode_2d.png')
+                 plt.close(IEPAR2Dfig)
+              else:
+                 PHI2Dfig.savefig(reportpath+'phi_mode_%s_2d.png' % (ifieldf[-4:]))
+                 plt.close(PHI2Dfig)
+                 PHI1Dfig.savefig(reportpath+'phi_mode_%s.png' % (ifieldf[-4:]))
+                 plt.close(PHI1Dfig)
+                 APAR1Dfig.savefig(reportpath+'apar_mode_%s.png' % (ifieldf[-4:]))
+                 plt.close(APAR1Dfig)
+                 APAR2Dfig.savefig(reportpath+'apar_mode_%s_2d.png' % (ifieldf[-4:]))
+                 plt.close(APAR2Dfig)
+                 REPAR2Dfig.savefig(reportpath+'real_Epar_mode_%s_2d.png' % (ifieldf[-4:]))
+                 plt.close(REPAR2Dfig)
+                 IEPAR2Dfig.savefig(reportpath+'imag_Epar_mode_%s_2d.png' % (ifieldf[-4:]))
+                 plt.close(IEPAR2Dfig)
 
     return 1
 
