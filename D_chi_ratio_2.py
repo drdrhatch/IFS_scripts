@@ -77,7 +77,7 @@ elif pars['n_spec'] ==3:
     temp_e, dens_e = read_species_tempdens(q_e,pars)
 
     time, nrgi, nrgz, nrge = read_from_nrg_files(pars,suffix,False)
-    print "Actually....species order: first ion, second impurity, third electron"
+    print "Assumed species order: first ion, second impurity, third electron"
     Dochi_i, Q_i, Qes_i, Qem_i, Gamma_i, D_i, chi_i = \
         D_over_chi(time,nrgi,omn_i,omt_i,temp_i,dens_i)
     Dochi_e, Q_e, Qes_e, Qem_e, Gamma_e, D_e, chi_e = \
