@@ -5,21 +5,24 @@ import math
 import csv
 from read_EFIT import *
 from read_iterdb_file import *
-#Last edited by Max Curie 02/26/2020
-#Supported by David R Hatch 
+#Last edited by Max Curie 02/27/2020
+#Supported by David R Hatch's script mtmDopplerFreqs.py
 
 
 #**************Block for user******************************************
 #**************Setting up*********************************************
 n0_min=1         #minmum mode number (include) that finder will cover
 n0_max=100       #maximum mode number (include) that finder will cover
-omega_percent=20 #choose the omega within the top that percent defined in(0,100)
+omega_percent=2 #choose the omega within the top that percent defined in(0,100)
 f_max=500        #upper bound of the frequency experimentally observed 
 f_min=100        #lower bound of the frequency experimentally observed 
 plot = 1         #set to 1 if you want to plot the result
 report=1         #set to 1 if you want to export a csv report
-iterdb_file_name = 'DIIID175823.iterdb' #name of the iterdb file
-geomfile = 'g175823.04108_257x257'      #name of the magnetic geometry file
+q_scale=0.994        #set the q to q*q_scale
+#iterdb_file_name = 'DIIID175823.iterdb' #name of the iterdb file
+#geomfile = 'g175823.04108_257x257'      #name of the magnetic geometry file
+iterdb_file_name = 'DIIID174082.iterdb' #name of the iterdb file
+geomfile = 'g174082.3000'      #name of the magnetic geometry file
 x0_center=0.96                          #radial location where ky will be calculated.
 Lref = 7.3893888417726761E-01           #minor radius of the device in meter
 Bref_Gauss = 19774.                     #Magnetic field in Gauss at the center of the simulation
@@ -32,7 +35,7 @@ mref = 2.                               # mass of ion in proton mass
 rhot0, te0, ti0, ne0, ni0, nz0, vrot0 = read_iterdb_file(iterdb_file_name)
 EFITdict = read_EFIT(geomfile)
 xgrid = EFITdict['psipn']
-q = EFITdict['qpsi']
+q = EFITdict['qpsi']*q_scale
 
 uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10.)
 
@@ -69,7 +72,9 @@ ky_range=[]
 n0_range=[]
 m0_range=[]
 f_range=[]
+f_GENE_range=[]
 x_range=[]
+drive_range=[]
 
 for n0 in range(n0_min,n0_max+1):
     n0_TEMP=0
@@ -147,7 +152,9 @@ for n0 in range(n0_min,n0_max+1):
                     n0_range.append(n)
                     m0_range.append(m)
                     f_range.append(omega[ix])
+                    f_GENE_range.append(omega[ix]*2*np.pi*1000/gyroFreq[ix])
                     x_range.append(uni_rhot[ix])
+                    drive_range.append(omega[ix]/omega_max)
 
                 else:
                     if plot==1:
@@ -181,15 +188,30 @@ print('***************End of report******************')
 if report==1:
     with open('mode_number_finder_report.csv','w') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['n ','m ','kymin          ','frequency(kHz)           ','location(r/a)            '])
+        data.writerow(['n ','m ','kymin          ','frequency(kHz)           ','location(r/a)            ','omega_GENE    ','Drive'])
         for i in range(len(n0_range)):
-            data.writerow([n0_range[i],m0_range[i],ky_range[i],f_range[i],x_range[i]])
+            data.writerow([n0_range[i],m0_range[i],ky_range[i],f_range[i],x_range[i],f_GENE_range[i],drive_range[i]])
     csvfile.close()
+
+ky_range2=ky_range
+n0_range2=n0_range
+m0_range2=m0_range
+f_range2=f_range
+x_range2=x_range
+
+#for i in range(len(n0_range)):
+#    for j in range(len(n0_range)):
+#        if min(x_range2[i]*Lref) >= rhoref:
+#        	countinue
+#        else:
+            
 
 plt.clf()
 plt.title('Frequency Spectrum')
 plt.ylabel('frequency (kHz)') 
 for i in range(len(n0_range)):
    plt.axhline(f_range[i],color='red',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
+plt.xlim(0,1)
+plt.ylim(0,500)
 plt.show()
 
