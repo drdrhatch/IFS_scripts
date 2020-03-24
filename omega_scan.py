@@ -12,8 +12,8 @@ options,args=parser.parse_args()
 
 alg = options.alg
 single = int(options.single)
-print "alg",alg
-print "single",single
+print( "alg",alg)
+print( "single",single)
 
 cwd = os.getcwd()
 filelist = []
@@ -28,5 +28,5 @@ else:
     filelist.sort()
 
 for suffix in filelist:
-    print "suffix",suffix
+    print( "suffix",suffix)
     omega_calc(suffix,alg = alg)
