@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from ParIO import *
-from matplotlib.mlab import griddata
+#from matplotlib.mlab import griddata
+from scipy.interpolate import griddata
 import optparse as op
 from interp import *
 #"""
@@ -78,8 +79,8 @@ def classify_modes(data_in,pars):
         epar_threshold = 0.4
         epar_threshold2 = 0.7
     dz = 2.0/float(pars['nz0'])
-    print "epar_threshold",epar_threshold
-    print "epar_threshold2",epar_threshold2
+    print( "epar_threshold",epar_threshold)
+    print( "epar_threshold2",epar_threshold2)
     for i in range(ntot):
         #Test for numerical modes (i.e. grid-scale z)
         if data_in[i,7] <= 2*dz:
@@ -120,9 +121,9 @@ def classify_modes(data_in,pars):
             modes.append('ID')
         if len(modes) == i:
             modes.append('other')
-    print "len(modes)",len(modes)
+    print( "len(modes)",len(modes))
     for i in range(len(modes)):
-        print i+1,modes[i]
+        print( i+1,modes[i])
     return modes
 
 def get_grids(data_in):
@@ -138,7 +139,7 @@ def get_grids(data_in):
  
     if len(x0_array) == 0:
         x0_array = np.append(x0_array,0.0)
-    nkxc = numscan_tot/(len(ky_array)*len(x0_array)) 
+    nkxc = int(numscan_tot/(len(ky_array)*len(x0_array)) )
     kxc_array = np.empty((len(ky_array),nkxc))
     kxc_array[:,:] = -1.0
     fill_index = np.empty(len(ky_array),dtype='int')
@@ -147,7 +148,7 @@ def get_grids(data_in):
         kyind = np.argmin(abs(data_in[i,0]-ky_array))
         if data_in[i,2] not in kxc_array[kyind,:]:
             fill_index[kyind] += 1
-            print 'kyind',kyind
+            print( 'kyind',kyind)
             kxc_array[kyind,fill_index[kyind]] = data_in[i,2]
 
     #print 'fill_index',fill_index
@@ -165,7 +166,7 @@ def get_ky_arrays(data_in):
     for i in range(numscan_tot):
         if data[i,0] not in ky_array:
             ky_array = np.append(ky_array,data[i,0])
-    data_ky = np.empty((len(ky_array),numscan_tot/len(ky_array),num_col))
+    data_ky = np.empty((len(ky_array),int(numscan_tot/len(ky_array)),num_col))
     index_ky = np.empty(len(ky_array),dtype='int')
     index_ky[:] = -1
     for i in range(numscan_tot):
@@ -265,13 +266,17 @@ if len(kxc_array[0,:]) > 1:
 
     kxcmax = kxc_array[-1,-1]
     kymax = ky_array[-1]
-    print 'kxcmax'
-    kxgrid = np.arange(100)/99.0*kxcmax
-    kygrid = np.arange(100)/99.0*kymax
-    zi = griddata(data[:,2],data[:,0],data[:,4],kxgrid,kygrid,interp='linear')
-    z2 = griddata(data[:,2],data[:,0],data[:,10],kxgrid,kygrid,interp='linear')
+    print( 'kxcmax')
+    #kxgrid = np.arange(100)/99.0*kxcmax
+    #kygrid = np.arange(100)/99.0*kymax
+    #zi = griddata((data[:,2],data[:,0]),data[:,4],(kxgrid,kygrid))#,interp='linear')
+    #z2 = griddata((data[:,2],data[:,0]),data[:,10],(kxgrid,kygrid))#,interp='linear')
+    #print(np.shape(zi))
     #plt.contourf(kxgrid,kygrid,zi,50,cmap=plt.cm.RdYlBu)
-    plt.contourf(kxgrid,kygrid,zi,50)
+    print(data[:,4])
+    grs = np.nan_to_num(data[:,4],nan=0.0)
+    print(grs)
+    plt.tricontourf(data[:,2],data[:,0],grs,levels=50)
     plt.colorbar()
     for i in range(len(data[:,0])):
         if modes[i] == 'MTM':
@@ -341,7 +346,7 @@ if len(kxc_array[0,:]) > 1:
             col = 'green'
         plt.plot(ky_array[i],max_gr_ky[i],color=col,marker=mark,markeredgewidth=2,markersize=5)
         #plt.plot(ky_array[i],max_gr_ky_fr[i],color=col,marker=mark,markeredgewidth=2,markersize=5)
-        print "modes_ky[i]",modes_ky[i]
+        print( "modes_ky[i]",modes_ky[i])
         f.write(str(ky_array[i])+'\t'+modes_ky[i]+'\n')
       
     f.close()
@@ -351,7 +356,7 @@ if len(kxc_array[0,:]) > 1:
     
 
 if 'x_local' not in pars or pars['x_local']:
-    print "Local scan detected."
+    print( "Local scan detected.")
     data = filter_numerical_modes(data,pars)    
     
     f=open('modes_ky.dat','w')
@@ -375,7 +380,7 @@ if 'x_local' not in pars or pars['x_local']:
             mark = '+'
             col = 'green'
         plt.plot(ky_array[i],data[i,4],color=col,marker=mark,markeredgewidth=2,markersize=5)
-        print "modes[i]",modes[i]
+        print( "modes[i]",modes[i])
         f.write(str(ky_array[i])+'\t'+modes[i]+'\n')
       
     f.close()
