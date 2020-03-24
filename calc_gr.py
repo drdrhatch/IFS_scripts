@@ -90,13 +90,13 @@ def calc_gr2(suffix,nspec=2,ncols=10):
     fit =  np.e**(2.0*avg_gr[0]*time[start_index:])*(nrgi[-1,0]/np.e**(2.0*avg_gr[0]*time[-1]))
     err = abs(np.sum(nrgi[start_index:,0]-fit[:])/np.sum(nrgi[start_index:,0]))
 
-    print "Calculated growth rate:",avg_gr[0]
-    print "Error:",err
+    print( "Calculated growth rate:",avg_gr[0])
+    print( "Error:",err)
     if err > 1.0e-2:
         plt.semilogy(time,nrgi[:,0],'-x')
         plt.semilogy(time[start_index-500:],np.e**(2.0*avg_gr[0]*time[start_index-500:])*(nrgi[-1,0]/np.e**(2.0*avg_gr[0]*time[-1])),'--',color='green')
         plt.show()
-        test = raw_input("Accept calculation? (y=yes)")
+        test = input("Accept calculation? (y=yes)")
         if test=='y':
             return avg_gr[0]
         else:
@@ -139,7 +139,7 @@ def calc_gr(suffix,nspec=2,ncols=10):
         #plt.savefig('nrge_plot.ps')
         #plt.close()
 
-    start_time=raw_input("Enter start time:")
+    start_time=input("Enter start time:")
     start_time=int(float(start_time))
     start_index=np.argmin(abs(time-start_time))
     ntime=len(time)-start_index
@@ -219,31 +219,31 @@ def calc_gr(suffix,nspec=2,ncols=10):
     momname.append('Qem_e  ')
 
     #print avg_gr
-    print "Select growth rate to keep:"
-    print "Average Growth Rates:"
-    print "0:ni      ",avg_gr[0]
-    print "1:Tpar_i  ",avg_gr[1]
-    print "2:Tperp_i ",avg_gr[2]
-    print "3:Qes_i   ",avg_gr[3]
-    print "4:Qem_i   ",avg_gr[4]
-    print "5:ne      ",avg_gr[5]
-    print "6:Tpar_e  ",avg_gr[6]
-    print "7:Tperp_e ",avg_gr[7]
-    print "8:Qes_e   ",avg_gr[8]
-    print "9:Qem_e  ",avg_gr[9]
-    print "-1:none"
+    print( "Select growth rate to keep:")
+    print( "Average Growth Rates:")
+    print( "0:ni      ",avg_gr[0])
+    print( "1:Tpar_i  ",avg_gr[1])
+    print( "2:Tperp_i ",avg_gr[2])
+    print( "3:Qes_i   ",avg_gr[3])
+    print( "4:Qem_i   ",avg_gr[4])
+    print( "5:ne      ",avg_gr[5])
+    print( "6:Tpar_e  ",avg_gr[6])
+    print( "7:Tperp_e ",avg_gr[7])
+    print( "8:Qes_e   ",avg_gr[8])
+    print( "9:Qem_e  ",avg_gr[9])
+    print( "-1:none")
 
 
-    selection=raw_input()
+    selection=input()
     sel=int(float(selection)) 
     if sel<10 and sel > -1:
-        print "Returning growth rate for"+momname[sel]+':',avg_gr[sel]
+        print( "Returning growth rate for"+momname[sel]+':',avg_gr[sel])
         return avg_gr[sel]
     elif sel==-1:
-        print "Returning -1: not sufficently converged."
+        print( "Returning -1: not sufficently converged.")
         return -1
     else:
-        print "Invalid selection.  Returning -1: not sufficiently converged."
+        print( "Invalid selection.  Returning -1: not sufficiently converged.")
         return -1
 
 
