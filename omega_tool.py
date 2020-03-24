@@ -86,26 +86,26 @@ def omega_calc2(suffix):
         sys.exit("n_spec must be 1,2,3.")
 
     #Check for rescaling
-    print "tmax",time[-1]
-    print "tmin",time[0]
+    print( "tmax",time[-1])
+    print( "tmin",time[0])
     for i in range(len(time)-1):
         if abs(nrgi[i,0] - nrgi[i+1,0])/(nrgi[i,0]+nrgi[i+1,0]) > 0.8:
-            print "Rescaling at :",time[i]
+            print( "Rescaling at :",time[i])
 
     if calc_from_apar:
-       print "Calculating growth rate from apar."
+       print( "Calculating growth rate from apar.")
        #plt.semilogy(time,nrge[:,7])
        #plt.xlabel('time')
        #plt.show()
     else:
-       print "Calculating growth rate from phi."
+       print( "Calculating growth rate from phi.")
        #plt.semilogy(time,nrgi[:,6])
        #plt.title('QiES')
        #plt.xlabel('time')
        #plt.show()
 
-    tstart = float(raw_input("Enter start time: "))
-    tend = float(raw_input("Enter end time: "))
+    tstart = float(input("Enter start time: "))
+    tend = float(input("Enter end time: "))
 
     field = fieldfile('field'+suffix,pars)
     istart = np.argmin(abs(np.array(field.tfld)-tstart))
@@ -126,14 +126,14 @@ def omega_calc2(suffix):
         if pars['n_fields'] > 1:
             apar = np.append(apar,field.apar()[imaxa[0],0,imaxa[1]])
         time = np.append(time,field.tfld[i])
-    print "phi_0,phi_f",phi[0],phi[-1]     
+    print( "phi_0,phi_f",phi[0],phi[-1]     )
     if len(phi) < 2.0:
         output_zeros = True
         omega = 0.0+0.0J
     else:
         output_zeros = False
         if calc_from_apar:
-            print "Calculating omega from apar"
+            print( "Calculating omega from apar")
             if pars['n_fields'] < 2:
                 stop
             omega = np.log(apar/np.roll(apar,1))
@@ -145,7 +145,7 @@ def omega_calc2(suffix):
             omega = np.log(phi/np.roll(phi,1))
             dt = time - np.roll(time,1)
             omega /= dt
-            print 'omega',omega
+            print( 'omega',omega)
             omega = np.delete(omega,0)
             time = np.delete(time,0)
     
@@ -155,10 +155,10 @@ def omega_calc2(suffix):
     if output_zeros:
         sys.exit( "Error: not enough time points in field selection.")
     else:
-        print "Gamma:",gam_avg
-        print "Omega:",om_avg
+        print( "Gamma:",gam_avg)
+        print( "Omega:",om_avg)
         f=open('new_omega'+suffix,'w')
-        f.write('# omega_calc2\n   '+'kymin'+'        '+'gamma'+'        '+'omega\n'+'        '+'std_gamma'+'        '+'std_omega\n')
+        f.write('# omega_calc2  \n '+'#kymin'+'        '+'gamma'+'        '+'omega'+'        '+'std_gamma'+'        '+'std_omega\n')
         f.write(str(pars['kymin'])+'    '+str(gam_avg)+'    '+str(om_avg)+'    '+str(np.nan)+ '    '+
     
 str(np.nan)+'\n')
