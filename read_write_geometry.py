@@ -116,13 +116,13 @@ def read_geometry_global(file_name):
         else:
             parameters[lsplit[0].strip()] = float(lsplit[1])
         l += 1
-        print parameters[lsplit[0].strip()]
+        print(parameters[lsplit[0].strip()])
 
 
     #lsplit = file_lines[11].split('=')
     #parameters[lsplit[0].strip()] = lsplit[1].strip()[1:-1]
     
-    print parameters
+    print(parameters)
     
     geometry = {}
     geometry['q'] = np.empty(0)
@@ -148,7 +148,7 @@ def read_geometry_global(file_name):
     for ln in range(len(file_lines)):
         if file_lines[ln].strip() in geometry:
             this_var = file_lines[ln].strip()
-            print this_var
+            print(this_var)
             ln2 = ln+1
             this_line = file_lines[ln2]
             while not this_line.strip() in geometry:
