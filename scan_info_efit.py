@@ -29,7 +29,7 @@ os.chdir('scanfiles'+suffix)
 
 
 def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
-    #print "len(time)",len(time)
+    #print( "len(time)",len(time))
     #print "len(v1)",len(v1)
     #print "len(v2)",len(v2)
     dt=time[1]-time[0]
@@ -61,7 +61,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print( "WARNING: neg_loc < corr_time")
         corr_time = neg_loc
 
     if show_plot:
@@ -78,13 +78,13 @@ if 'edge_opt' in pars:
     edge_opt = pars['edge_opt']
 else:
     edge_opt = 1
-print "edge_opt = ",edge_opt
+print( "edge_opt = ",edge_opt)
 if pars['n_spec'] == 3:
-   print "Species 3:",pars['name3']   
+   print( "Species 3:",pars['name3']   )
 #   dummy = raw_input("Warning!  Assuming species 3 is electrons (press any key):\n")
 
-print type(pars['scan_dims'])
-print "scan_dims",pars['scan_dims']
+print( type(pars['scan_dims']))
+print( "scan_dims",pars['scan_dims'])
 if type(pars['scan_dims']) == str:
     scan_dims = pars['scan_dims'].split()
     numscan_tot = 1
@@ -93,7 +93,7 @@ if type(pars['scan_dims']) == str:
 else:
     numscan_tot = pars['scan_dims']
 
-print "Total number of runs: ", numscan_tot 
+print( "Total number of runs: ", numscan_tot )
 
 #Test if global scan
 if 'x_local' in pars and not pars['x_local']:
@@ -102,12 +102,12 @@ if 'x_local' in pars and not pars['x_local']:
         par0 = Parameters()
         scan_num = '000'+str(i+1)
         scan_num = scan_num[-4:]
-        print "Analyzing ",scan_num
+        print( "Analyzing ",scan_num)
         if os.path.isfile('parameters_'+scan_num):
             par0.Read_Pars('parameters_'+scan_num)
             pars0 = par0.pardict
             nspec = pars0['n_spec']
-            print pars0['kymin']
+            print( pars0['kymin'])
             scan_info[i,0] = pars0['kymin']
             if 'x0' in pars0:
                 scan_info[i,1] = pars0['x0']
@@ -221,15 +221,15 @@ if 'x_local' in pars and not pars['x_local']:
             #plt.plot(zgrid,(np.imag(gradphi[2:-2,0,3*field.nx/4])),'-.',color = 'black')
             #plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,3*field.nx/4])),'-.',color = 'red')
             #plt.show()
-            print "omega_complex",omega_complex
+            print( "omega_complex",omega_complex)
             
             diff = np.sum(np.abs(gradphi[2:-2,:] + omega_complex*apar[:,:]))
             phi_cont = np.sum(np.abs(gradphi[2:-2,:]))
             apar_cont = np.sum(np.abs(omega_complex*apar[:,:]))
-            print "diff",diff
-            print "phi_cont",phi_cont
-            print "apar_cont",apar_cont
-            print "diff/abs",diff/(phi_cont+apar_cont)
+            print( "diff",diff)
+            print( "phi_cont",phi_cont)
+            print( "apar_cont",apar_cont)
+            print( "diff/abs",diff/(phi_cont+apar_cont))
             scan_info[i,11] = diff/(phi_cont+apar_cont)
             scan_info[i,12] = np.nan           
             scan_info[i,13] = np.nan
@@ -254,7 +254,7 @@ if 'x_local' in pars and not pars['x_local']:
                 tn,nrg1,nrg2,nrg3=get_nrg0('_'+scan_num,nspec=nspec)
                 scan_info[i,10]=nrg2[-1,7]/(abs(nrg2[-1,6])+abs(nrg1[-1,6]))
             else:
-                sys.exit("Not ready for nspec>2")
+                sys.exit("Not ready for nspec>3")
         else:
             scan_info[i,10] = np.nan
     
@@ -278,12 +278,12 @@ else:
         par0 = Parameters()
         scan_num = '000'+str(i+1)
         scan_num = scan_num[-4:]
-        print "Analyzing ",scan_num
+        print( "Analyzing ",scan_num)
         if os.path.isfile('parameters_'+scan_num):
             par0.Read_Pars('parameters_'+scan_num)
             pars0 = par0.pardict
             nspec = pars0['n_spec']
-            print pars0['kymin']
+            print( pars0['kymin'])
             scan_info[i,0] = pars0['kymin']
             if 'x0' in pars0:
                 scan_info[i,1] = pars0['x0']
@@ -356,14 +356,14 @@ else:
                 #print "pars0['kymin']",pars0['kymin']
                 #print "pars0['lx']",pars0['lx']
                 phase_fac = -np.e**(-np.pi*(0.0+1.0J)* pars0['shat']*pars0['kymin']*pars0['lx'])
-            for j in range(field.nx/2):
-                phi[(j+field.nx/2)*field.nz:(j+field.nx/2+1)*field.nz]=field.phi()[:,0,j]*phase_fac**j
+            for j in range(int(field.nx/2)):
+                phi[(j+int(field.nx/2))*field.nz:(j+int(field.nx/2)+1)*field.nz]=field.phi()[:,0,j]*phase_fac**j
                 if j < field.nx/2:
-                    phi[(field.nx/2-j-1)*field.nz : (field.nx/2-j)*field.nz ]=field.phi()[:,0,-1-j]*phase_fac**(-(j+1))
+                    phi[(int(field.nx/2)-j-1)*field.nz : (int(field.nx/2)-j)*field.nz ]=field.phi()[:,0,-1-j]*phase_fac**(-(j+1))
                 if pars0['n_fields']>1:
-                    apar[(j+field.nx/2)*field.nz:(j+field.nx/2+1)*field.nz]=field.apar()[:,0,j]*phase_fac**j
+                    apar[(j+int(field.nx/2))*field.nz:(j+int(field.nx/2)+1)*field.nz]=field.apar()[:,0,j]*phase_fac**j
                     if j < field.nx/2:
-                        apar[(field.nx/2-j-1)*field.nz : (field.nx/2-j)*field.nz ]=field.apar()[:,0,-1-j]*phase_fac**(-(j+1))
+                        apar[(int(field.nx/2)-j-1)*field.nz : (int(field.nx/2)-j)*field.nz ]=field.apar()[:,0,-1-j]*phase_fac**(-(j+1))
         
             zavg=np.sum(np.abs(phi)*np.abs(zgrid))/np.sum(np.abs(phi))
             scan_info[i,6] = zavg
@@ -405,7 +405,7 @@ else:
             apar0 = aparkx
             #Calculate <gamma_HB> / gamma
             geomfile = pars0['magn_geometry'][1:-1]+'_'+scan_num
-            print "geomfile",geomfile
+            print( "geomfile",geomfile)
             #zgrid_pp, Btheta_R, prefactor = get_abs_psi_prime(geomfile,'../rbsProfs',pars['x0'])
             #rbs = np.genfromtxt('../rbsProfs')
             #ind_rbs_x0 = np.argmin(abs(rbs[:,0]-pars['x0'])) 
@@ -443,11 +443,11 @@ else:
                kxgrid[0] = pars0['kx_center']
             else:
                kxgrid[0] = 0.0  
-            for k in range(pars0['nx0']/2):
+            for k in range(int(pars0['nx0']/2)):
                kxgrid[k+1] = kxgrid[0] + (k+1)*dkx  
-            for k in range((pars0['nx0']-1)/2):
+            for k in range(int((pars0['nx0']-1)/2)):
                kxgrid[-k-1] = kxgrid[0] - (k+1)*dkx  
-            print "kxgrid",kxgrid
+            print( "kxgrid",kxgrid)
             kxavg = 0.0
             #Get eigenmode averaged |kx|
             for k in range(pars0['nx0']):
@@ -472,13 +472,13 @@ else:
             scan_info[i,13] = np.nan
     
         if os.path.isfile('nrg_'+scan_num):
-            for i in range(3):
-              if 'name'+str(i+1) in pars:
-                 print "i",i,str(i+1),pars['name'+str(i+1)][1:-1]
-                 if pars['name'+str(i+1)][1:-1] == 'e':
-                    especnum = i+1
-                 if pars['name'+str(i+1)][1:-1] == 'i':
-                    ispecnum = i+1
+            for i0 in range(3):
+              if 'name'+str(i0+1) in pars:
+                 print( "i0",i0,str(i0+1),pars['name'+str(i0+1)][1:-1])
+                 if pars['name'+str(i0+1)][1:-1] == 'e':
+                    especnum = i0+1
+                 if pars['name'+str(i0+1)][1:-1] == 'i':
+                    ispecnum = i0+1
             if nspec==1:
                 tn,nrg1=get_nrg0('_'+scan_num,nspec=nspec)
                 scan_info[i,10]=nrg1[-1,7]/abs(nrg1[-1,6])
@@ -488,11 +488,13 @@ else:
             elif nspec==3:
                 tn,nrg1,nrg2,nrg3=get_nrg0('_'+scan_num,nspec=nspec)
                 if ispecnum != 1:
-                   print "Error: main ions must be first species."
+                   print( "Error: main ions must be first species.")
                 if especnum == 2:
                    scan_info[i,10]=nrg2[-1,7]/(abs(nrg2[-1,6])+abs(nrg1[-1,6]))
+                   print("!!!",scan_info[i,10])
                 elif especnum == 3:
                    scan_info[i,10]=nrg3[-1,7]/(abs(nrg3[-1,6])+abs(nrg1[-1,6]))
+                   print( "Error: Electrons must be second species!!")
                 else:
                    stop
             else:
@@ -511,6 +513,9 @@ else:
     f.write('#1.kymin 2.x0 3.kx_center 4.n0_global 5.gamma(cs/a) 6.omega(cs/a) 7.<z> 8.lambda_z 9.parity(apar) 10.parity(phi) 11.QEM/QES 12.Epar cancelation 13.gamma_HB_avg 14.global_factor\n')
     np.savetxt(f,scan_info)
     f.close()
+
+for i in range(len(scan_info[:,0])):
+    print("QEM/QES",i,scan_info[i,10])
 
 os.chdir('../')
 call(['plot_scan_info_efit.py',suffix])
