@@ -13,8 +13,8 @@ def get_nrg0(suffix,nspec=2,ncols=10):
         nrg2=np.empty((0,10),dtype='float')
         nrg3=np.empty((0,10),dtype='float')
     if nspec>=4:
-        print "nspec=",nspec
-        print "Error, nspec must be less than 4"
+        print( "nspec=",nspec)
+        print( "Error, nspec must be less than 4")
         stop
     #qies=np.empty((0,10),dtype='float')
     #qees=np.empty((0,10),dtype='float')
