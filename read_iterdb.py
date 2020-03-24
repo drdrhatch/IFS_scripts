@@ -15,7 +15,7 @@ def read_iterdb(filename):
             num=data_linesplit[i].split()[0]
             num=float(num)
             num=int(num)
-            print "number of points:",num
+            print("number of points:",num)
             keep_going=(1==2)
         if i == len(data_linesplit):
             keep_going=(1==2)
