@@ -38,6 +38,7 @@ mtmFreq = omMTM*gyroFreq/2./np.pi/1000.
 omegaDoppler = vrot_u*n0_global/2./np.pi/1E3
 
 if 1 == 1:
+    plt.title('n='+str(n0_global))
     plt.plot(uni_rhot,omegaDoppler,label='Doppler Shift')
     plt.plot(uni_rhot,mtmFreq,label='Electron Diamagnetic (MTM in plasma frame)')
     plt.plot(uni_rhot,mtmFreq + omegaDoppler,label='Diamagnetic plus Doppler (MTM in lab frame)')
