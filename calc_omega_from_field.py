@@ -33,13 +33,16 @@ elif pars['n_spec'] == 3:
 else:
     sys.exit("n_spec must be 1,2,3.")
 
+print("len(time)",len(time))
+print("len(nrgi[:,0])",len(nrgi[:,0]))
+
 if calc_from_apar:
-   print "Calculating growth rate from apar."
+   print( "Calculating growth rate from apar.")
    plt.semilogy(time,nrge[:,7])
    plt.xlabel('time')
    plt.show()
 else:
-   print "Calculating growth rate from phi."
+   print( "Calculating growth rate from phi.")
    plt.semilogy(time,nrgi[:,6])
    plt.title('QiES')
    plt.xlabel('time')
@@ -50,9 +53,9 @@ tend = float(raw_input("Enter end time: "))
 
 field = fieldfile('field'+suffix,pars)
 istart = np.argmin(abs(np.array(field.tfld)-tstart))
-print "istart,start_time",istart,field.tfld[istart]
+print( "istart,start_time",istart,field.tfld[istart])
 iend = np.argmin(abs(np.array(field.tfld)-tend))
-print "iend,end_time",iend,field.tfld[iend]
+print( "iend,end_time",iend,field.tfld[iend])
 
 
 #field.set_time(field.tfld[-1],len(field.tfld)-1)
@@ -63,7 +66,7 @@ if pars['n_fields'] > 1:
     imaxa = np.unravel_index(np.argmax(abs(field.apar()[:,0,:])),(field.nz,field.nx))
     apar = np.empty(0,dtype='complex128')
 
-print "imax",imax
+print( "imax",imax)
 
 time = np.empty(0)
 for i in range(istart,iend):
@@ -73,7 +76,7 @@ for i in range(istart,iend):
     if pars['n_fields'] > 1:
         apar = np.append(apar,field.apar()[imaxa[0],0,imaxa[1]])
     time = np.append(time,field.tfld[i])
-print "phi_0,phi_f",phi[0],phi[-1]     
+print( "phi_0,phi_f",phi[0],phi[-1]     )
 #plt.semilogy(time,np.abs(phi))
 #plt.semilogy(time,np.abs(apar))
 #plt.show()
@@ -84,7 +87,7 @@ if len(phi) < 2.0:
 else:
     output_zeros = False
     if calc_from_apar:
-        print "Calculating omega from apar"
+        print( "Calculating omega from apar")
         if pars['n_fields'] < 2:
             stop
         omega = np.log(apar/np.roll(apar,1))
@@ -96,14 +99,14 @@ else:
         omega = np.log(phi/np.roll(phi,1))
         dt = time - np.roll(time,1)
         omega /= dt
-        print 'omega',omega
+        print( 'omega',omega)
         omega = np.delete(omega,0)
         time = np.delete(time,0)
 
 gam_avg = np.average(np.real(omega))
 om_avg = np.average(np.imag(omega))
-print "Gamma:",gam_avg
-print "Omega:",om_avg
+print( "Gamma:",gam_avg)
+print( "Omega:",om_avg)
 
 
 if output_zeros:
