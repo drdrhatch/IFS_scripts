@@ -67,7 +67,7 @@ rhot0,q0,shat = calc_shat_wpsi(q,psi,rt[ind8:],rp[ind8:])
 #shat_out = shat[xind]
 #print "Assuming shat = ",shat_out
 #if j==0:
-print "Saving shat.dat"
+print( "Saving shat.dat")
 f = open('shat.dat','w')
 f.write('#1.rhot0 2.q0 3.shat\n')
 np.savetxt(f,np.column_stack((rhot0,q0,shat)))
