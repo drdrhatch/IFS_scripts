@@ -57,7 +57,7 @@ def create_report(genefpath="./"):
                if os.path.isfile(iterdbpath+geneparams['in_out']['iterdb_file']):
                   iterdbpath += geneparams['in_out']['iterdb_file']
                else:
-                   iterdbpath = raw_input('iterdb file not found, enter full path for iterdb file: ')
+                   iterdbpath = input('iterdb file not found, enter full path for iterdb file: ')
                    if not os.path.isfile(iterdbpath):
                       print('iterdb not found in path provided. EXIT!')
                       sys.exit()
@@ -94,13 +94,13 @@ def create_report(genefpath="./"):
     texfhand.write("\\hline \n")
     texfhand.write("\\multicolumn{2}{|c|}{General}\\\\ \n")
     texfhand.write("\\hline \n")
-    for subitem in geneparams['general'].keys():
+    for subitem in list(geneparams['general'].keys()):
         texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['general'][subitem]).replace('_','\_')+"\\\\ \n")
     texfhand.write("\\hline \n")
-    if 'species1' in geneparams.keys():
+    if 'species1' in list(geneparams.keys()):
        texfhand.write("\\multicolumn{2}{|c|}{Species-1}\\\\ \n")
        texfhand.write("\\hline \n")
-       for subitem in geneparams['species1'].keys():
+       for subitem in list(geneparams['species1'].keys()):
            texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['species1'][subitem]).replace('_','\_')+"\\\\ \n")
        texfhand.write("\\hline \n")
     texfhand.write("\\end{tabular} \n")
@@ -111,18 +111,18 @@ def create_report(genefpath="./"):
     texfhand.write("\\hline \n")
     texfhand.write("\\multicolumn{2}{|c|}{Parallelization}\\\\ \n")
     texfhand.write("\\hline \n")
-    for subitem in geneparams['parallelization'].keys():
+    for subitem in list(geneparams['parallelization'].keys()):
         texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['parallelization'][subitem]).replace('_','\_')+"\\\\ \n")
     texfhand.write("\\hline \n")
     texfhand.write("\\multicolumn{2}{|c|}{Box}\\\\ \n")
     texfhand.write("\\hline \n")
-    for subitem in geneparams['box'].keys():
+    for subitem in list(geneparams['box'].keys()):
         texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['box'][subitem]).replace('_','\_')+"\\\\ \n")
     texfhand.write("\\hline \n")
-    if 'species2' in geneparams.keys():
+    if 'species2' in list(geneparams.keys()):
        texfhand.write("\\multicolumn{2}{|c|}{Species-2}\\\\ \n")
        texfhand.write("\\hline \n")
-       for subitem in geneparams['species2'].keys():
+       for subitem in list(geneparams['species2'].keys()):
            texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['species2'][subitem]).replace('_','\_')+"\\\\ \n")
        texfhand.write("\\hline \n")
     texfhand.write("\\end{tabular} \n")
@@ -133,31 +133,31 @@ def create_report(genefpath="./"):
     texfhand.write("\\hline \n")
     texfhand.write("\\multicolumn{2}{|c|}{Geometry}\\\\ \n")
     texfhand.write("\\hline \n")
-    for subitem in geneparams['geometry'].keys():
+    for subitem in list(geneparams['geometry'].keys()):
         if subitem == "geomdir": continue
         texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['geometry'][subitem]).replace('_','\_')+"\\\\ \n")
     texfhand.write("\\hline \n")
     texfhand.write("\\multicolumn{2}{|c|}{In-Out}\\\\ \n")
     texfhand.write("\\hline \n")
-    for subitem in geneparams['in_out'].keys():
+    for subitem in list(geneparams['in_out'].keys()):
         if subitem == "diagdir": continue
         texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['in_out'][subitem]).replace('_','\_')+"\\\\ \n")
     texfhand.write("\\hline \n")
     texfhand.write("\\multicolumn{2}{|c|}{Units}\\\\ \n")
     texfhand.write("\\hline \n")
-    for subitem in geneparams['units'].keys():
+    for subitem in list(geneparams['units'].keys()):
         texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['units'][subitem]).replace('_','\_')+"\\\\ \n")
     texfhand.write("\\hline \n")
-    if 'external_contr' in geneparams.keys():
+    if 'external_contr' in list(geneparams.keys()):
        texfhand.write("\\multicolumn{2}{|c|}{External Profiles}\\\\ \n")
        texfhand.write("\\hline \n")
-       for subitem in geneparams['external_contr'].keys():
+       for subitem in list(geneparams['external_contr'].keys()):
            texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['external_contr'][subitem]).replace('_','\_')+"\\\\ \n")
        texfhand.write("\\hline \n")
-    if 'species3' in geneparams.keys():
+    if 'species3' in list(geneparams.keys()):
        texfhand.write("\\multicolumn{2}{|c|}{Species-3}\\\\ \n")
        texfhand.write("\\hline \n")
-       for subitem in geneparams['species3'].keys():
+       for subitem in list(geneparams['species3'].keys()):
            texfhand.write(subitem.replace('_','\_')+"&"+str(geneparams['species3'][subitem]).replace('_','\_')+"\\\\ \n")
        texfhand.write("\\hline \n")
     texfhand.write("\\end{tabular} \n")
@@ -234,7 +234,7 @@ def create_report(genefpath="./"):
     print('Reading Geometry ...')
     texfhand.write("\\clearpage \n")
     texfhand.write("\\section{Geometry:} \n")
-    if 'geomfile' in geneparams['geometry'].keys():
+    if 'geomfile' in list(geneparams['geometry'].keys()):
        if geneparams['geometry']['geomdir'][-1] == '/':
           geomfpath = geneparams['geometry']['geomdir']+geneparams['geometry']['geomfile']
        else:
@@ -503,17 +503,17 @@ if   len(sys.argv) >= 2:
      eqdskdata   = read_eqdsk(sys.argv[1])
      psirhotorfn = interp1d(eqdskdata['PSIN'],eqdskdata['rhotor'],kind="linear")
      psiN = 0.96
-     print psiN, psirhotorfn(psiN)
+     print(psiN, psirhotorfn(psiN))
      psiN = 0.97
-     print psiN, psirhotorfn(psiN)
+     print(psiN, psirhotorfn(psiN))
      psiN = 0.98
-     print psiN, psirhotorfn(psiN)
+     print(psiN, psirhotorfn(psiN))
      psiN = 0.99
-     print psiN, psirhotorfn(psiN)
+     print(psiN, psirhotorfn(psiN))
      sys.exit()
 else:
     while True:
-          genefpath=raw_input('Path to GENE files: ')
+          genefpath=input('Path to GENE files: ')
           if os.path.isdir(genefpath):
              create_report(genefpath)
           else:

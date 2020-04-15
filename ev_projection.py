@@ -33,7 +33,7 @@ kx_index = int(float(args[1]))
 ky_index_string = '%04d' % ky_index
 kx_index_string = '%04d' % kx_index
 df_file_name = df_dir + 'df_ky'+ky_index_string+'kx'+kx_index_string+'.dat'
-print "df_file_name",df_file_name
+print("df_file_name",df_file_name)
 
 ####### Start functions ########
 ####### Start functions ########
@@ -79,12 +79,12 @@ def get_sorted_evecs(ev_dir,par,nev):
 
 def get_time_from_dffile(file_name,ntot):
         
-    print "Reading file",file_name
+    print("Reading file",file_name)
     file_exists=os.path.isfile(file_name)
     if file_exists:
         pass
     else:
-        print "File does not exist:",file_name
+        print("File does not exist:",file_name)
         sys.exit()
 
     f=open(file_name,'r')
@@ -193,7 +193,7 @@ for i in range(dfpars['num_ky_modes']):
    if kx_index == kx_center[i] and ky_index == ky_indices[i]:
       df_index = i
 if df_index == -999:
-   print "ERROR! invalid kx_index or ky_index."
+   print("ERROR! invalid kx_index or ky_index.")
    sys.exit()
 
 nkx = nkx_keep[df_index]
@@ -206,8 +206,8 @@ time = get_time_from_dffile(df_file_name,nv0*nw0*nz0*nkx*n_spec)
 #print time
 
 start_index = np.argmin(abs(time - start_time))
-print "Starting at t = ",start_time
-print "start_index",start_index
+print("Starting at t = ",start_time)
+print("start_index",start_index)
 
 
 ####### Set up ev stuff ########
@@ -218,27 +218,27 @@ parev = Parameters()
 parev.Read_Pars(ev_dir+'/parameters.dat')
 evpars = parev.pardict
 
-print "Checking consistency of df parameters and ev parameters."
+print("Checking consistency of df parameters and ev parameters.")
 if evpars['nz0'] != dfpars['nz0']:
-   print "Error! Mismatch between dfout and ev nz0!"
+   print("Error! Mismatch between dfout and ev nz0!")
    sys.exit()
 if evpars['nv0'] != dfpars['nv0']:
-   print "Error! Mismatch between dfout and ev nv0!"
+   print("Error! Mismatch between dfout and ev nv0!")
    sys.exit()
 if evpars['nw0'] != dfpars['nw0']:
-   print "Error! Mismatch between dfout and ev nw0!"
+   print("Error! Mismatch between dfout and ev nw0!")
    sys.exit()
 if evpars['n_spec'] != dfpars['n_spec']:
-   print "Error! Mismatch between dfout and ev n_spec!"
+   print("Error! Mismatch between dfout and ev n_spec!")
    sys.exit()
 if evpars['nx0'] % 2 != 1:
-   print "Error! This routine can only handle nx0=odd.  Fix if necessary."
+   print("Error! This routine can only handle nx0=odd.  Fix if necessary.")
    sys.exit()
 if evpars['nx0'] > nkx:
-   print "Error! This routine expects nx0 for eigenvectors to be <= nx0 for dfout data.  Can be fixed if necessary."
+   print("Error! This routine expects nx0 for eigenvectors to be <= nx0 for dfout data.  Can be fixed if necessary.")
    sys.exit()
 
-print "Sorting eigenvalues and eigenvectors."
+print("Sorting eigenvalues and eigenvectors.")
 gammas, omegas, indices, levecs, revecs = get_sorted_evecs(ev_dir,evpars,nev)
 plt.scatter(gammas,omegas)
 plt.xlabel(r'$\gamma (v_{ref}/L_{ref})$',size=18)
@@ -246,18 +246,18 @@ plt.ylabel(r'$\omega (v_{ref}/L_{ref})$',size=18)
 plt.show()
 
 if test_ortho:
-   print "Testing orthogonality of eigenvectors."
+   print("Testing orthogonality of eigenvectors.")
    sps = np.empty((nev,nev))
    for i in range(nev):
       for j in range(nev):
          sps[i,j] = np.abs(scalar_product(revecs[:,:,:,:,:,i],levecs[:,:,:,:,:,j]))
          if i==j and sps[i,j] < 0.999999:
-            print "Orthogonality failure at ",i,j
-            print "Scalar product:",sps[i,j]
+            print("Orthogonality failure at ",i,j)
+            print("Scalar product:",sps[i,j])
             sys.exit()
          if i!=j and sps[i,j] > 1.0e-13:
-            print "Orthogonality Failure at ",i,j
-            print "Scalar product:",sps[i,j]
+            print("Orthogonality Failure at ",i,j)
+            print("Scalar product:",sps[i,j])
             sys.exit()
    plt.contourf(sps,50)
    plt.colorbar()
@@ -268,7 +268,7 @@ if test_ortho:
 ####### Do projection ########
 
 ct = np.empty((len(time)-start_index,nev),dtype='complex128')
-print "Doing eigenvector projection."
+print("Doing eigenvector projection.")
 
 for i in range(start_index,len(time)):
    t0,dft = read_time_step_df(df_file_name,i,nkx,dfpars)   

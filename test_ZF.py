@@ -50,7 +50,7 @@ rhot0 = interp(gp[:,1],gp[:,0],psi0**0.5)
 psip_n, Rgrid, Zgrid, F, p, ffprime, pprime, psirz, qpsi, rmag, zmag, nw,psiax,psisep = read_EFIT_file(efit_file)
 
 psisep0 = psisep-psiax
-print "psisep0",psisep0
+print("psisep0",psisep0)
 psiSI = psi0*psisep0
 
 phiSI = phi0*Tref*1000.0*rhostar

@@ -23,8 +23,8 @@ omtor_file = options.omtor_file
 
 data = np.genfromtxt(pfile) 
 
-dummy = raw_input("WARNING: profile file must have rho_poloidal as second column! Press any key to continue.\n")
-dummy = raw_input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
+dummy = input("WARNING: profile file must have rho_poloidal as second column! Press any key to continue.\n")
+dummy = input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
 
 rhot = data[:,0]
 psi = data[:,1]**2
@@ -40,12 +40,12 @@ Lref, Bref, R_major, q0 = get_dimpar_pars(efit_file_name,0.9)
 
 psip_n, Rgrid, Zgrid, F, p, ffprime, pprime, psirz, qpsi, rmag, zmag, nw,psiax,psisep = read_EFIT_file(efit_file_name)
 
-print "R_major",R_major
-print "Bref",Bref
-print "psisep",psisep
-print "psiax",psiax
+print("R_major",R_major)
+print("Bref",Bref)
+print("psisep",psisep)
+print("psiax",psiax)
 psisep0 = psisep-psiax
-print "psisep0",psisep0
+print("psisep0",psisep0)
 
 #Get everything on the same even psi grid
 psi0 = np.linspace(0.0,1.0,num=3000)
@@ -99,7 +99,7 @@ omegator0 = (1.0/psisep0/ee)*1/ni00*dpdpsi
 outfile = 'omegator'+pfile
 if omtor_file != 'empty':
    #This includes the effect of toroidal rotation on d Phi_0 / d psi--i.e. the V_{||} term in Eq. 6 of Landreman and Ernst
-   print "Including toroidal rotation from file ",omtor_file
+   print("Including toroidal rotation from file ",omtor_file)
    omtor = np.genfromtxt(omtor_file)
    omtor00 = interp(omtor[:,0],omtor[:,1],psi0)
    omegator += omtor00

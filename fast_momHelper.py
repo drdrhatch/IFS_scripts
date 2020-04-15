@@ -37,7 +37,7 @@ show_plots = True
 plot_format = 'display'
 #plot_format = 'ps'
 
-kygrid = range(pars['nky0'])
+kygrid = list(range(pars['nky0']))
 #kygrid = [0]
 zInd = nz / 2
 

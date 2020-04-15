@@ -61,7 +61,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print("WARNING: neg_loc < corr_time")
         corr_time = neg_loc
 
     if show_plot:
@@ -75,11 +75,11 @@ par = Parameters()
 par.Read_Pars('parameters')
 pars = par.pardict
 edge_opt = pars['edge_opt']
-print "edge_opt = ",edge_opt
+print("edge_opt = ",edge_opt)
 #dummy = raw_input("Press any key to continue:\n")
 
-print type(pars['scan_dims'])
-print "scan_dims",pars['scan_dims']
+print(type(pars['scan_dims']))
+print("scan_dims",pars['scan_dims'])
 if type(pars['scan_dims']) == str:
     scan_dims = pars['scan_dims'].split()
     numscan_tot = 1
@@ -88,10 +88,10 @@ if type(pars['scan_dims']) == str:
 else:
     numscan_tot = pars['scan_dims']
 
-print "Total number of runs: ", numscan_tot 
+print("Total number of runs: ", numscan_tot) 
 
 if pars['n_spec'] == 3:
-    dummy = raw_input("Assuming electrons are third species (press any key).\n")
+    dummy = input("Assuming electrons are third species (press any key).\n")
 
 #Test if global scan
 if 'x_local' in pars and not pars['x_local']:
@@ -100,12 +100,12 @@ if 'x_local' in pars and not pars['x_local']:
         par0 = Parameters()
         scan_num = '000'+str(i+1)
         scan_num = scan_num[-4:]
-        print "Analyzing ",scan_num
+        print("Analyzing ",scan_num)
         if os.path.isfile('parameters_'+scan_num):
             par0.Read_Pars('parameters_'+scan_num)
             pars0 = par0.pardict
             nspec = pars0['n_spec']
-            print pars0['kymin']
+            print(pars0['kymin'])
             scan_info[i,0] = pars0['kymin']
             if 'x0' in pars0:
                 scan_info[i,1] = pars0['x0']
@@ -217,15 +217,15 @@ if 'x_local' in pars and not pars['x_local']:
             #plt.plot(zgrid,(np.imag(gradphi[2:-2,0,3*field.nx/4])),'-.',color = 'black')
             #plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,3*field.nx/4])),'-.',color = 'red')
             #plt.show()
-            print "omega_complex",omega_complex
+            print("omega_complex",omega_complex)
             
             diff = np.sum(np.abs(gradphi[2:-2,:] + omega_complex*apar[:,:]))
             phi_cont = np.sum(np.abs(gradphi[2:-2,:]))
             apar_cont = np.sum(np.abs(omega_complex*apar[:,:]))
-            print "diff",diff
-            print "phi_cont",phi_cont
-            print "apar_cont",apar_cont
-            print "diff/abs",diff/(phi_cont+apar_cont)
+            print("diff",diff)
+            print("phi_cont",phi_cont)
+            print("apar_cont",apar_cont)
+            print("diff/abs",diff/(phi_cont+apar_cont))
             scan_info[i,11] = diff/(phi_cont+apar_cont)
             scan_info[i,12] = np.nan           
    
@@ -273,12 +273,12 @@ else:
         par0 = Parameters()
         scan_num = '000'+str(i+1)
         scan_num = scan_num[-4:]
-        print "Analyzing ",scan_num
+        print("Analyzing ",scan_num)
         if os.path.isfile('parameters_'+scan_num):
             par0.Read_Pars('parameters_'+scan_num)
             pars0 = par0.pardict
             nspec = pars0['n_spec']
-            print pars0['kymin']
+            print(pars0['kymin'])
             scan_info[i,0] = pars0['kymin']
             if 'x0' in pars0:
                 scan_info[i,1] = pars0['x0']
@@ -389,7 +389,7 @@ else:
             apar0 = aparkx
             #Calculate <gamma_HB> / gamma
             geomfile = pars0['magn_geometry'][1:-1]+'_'+scan_num
-            print "geomfile",geomfile
+            print("geomfile",geomfile)
             zgrid_pp, Btheta_R, prefactor = get_abs_psi_prime(geomfile,'../rbsProfs',pars['x0'])
             rbs = np.genfromtxt('../rbsProfs')
             ind_rbs_x0 = np.argmin(abs(rbs[:,0]-pars['x0'])) 

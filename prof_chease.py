@@ -5,7 +5,7 @@
 try:
     import h5py as h5
 except:
-    print 'This script requires the Python module h5py in order to open HDF5 files.'
+    print('This script requires the Python module h5py in order to open HDF5 files.')
     exit(1)
 
 import numpy as np
@@ -14,14 +14,14 @@ from sys import argv,exit
 
 
 if len(argv)!=3:
-    print 'Need two arguments: filename and desired coordinate.'
+    print('Need two arguments: filename and desired coordinate.')
     exit(1)
 else:
     filename=argv[1]
     coord=argv[2]
 coords=('rho_v','rho_t','rho_p')
 if coord not in coords:
-    print 'Second argument has to be %s, %s or %s.' %coords
+    print('Second argument has to be %s, %s or %s.' %coords)
     exit(1)
 
 #read relevant contents of h5 file

@@ -31,7 +31,7 @@ if calcRZ:    # if this is the local linear run at rhot = 0.999...
 else:    # if the probe's position at LCFS is found
     mirnovR = 0.86669 + 0.02
     mirnovZ = 0.1015
-print('Mirnov probe is at ({:.4f}, {:.4f})'.format(mirnovR, mirnovZ))
+print(('Mirnov probe is at ({:.4f}, {:.4f})'.format(mirnovR, mirnovZ)))
 
 # go along the surface to find the point closest to Mirnov Probe
 minDist = 99.
@@ -45,8 +45,8 @@ for i in range(len(R)):
         minDR = R[i]
         minDZ = Z[i]
         minDInd = i
-print 'Point on flux surface closest to the Mirnov Probe is:\n({:.4f}, {:.4f})'.format(minDR, minDZ)
-print 'Its ky * d is {:.4f} '.format(minDist * ky_fluxsurface[minDInd])
+print('Point on flux surface closest to the Mirnov Probe is:\n({:.4f}, {:.4f})'.format(minDR, minDZ))
+print('Its ky * d is {:.4f} '.format(minDist * ky_fluxsurface[minDInd]))
 #print 'index =', minDInd
 
 # go along the surface to find the point with minimum ky*distance
@@ -62,7 +62,7 @@ for i in range(len(R)):
         minR = R[i]
         minZ = Z[i]
         minInd = i
-print 'Point on flux surface minimizes ky * d to the Mirnov Probe is:\n({:.4f}, {:.4f})'.format(minR, minZ)
+print('Point on flux surface minimizes ky * d to the Mirnov Probe is:\n({:.4f}, {:.4f})'.format(minR, minZ))
 decayFactor = np.exp(-minArg)
-print 'Its ky * d is {:.4f}, decay factor is {:.4f}'.format(minArg, decayFactor)
+print('Its ky * d is {:.4f}, decay factor is {:.4f}'.format(minArg, decayFactor))
 #print 'index =', minInd

@@ -147,20 +147,20 @@ class PlotNrgdata(Plotting):
                                "with the current implementation in the plotting routine")
         for nrgd in nrgdata:
             if nrgd.isdatapresent is False:
-                print("No nrg data present in object ", nrgdata.fext)
+                print(("No nrg data present in object ", nrgdata.fext))
 
     def calcmean_err(self):
         """ Calculate and print the mean and error estimate for each nrg column """
         for nrgd in self.nrgdata:
             mean_nrg = err.mytrapz(nrgd.nrgcols, nrgd.timefld)
             err_nrg, ctimes_nrg = err.windowerr(nrgd.nrgcols, nrgd.timefld)
-            print("Mean and errors for ", nrgd.filename)
+            print(("Mean and errors for ", nrgd.filename))
             for i_sp in range(nrgd.pnt.n_spec):
-                print("Species: ", i_sp, nrgd.specname[i_sp])
+                print(("Species: ", i_sp, nrgd.specname[i_sp]))
                 print("============================")
                 for col in range(nrgd.n_col):
-                    print(nrgd.colnames[col]+": ", mean_nrg[i_sp, col], "+-", err_nrg[i_sp, col])
-                print("corr times: ", ctimes_nrg[i_sp, :])
+                    print((nrgd.colnames[col]+": ", mean_nrg[i_sp, col], "+-", err_nrg[i_sp, col]))
+                print(("corr times: ", ctimes_nrg[i_sp, :]))
                 print("============================")
 
     def plot_ttrace(self, poutput=False):

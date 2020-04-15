@@ -8,7 +8,7 @@ from rbs_tools import *
 def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, remove_edge_opt = False, edge_opt = 0.0):
 
     print( "Calculating absolution value of psi_prime (i.e. Bpol R).")
-    print( "x0 (rhot):",x0)
+    print(( "x0 (rhot):",x0))
     #Note edge_opt is not removed--must include jacobian in integrals
 
     rbs = np.genfromtxt(rbsfile)
@@ -26,7 +26,7 @@ def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, r
     # gB = Total B on zgrid un-normalized
     if remove_edge_opt:
         if edge_opt <= 0.0:
-            edge_opt = float(raw_input("Enter edge_opt:\n"))    
+            edge_opt = float(input("Enter edge_opt:\n"))    
         print( "Removing edge_opt.")
         gl_dxdR = remove_edge_opt(geom['gl_dxdR'],edge_opt)
         gl_dxdZ = remove_edge_opt(geom['gl_dxdZ'],edge_opt)
@@ -90,9 +90,9 @@ def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, r
         #print "B(rbs) at x0",(rbs[x0_ind_rbs,25]**2+rbs[x0_ind_rbs,26]**2)**0.5
         error = abs(gB[ind0]-(rbs[x0_ind_rbs,25]**2+rbs[x0_ind_rbs,26]**2)**0.5)/abs(gB[ind0])
         if error>0.02:
-            print( "Bfield error=",error)
-            print( "Error=",error)
-            dummy = raw_input("Press any key to continue")
+            print(( "Bfield error=",error))
+            print(( "Error=",error))
+            dummy = input("Press any key to continue")
         #print "error",error
         
         #print "\n\n"
@@ -100,8 +100,8 @@ def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, r
         #print "R(rbs) at x0",rbs[x0_ind_rbs,24]
         error = abs(gl_R[ind0]-rbs[x0_ind_rbs,24])/abs(gl_R[ind0])
         if error>0.02:
-            print( "R error=",error)
-            dummy = raw_input("Press any key to continue")
+            print(( "R error=",error))
+            dummy = input("Press any key to continue")
         #print "error",error
         #print "\n\n"
         
@@ -115,8 +115,8 @@ def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, r
         #print "drhot_dr (rbs) at x0", drhot_dR_R[ind_x0_R_even]
         error = abs(drhot_dr[ind0]-drhot_dR_R[ind_x0_R_even])/drhot_dr[ind0]
         if error>0.02:
-            print( "drhot_dr error=",error)
-            dummy = raw_input("Press any key to continue")
+            print(( "drhot_dr error=",error))
+            dummy = input("Press any key to continue")
         #print "error",error
         
         #print "\n\n"
@@ -127,8 +127,8 @@ def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, r
         #print "Btheta*R (rbs) at x0", rbs[x0_ind_rbs,25]*rbs[x0_ind_rbs,24]
         error = abs(dpsi_dr[ind0]-dpsi_dR_R[ind_x0_R_even])/dpsi_dr[ind0]
         if error>0.02:
-            print( "dpsi_dr error=",error)
-            dummy = raw_input("Press any key to continue")
+            print(( "dpsi_dr error=",error))
+            dummy = input("Press any key to continue")
         #print "error",error
         
         #print "\n\n"
@@ -138,8 +138,8 @@ def get_abs_psi_prime(geomfile,rbsfile,x0,show_plots = False, do_tests = True, r
         #print "B_theta**2 R**2 / B", prefactor_rbs[x0_ind_rbs] 
         error = abs(prefactor[ind0]-prefactor_rbs[x0_ind_rbs])/abs(prefactor[ind0])
         if error>0.02:
-            print( "prefactor error=",error)
-            dummy = raw_input("Press any key to continue")
+            print(( "prefactor error=",error))
+            dummy = input("Press any key to continue")
         #print "error",error
         
         #print "\n\n"

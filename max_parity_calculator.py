@@ -78,20 +78,20 @@ def parity_finder_long(zgrid,f,name,plot,report): #this function is for local li
     if report==1:
         for i in range(len(location)+1):
             if i < len(location):
-                print('Around z=',location[i])
+                print(('Around z=',location[i]))
             else:
                 print('For the loop')        
-            print(ratio[2*i+0]*100,'% Odd', ratio[2*i+1]*100, "% Even")
+            print((ratio[2*i+0]*100,'% Odd', ratio[2*i+1]*100, "% Even"))
 
-        print('The location of the center is', location0)
-        print('The function is largely', parity0)
+        print(('The location of the center is', location0))
+        print(('The function is largely', parity0))
 
-        print('Based on the loop, the function is largely ',parity1)
+        print(('Based on the loop, the function is largely ',parity1))
     
         if parity1==parity0:
             print('Result checked')
         else:
-            print('location=', location0 ,'and loop mismatch, please check the Parity_plot.png or function.png to determine the parity manually')
+            print(('location=', location0 ,'and loop mismatch, please check the Parity_plot.png or function.png to determine the parity manually'))
     #*********End of Print out report**********
 
     #********Plot the result*******************
@@ -206,9 +206,9 @@ def parity_finder_LL(zgrid,f,name,plot,report):
 
 
 def parity_finder_GL(xgrid,zgrid,f,name,plot,report): #this function is for global linear simulation
-    print(np.shape(f)) #f(z,x)
-    print(np.shape(xgrid))
-    print(np.shape(zgrid))
+    print((np.shape(f))) #f(z,x)
+    print((np.shape(xgrid)))
+    print((np.shape(zgrid)))
     
     location_dis=np.zeros(len(xgrid))  #distribution of the location in term of radius
     f_dis=np.zeros(len(xgrid))         #distribution of the function in term of radius
@@ -243,8 +243,8 @@ def parity_finder_GL(xgrid,zgrid,f,name,plot,report): #this function is for glob
         parity0 = 'even'
 
     if report==1:
-        print('The location of the center is z=',location_avg)
-        print('The function is largely =', parity0)
+        print(('The location of the center is z=',location_avg))
+        print(('The function is largely =', parity0))
     if plot==1:
         plt.clf()
         plt.figure(figsize=(8.0,9.5))
@@ -311,18 +311,18 @@ else:
 print('***********************************************')
 print('************Summary of parity******************')
 if location_phi==location_apar:
-    print('Center of the symmetry is z=',location_phi)
+    print(('Center of the symmetry is z=',location_phi))
 else:
-    print('Center of symmetry for phi= ', location_phi, ', apar=', location_apar ,', WARNING, please check the output graph manually')
+    print(('Center of symmetry for phi= ', location_phi, ', apar=', location_apar ,', WARNING, please check the output graph manually'))
 
 if parity_phi=='even' and parity_apar=='odd':
-    print('phi=even (', ratio_phi[1]*100, '%), apar=odd  (', ratio_apar[0]*100, '%)  ---->   Ballooning parity')
+    print(('phi=even (', ratio_phi[1]*100, '%), apar=odd  (', ratio_apar[0]*100, '%)  ---->   Ballooning parity'))
 elif parity_phi=='odd' and parity_apar=='even':
-    print('phi=odd  (', ratio_phi[0]*100, '%), apar=even (', ratio_apar[1]*100 ,'%)  ---->   Tearing parity')
+    print(('phi=odd  (', ratio_phi[0]*100, '%), apar=even (', ratio_apar[1]*100 ,'%)  ---->   Tearing parity'))
 else:
-    print('phi:  odd ', ratio_phi[0]*100 ,'%,  even ',ratio_phi[1]*100,'%')
-    print('apar: odd ', ratio_apar[0]*100,'%,  even ',ratio_apar[1]*100,'%')
-    print('phi=', parity_phi, ', apar=' ,parity_apar,'   ---->   WARNING, please check the output graph manually')
+    print(('phi:  odd ', ratio_phi[0]*100 ,'%,  even ',ratio_phi[1]*100,'%'))
+    print(('apar: odd ', ratio_apar[0]*100,'%,  even ',ratio_apar[1]*100,'%'))
+    print(('phi=', parity_phi, ', apar=' ,parity_apar,'   ---->   WARNING, please check the output graph manually'))
 
 print('**************End of Summary*******************')
 print('***********************************************')

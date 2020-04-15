@@ -9,7 +9,7 @@ ne = de[:,3]
 ni = di[:,3]
 nz = dz[:,3]
 
-Z = float(raw_input("Enter Z for impurity:\n"))
+Z = float(input("Enter Z for impurity:\n"))
 
 zeff = (ni+Z**2*nz)/ne
 id = ni/ne

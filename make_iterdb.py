@@ -26,13 +26,13 @@ psi0, ne0, te0, ni0, ti0, nz0, er0 = read_pfile(p_file_name,impurityCharge,add_i
 zeff = (ni0 + nz0 * impurityCharge**2) / ne0 
 
 EFITdict = read_EFIT(efit_file_name)
-print(list(EFITdict.keys()))
+print((list(EFITdict.keys())))
 
 sepInd = np.argmin(abs(EFITdict['psipn'] - 1.))
-print('index at psipn = 1 is ', sepInd)
+print(('index at psipn = 1 is ', sepInd))
 Rsep = EFITdict['R'][sepInd]
-print('major R(m) at psipn = 1 is ', Rsep)
-print('major R(m) at index = 1 is ', EFITdict['R'][0])
+print(('major R(m) at psipn = 1 is ', Rsep))
+print(('major R(m) at index = 1 is ', EFITdict['R'][0]))
 
 # construct R grid with uniform spacing 
 # uniform spacing because first_derivative requires so

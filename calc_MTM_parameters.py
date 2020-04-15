@@ -40,7 +40,7 @@ omte = profs[:,4]
 imin_shat = np.argmin(abs(rhot_shat-(rhot0-wped/2.0)))
 imax_shat = np.argmin(abs(rhot_shat-(rhot0+wped/2.0)))
 shat_avg = np.sum(shat[imin_shat:imax_shat])/(imax_shat-imin_shat)
-print "shat_avg",shat_avg
+print("shat_avg",shat_avg)
 plt.plot(rhot_shat[imin_shat:imax_shat],shat[imin_shat:imax_shat])
 plt.title("shat_avg "+str(shat_avg))
 plt.show()
@@ -49,7 +49,7 @@ plt.show()
 imin_omte = np.argmin(abs(rhot_omte-(rhot0-wped/2.0)))
 imax_omte = np.argmin(abs(rhot_omte-(rhot0+wped/2.0)))
 omte_avg = np.sum(omte[imin_omte:imax_omte])/(imax_omte-imin_omte)
-print "omte_avg",omte_avg
+print("omte_avg",omte_avg)
 plt.plot(rhot_omte[imin_omte:imax_omte],omte[imin_omte:imax_omte])
 plt.title("omte_avg "+str(omte_avg))
 plt.show()
@@ -74,7 +74,7 @@ minor_r = 1.0
 
 trpeps = rhot0*Lref/R_major
 
-dummy = raw_input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
+dummy = input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
 Z = 1.0
 
 beta = 403.0e-5*ne*Te/Bref**2  #From GENE documentation
@@ -89,12 +89,12 @@ nue = 4.0*coll*(mref/me)**0.5
 #nustar_i=8.0/3.0/pi**0.5*q0/trpeps**1.5*(R_major/Lref)*(ni/ne)*Z**4/(Te/Ti)**2*coll
 #nustar_e=16.0/3.0/pi**0.5*q0/trpeps**1.5*(R_major/Lref)*Z**2*coll
 
-print "betae",beta
-print "coll",coll
-print "Avg a/Ls",shat_avg
-print "Avg a/LTe",omte_avg
-print "beta_hat = betae*(Ls/LTe)^2",beta*(omte_avg/shat_avg)**2
-print "nu_e (normalized to cs/a)", nue
+print("betae",beta)
+print("coll",coll)
+print("Avg a/Ls",shat_avg)
+print("Avg a/LTe",omte_avg)
+print("beta_hat = betae*(Ls/LTe)^2",beta*(omte_avg/shat_avg)**2)
+print("nu_e (normalized to cs/a)", nue)
 
 kygrid = np.linspace(0.0,1.0,num=10)
 plt.plot(kygrid,kygrid*omte_avg,label='omega* = ky rhos a/LTe)')

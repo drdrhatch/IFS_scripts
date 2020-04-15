@@ -12,7 +12,7 @@ keys = list(file.keys())
 dset = file[keys[0]]
 pars = init_read_parameters_file(suffix)
 nz0 = pars['nz0']
-print 'nz0 =', nz0
+print('nz0 =', nz0)
 dens_data = file['mom_e/dens/']
 fluc_data = []
 for subgroup in dens_data:
@@ -43,7 +43,7 @@ for i in range(len(t)):
 #    print t_c - t_f
     if abs(t_c - t_f) < 10**-10:
         i_f = i  
-        print 't_f', t_f, t_c
+        print('t_f', t_f, t_c)
 #print nrg_e[i_f].split()
 nrg_final_data = nrg_e[i_f]
 #print 't_f', t_f
@@ -82,17 +82,17 @@ m_si = mp*mref
 #print 'm_si', m_si
 #print 'gamma_tot', gamma_tot
 #print 'q_tot', q_tot
-print 'rhostar', rhostar
-print 'GENE delta_n/n_0', delta_n
-print 'delta_n/n_0', delta_n*rhostar
+print('rhostar', rhostar)
+print('GENE delta_n/n_0', delta_n)
+print('delta_n/n_0', delta_n*rhostar)
 #print 'cref', cref
 c_si = math.sqrt(T_si/m_si)
 Lref = pars['Lref']
 R = pars['major_R']*Lref
 r = pars['minor_r']*Lref
-print 'n0 (m^-3)', n0
-print 'Tref (eV)', Tref
-print 'c_si', c_si
+print('n0 (m^-3)', n0)
+print('Tref (eV)', Tref)
+print('c_si', c_si)
 g_ratio = gamma_tot*cref*nref/(delta_n**2)
 q_ratio = q_tot*pref/(delta_n**2)
 g_ratio_si = gamma_tot*c_si*nref/(delta_n**2*Lref**2)
@@ -102,15 +102,15 @@ g_gb = n0*c_si*(rhostar**2)
 Area = (2*math.pi*R)*(2*math.pi*r*pars['x0'])
 q = q_gb*q_tot*Area*10**-6/(delta_n*rhostar)**2
 #print "t_final Density fluctuation at outboard midplane.", delta_n*rhostar*100, "%"
-print "Gamma_gb (kW/(eV*m^2))", g_gb*10**-3
-print "Q_gb (kW/m^2)",q_gb*10**-3 
+print("Gamma_gb (kW/(eV*m^2))", g_gb*10**-3)
+print("Q_gb (kW/m^2)",q_gb*10**-3) 
 #print "GENE Q_tot", q_tot
 #print "Q estimate (kW/m^2)",q_gb*q_tot*10**-3
-print "Area (m^2)", Area
-print "Lref", Lref  
+print("Area (m^2)", Area)
+print("Lref", Lref)  
 #print "Gamma in MW: ", g_ratio_si*Area*10**-6
-print "Q estimate in MW/(delta_n/n)^2: ", q
-print "Estimated Q(MW) using 1%: ",q*(0.01)**2 
-print "Estimated Q(MW) using 3%: ",q*(0.03)**2
+print("Q estimate in MW/(delta_n/n)^2: ", q)
+print("Estimated Q(MW) using 1%: ",q*(0.01)**2) 
+print("Estimated Q(MW) using 3%: ",q*(0.03)**2)
 #print "Density Fluctuation Data", dens_data[[dens_data.len()-1]]
 #print dens_data.visititems(print_attrs)

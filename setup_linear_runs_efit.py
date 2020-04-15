@@ -53,7 +53,7 @@ gene_dirname = 'knl-refactored/'
 x0_scan_string = str(x0_values[0])
 for i in range(1,len(x0_values)):
     x0_scan_string += ', '+str(x0_values[i])
-print "x0_scan_string:",x0_scan_string
+print("x0_scan_string:",x0_scan_string)
 basedir='/global/cscratch1/sd/halfmoon/'
 diagdir = basedir+case
 #homedir = '/home1/01658/drhatch/'
@@ -67,14 +67,14 @@ for i in range(len(x0_values)):
     probdirkxc.append(genedir+'prob_kxc_'+case+'_'+str(x0_values[i]))
 pmvdir = homedir
 eqs_dir = homedir+gene_dirname+case+'/'
-print "Checking existence of efit file."
-print eqs_dir
+print("Checking existence of efit file.")
+print(eqs_dir)
 if os.path.isfile(eqs_dir+efit_file_name):
-    print "Efit file exists:",efit_file_name
+    print("Efit file exists:",efit_file_name)
 else:
     sys.exit("Efit file does not exist.  Select different efit file.") 
 if os.path.isfile(eqs_dir+iterdb_file):
-    print "Iterdb file exists:",case+'.iterdb'
+    print("Iterdb file exists:",case+'.iterdb')
 else:
     sys.exit("Iterdb file does not exist.  Select different iterdb file.") 
 
@@ -111,13 +111,13 @@ def calc_shat_wpsi(qin,psiin,rhot,rhop,rhot_range=[0.87,1.027]):
 #####Execute
 
 if not os.path.exists(diagdir):
-    print diagdir," does not exist."  
+    print(diagdir," does not exist.")  
     os.makedirs(diagdir)
-    print "Now it does."
+    print("Now it does.")
 
 if x0_scan:
     if include_impurity:
-       print "Warning: include_impurity not ready for x0_scan!"
+       print("Warning: include_impurity not ready for x0_scan!")
        stop
     if os.path.exists(probdirloc):
         call(['rm','-r',probdirloc])
@@ -126,7 +126,7 @@ if x0_scan:
 
 if setup_global:
     if include_impurity:
-       print "Warning: include_impurity not ready for global!"
+       print("Warning: include_impurity not ready for global!")
        stop
     if os.path.exists(probdirglob):
         call(['rm','-r',probdirglob])
@@ -134,7 +134,7 @@ if setup_global:
     call(['cp','-r',homedir+'/scripts/setup_linear_runs.py',probdirglob])
 if setup_lilo:
     if include_impurity:
-       print "Warning: include_impurity not ready for global!"
+       print("Warning: include_impurity not ready for global!")
        stop
     if os.path.exists(probdirlilo):
         call(['rm','-r',probdirlilo])
@@ -328,9 +328,9 @@ if kx_center_scan:
         rhot0,q0,shat = calc_shat_wpsi(q,psi,genefile[ind8:,0],genefile[ind8:,1])
         xind = np.argmin(abs(rhot0-x0_values[j]))
         shat_out = shat[xind]
-        print "Assuming shat = ",shat_out
+        print("Assuming shat = ",shat_out)
         if j==0:
-            print "Saving shat.dat"
+            print("Saving shat.dat")
             np.savetxt('shat.dat',np.column_stack((rhot0,q0,shat)))
 
         #change submit.cmd file
@@ -348,7 +348,7 @@ if kx_center_scan:
         for i in range(num_kxcenter-1):
             kx_center_scan_string += ', '+str(0.8*(i+1)/float(num_kxcenter)*2*np.pi)+'*'+str(shat_out)+'*kymin(1)'
 
-        print "kx_center_scan_string",kx_center_scan_string
+        print("kx_center_scan_string",kx_center_scan_string)
         #change diagdir
         f=open('parameters','r')
         parfile=f.read()
@@ -379,9 +379,9 @@ if kx_center_scan:
                 parfile_split[i] = 'n_procs_z = 8 ' 
 
         if include_impurity:
-            imp_charge = raw_input('Enter impurity charge:\n')
-            imp_mass = raw_input('Enter impurity mass:\n')
-            imp_label = raw_input('Enter impurity label:\n')
+            imp_charge = input('Enter impurity charge:\n')
+            imp_mass = input('Enter impurity mass:\n')
+            imp_label = input('Enter impurity label:\n')
         #print 'spec_ind',spec_ind
             parfile_split.insert(spec_ind[1],'\n')
             parfile_split.insert(spec_ind[1],'/')

@@ -29,7 +29,7 @@ def global_moments(momen, \
                    plot_format = 'display'):
     momen.set_time(momen.tmom[setTime])
     time = momen.tmom[setTime]
-    print 'Reading moments are at t = ', time
+    print('Reading moments are at t = ', time)
     nz = momen.pars['nz0']
     nky = momen.pars['nky0']
     nx = momen.pars['nx0']
@@ -70,16 +70,16 @@ def momen_xz(momen, \
     debug = False
     show_raw_plots = False
     q, Cy = q_Cy(geom_coeff)
-    nGrid = np.array(range(momen.pars['nky0']))*momen.pars['n0_global']
+    nGrid = np.array(list(range(momen.pars['nky0'])))*momen.pars['n0_global']
     thetaGrid = zgrid * np.pi
     thetaqMatrix = np.outer(thetaGrid, q)
     if debug:
-        print 'zi='+str(zi)
-        print 'n0='+str(momen.pars['n0_global'])
-        print q
-        print nGrid
-        print thetaGrid
-        print thetaqMatrix
+        print('zi='+str(zi))
+        print('n0='+str(momen.pars['n0_global']))
+        print(q)
+        print(nGrid)
+        print(thetaGrid)
+        print(thetaqMatrix)
     dens_xz = np.zeros((len(zgrid), len(q)),dtype='complex128')
     tperp_xz = np.zeros((len(zgrid), len(q)),dtype='complex128')
     for ky in kygrid:

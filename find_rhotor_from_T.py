@@ -20,6 +20,6 @@ gene_profiles_e = args[1]
 data = np.genfromtxt(gene_profiles_e)
 irhot = np.argmin(abs(data[:,2]-Te))
 rhot = data[irhot,0]
-print "rho_toroidal with Te = "+str(Te)+":\n",rhot
-print "density at = "+str(rhot)+":\n",data[irhot,3]
+print("rho_toroidal with Te = "+str(Te)+":\n",rhot)
+print("density at = "+str(rhot)+":\n",data[irhot,3])
 

@@ -45,7 +45,7 @@ while keep_going:
         num=data_linesplit[i].split()[0]
         num=float(num)
         num=int(num)
-        print "number of points:",num
+        print("number of points:",num)
         keep_going=(1==2)
     if i == len(data_linesplit):
         keep_going=(1==2)
@@ -63,7 +63,7 @@ def plot_next(data_linesplit,lnum,num):
         if test :
             quantity=data_linesplit[lnum].split()[0]
             units=data_linesplit[lnum].split()[1]
-            print "Plotting :",quantity
+            print("Plotting :",quantity)
         test=re.search('DATA FOLLOW',data_linesplit[lnum])
         if test:
             keep_going=(1==2)
@@ -79,7 +79,7 @@ def plot_next(data_linesplit,lnum,num):
                 rhot=np.append(rhot,temp)
         lnum=lnum+1
     #print rhot
-    print "time=",data_linesplit[lnum]
+    print("time=",data_linesplit[lnum])
     #print "var=",quantity
     lnum=lnum+1
     

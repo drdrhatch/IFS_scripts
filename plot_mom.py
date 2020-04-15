@@ -29,32 +29,32 @@ Arguments must be 1.Case name 2.Run number (e.g. .dat or _1)
 case_name = args[0]
 run_number = args[1]
 
-print "run_number", run_number
+print("run_number", run_number)
 tmax = options.tmax
 #print "tmax",tmax
 
 par=Parameters()
 par.Read_Pars('parameters'+run_number)
 n_spec = int(float(par.pardict['n_spec']))
-print 'n_spec',n_spec
+print('n_spec',n_spec)
 nrgcols = int(float(par.pardict['nrgcols']))
 rhostar = float(par.pardict['rhostar'])
-print 'ncols',nrgcols
+print('ncols',nrgcols)
 
 time,nrgi,nrge=get_nrg0(run_number,nspec=n_spec,ncols = nrgcols)
 
 if not tmax:
-    print "Identify end time for plots."
+    print("Identify end time for plots.")
 
     plt.plot(time,nrgi[:,0],'x-')
     plt.xlabel(r'$t(L_{ref}/v_{ref})$',size=18)
     plt.ylabel(r'$n^2/(n_0\rho^*)^2$',size=18)
     plt.show()
 
-    tmax = float(raw_input("Enter end time for plot:"))
+    tmax = float(input("Enter end time for plot:"))
 
 end_index = np.argmin(abs(time-tmax))
-print "time[end_index]",time[end_index]
+print("time[end_index]",time[end_index])
 
 plt.figure(figsize=(14,8))
 ax=plt.subplot(231)
@@ -76,8 +76,8 @@ plt.plot(time[:end_index],nrge[:end_index,2],label='Tpare')
 plt.annotate('Case: '+case_name,[0.82,0.9],xycoords='figure fraction')
 plt.annotate('nrg'+run_number,[0.82,0.87],xycoords='figure fraction')
 nx0 = str(par.pardict['nx0'])
-print "nx0",nx0
-print "type(nx0)",type(nx0)
+print("nx0",nx0)
+print("type(nx0)",type(nx0))
 nky0 = str(par.pardict['nky0'])
 nz0 = str(par.pardict['nz0'])
 nv0 = str(par.pardict['nv0'])

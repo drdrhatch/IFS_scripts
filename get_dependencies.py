@@ -10,7 +10,7 @@ class TreeNode(object):
         self.isTraversed=False
 
     def output(self):
-        print "%s %s: %s"%(self.Type,self.Value,", ".join(self.Leaves))
+        print("%s %s: %s"%(self.Type,self.Value,", ".join(self.Leaves)))
 
     def appendLeaf(self,leaf):
         self.Leaves.append(leaf)
@@ -107,10 +107,10 @@ def findNode(name,nodelist):
 def buildSubtree(thisnode,nodes):
     # build a subtree
     if not thisnode.hasSubtree():
-        print "\nBEGIN subtree of node ",thisnode.Value
+        print("\nBEGIN subtree of node ",thisnode.Value)
         leaflist = []
         for ileaf in range(len(thisnode.Leaves)):
-            print "Getting %u. leaf from %u leaves."%(ileaf,len(thisnode.Leaves))
+            print("Getting %u. leaf from %u leaves."%(ileaf,len(thisnode.Leaves)))
             #print thisnode.Leaves
             leaf = thisnode.Leaves.pop(0)
             #print "leaf = ",leaf,"\nnodes = ",[x.Value for x in nodes]
@@ -128,9 +128,9 @@ def buildSubtree(thisnode,nodes):
                 buildSubtree(node,nodes)
                 leaflist.append(node)
         thisnode.Leaves=leaflist
-        print "END subtree %s"%thisnode.Value
+        print("END subtree %s"%thisnode.Value)
     else:
-        print "Subtree of node %s already exists."%thisnode.Value
+        print("Subtree of node %s already exists."%thisnode.Value)
 
 def writeNodesToFile(thisnode,dotfile):
     towrite=[]
@@ -152,7 +152,7 @@ def writeNodesToFile(thisnode,dotfile):
             subtree.isTraversed=True
 
 def writeToFile(thisnode,dotfile):
-    print "Writing subtrees for node ",thisnode.Value
+    print("Writing subtrees for node ",thisnode.Value)
     if thisnode.hasLeaves():
         dotfile.write('\t%s -> {'%thisnode.Value)
     for subtree in thisnode.Leaves:
@@ -171,7 +171,7 @@ def resetAllNodes(nodes):
         node.isTraversed=False
 
 def writeMakeDependencies(thisnode,makedepfile):
-    print "Writing make dependencies for node ",thisnode.Value
+    print("Writing make dependencies for node ",thisnode.Value)
     for subtree in thisnode.Leaves:
         # construct the makefile line by line
         # target object file should reside in $(OBJDIR)
@@ -229,7 +229,7 @@ nodes = []
 for thisfile in filelist:
     # is the suffix a Fortran90 suffix?
     if re.search(r"\.(f90|F90|F03|f03|F95|f95)\s*$",os.path.splitext(thisfile)[1]):
-        print "parsing ",thisfile
+        print("parsing ",thisfile)
         resultlist = parseFortranSource(thisfile)
         #print "resultlist = ",[x.Value for x in resultlist]
         for res in resultlist:
@@ -258,7 +258,7 @@ for node in nodes:
 
 # now we have the root of the tree fixed
 #print rootnode.Leaves
-print [x.Value for x in nodes]
+print([x.Value for x in nodes])
 
 buildSubtree(rootnode,nodes)
 
@@ -290,4 +290,4 @@ makedepfile.write("LINK_OBJ = %s\n\n"%linkline)
 resetAllNodes(nodes)
 writeMakeDependencies(rootnode,makedepfile)
 makedepfile.close()
-print linkline
+print(linkline)

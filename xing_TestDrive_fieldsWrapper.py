@@ -24,7 +24,7 @@ gauss = float(options.gauss)
 show_plots = options.show_plots
 smooth_field = options.smooth_field
 central = options.central
-print('gauss =', gauss)
+print(('gauss =', gauss))
 if not suffix =='.dat':
    suffix = '_'+suffix
 
@@ -104,45 +104,45 @@ elif xlocal:
         
         f = open('averaged' + suffix + str(gauss).replace(".",""), 'w')
         sys.stdout = f
-        print 'Using phi from GENE run'
-        print 'kz = ', ave_kz
-        print 'kperp =', ave_kperp
-        print 'omd =', ave_omd
-        print 'gamma/kperp**2 =', float(om[1]) / ave_kperp**2
-        print ''
-        print ''
-        print 'Input to SKiM'
-        print 'kperp =', ave_kperp / float(pars['kymin'])
-        print 'omd =', ave_omd / float(pars['kymin'])
-        print ''
-        print ''
-        print 'kz * (int phi)**2 / int(phi**2)/ sqrt(2pi) = ', ave_kz/np.sqrt(2. * np.pi) *ave_int_sq / ave_sq_int
-        print 'Using once smoothed phi from GENE run'
-        print 'kz = ', ave_kz_smoothed01
-        print 'kperp =', ave_kperp_smoothed01
-        print 'omd =', ave_omd_smoothed01
-        print 'gamma/kperp**2 =', float(om[1]) / ave_kperp_smoothed01**2
-        print ''
-        print ''
-        print 'Input to SKiM'
-        print 'kperp =', ave_kperp_smoothed01 / float(pars['kymin'])
-        print 'omd =', ave_omd_smoothed01 / float(pars['kymin'])
-        print ''
-        print ''
-        print 'kz * (int phi)**2 / int(phi**2)/ sqrt(2pi) = ', ave_kz_smoothed01/np.sqrt(2. * np.pi) *ave_int_sq01 / ave_sq_int01
-        print 'Using twice smoothed phi from GENE run'
-        print 'kz = ', ave_kz_smoothed02
-        print 'kperp =', ave_kperp_smoothed02
-        print 'omd =', ave_omd_smoothed02
-        print 'gamma/kperp**2 =', float(om[1]) / ave_kperp_smoothed02**2
-        print ''
-        print ''
-        print 'Input to SKiM'
-        print 'kperp =', ave_kperp_smoothed02 / float(pars['kymin'])
-        print 'omd =', ave_omd_smoothed02 / float(pars['kymin'])
-        print ''
-        print ''
-        print 'kz * (int phi)**2 / int(phi**2)/ sqrt(2pi) = ', ave_kz_smoothed02/np.sqrt(2. * np.pi) *ave_int_sq02 / ave_sq_int02
+        print('Using phi from GENE run')
+        print('kz = ', ave_kz)
+        print('kperp =', ave_kperp)
+        print('omd =', ave_omd)
+        print('gamma/kperp**2 =', float(om[1]) / ave_kperp**2)
+        print('')
+        print('')
+        print('Input to SKiM')
+        print('kperp =', ave_kperp / float(pars['kymin']))
+        print('omd =', ave_omd / float(pars['kymin']))
+        print('')
+        print('')
+        print('kz * (int phi)**2 / int(phi**2)/ sqrt(2pi) = ', ave_kz/np.sqrt(2. * np.pi) *ave_int_sq / ave_sq_int)
+        print('Using once smoothed phi from GENE run')
+        print('kz = ', ave_kz_smoothed01)
+        print('kperp =', ave_kperp_smoothed01)
+        print('omd =', ave_omd_smoothed01)
+        print('gamma/kperp**2 =', float(om[1]) / ave_kperp_smoothed01**2)
+        print('')
+        print('')
+        print('Input to SKiM')
+        print('kperp =', ave_kperp_smoothed01 / float(pars['kymin']))
+        print('omd =', ave_omd_smoothed01 / float(pars['kymin']))
+        print('')
+        print('')
+        print('kz * (int phi)**2 / int(phi**2)/ sqrt(2pi) = ', ave_kz_smoothed01/np.sqrt(2. * np.pi) *ave_int_sq01 / ave_sq_int01)
+        print('Using twice smoothed phi from GENE run')
+        print('kz = ', ave_kz_smoothed02)
+        print('kperp =', ave_kperp_smoothed02)
+        print('omd =', ave_omd_smoothed02)
+        print('gamma/kperp**2 =', float(om[1]) / ave_kperp_smoothed02**2)
+        print('')
+        print('')
+        print('Input to SKiM')
+        print('kperp =', ave_kperp_smoothed02 / float(pars['kymin']))
+        print('omd =', ave_omd_smoothed02 / float(pars['kymin']))
+        print('')
+        print('')
+        print('kz * (int phi)**2 / int(phi**2)/ sqrt(2pi) = ', ave_kz_smoothed02/np.sqrt(2. * np.pi) *ave_int_sq02 / ave_sq_int02)
         f.close()
 
 
@@ -182,18 +182,18 @@ elif xlocal:
         plt.show()
 
     if 1 == 0:
-        print 'calculate average kz using d field/ dz'
+        print('calculate average kz using d field/ dz')
         ave_kz = kz_from_dfielddz(zgrid,jacobian, phi, True, 'phi')
         f = open('averaged' + suffix + str(gauss).replace(".",""), 'w')
         sys.stdout = f
         if gauss == 0.:
-            print 'Using field from GENE run'
+            print('Using field from GENE run')
         else:
-            print 'Gaussian width z = ', gauss
-        print 'Input to SKiM kz = ', ave_kz
+            print('Gaussian width z = ', gauss)
+        print('Input to SKiM kz = ', ave_kz)
         ave_kperp, ave_omd =  eigenfunction_average(zgrid, jacobian,kperp,omd_curv,phi,'phi')
-        print 'Input to SKiM kperp =', ave_kperp / pars['kymin']
-        print 'Input to SKiM omd =', ave_omd / pars['kymin']
+        print('Input to SKiM kperp =', ave_kperp / pars['kymin'])
+        print('Input to SKiM omd =', ave_omd / pars['kymin'])
 #        print 'calculate average kz using FT'
 #        phi1 = list(phi)
 #        field_kz, kz_grid = fourierTrans(pars, zgrid, jacobian, phi1, True, 'phi')

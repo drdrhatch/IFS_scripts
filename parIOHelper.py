@@ -34,16 +34,16 @@ def otherRef(suffix, pars):
     Gamma_gb = cref * nref * rhorefStar ** 2
     Qheat_gb = cref * pref * rhorefStar ** 2
 
-    print 'Tref = ', Tref, 'J'
-    print 'nref = ', nref, 'm^-3'
-    print 'pref = ', pref, 'N / m^2'
-    print 'cref = ', cref, 'm / s'
-    print 'Omegaref = ', Omegaref, 'Hz'
-    print 'rhoref = ', rhoref, 'm'
-    print 'rhorefStar = ', rhorefStar, 'dimensionless'
-    print 'phiref = ',phi_norm, 'V'
-    print 'Aparref = ', Apar_norm, 'Tesla * m'
-    print 'Gamma_gb = ', Gamma_gb, '/ m^2 / s'
-    print 'Q_gb =', Qheat_gb, 'J / m^2 / s'
+    print('Tref = ', Tref, 'J')
+    print('nref = ', nref, 'm^-3')
+    print('pref = ', pref, 'N / m^2')
+    print('cref = ', cref, 'm / s')
+    print('Omegaref = ', Omegaref, 'Hz')
+    print('rhoref = ', rhoref, 'm')
+    print('rhorefStar = ', rhorefStar, 'dimensionless')
+    print('phiref = ',phi_norm, 'V')
+    print('Aparref = ', Apar_norm, 'Tesla * m')
+    print('Gamma_gb = ', Gamma_gb, '/ m^2 / s')
+    print('Q_gb =', Qheat_gb, 'J / m^2 / s')
 
     return pref, cref, Omegaref, rhoref, rhorefStar, Apar_norm, Gamma_gb, Qheat_gb

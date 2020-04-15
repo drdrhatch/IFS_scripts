@@ -28,14 +28,14 @@ def check_batch_script():
                 line_split = line.split()
                 for i in range(len(line_split)):
                     if '--cs' in line_split[i]:
-                        dummy = raw_input("Warning! This is a scan continuation (press any key)")
+                        dummy = input("Warning! This is a scan continuation (press any key)")
                     if '--np' in line_split[i]:
                         nprocs2 = int(line_split[i+1])
         if nprocs == -1:
             print("Error: can't determine number of processors from submit.cmd")
         elif nprocs2 != -1:
             if nprocs != nprocs2:
-                print "Error: SBATCH nprocs differs from scanscript nprocs."
+                print("Error: SBATCH nprocs differs from scanscript nprocs.")
         return nprocs, False
     elif 'helios' in os.getenv('HOST'):
         f=open('submit.cmd')
@@ -58,12 +58,12 @@ def check_batch_script():
             if '-A' in line:
                 print("Check allocation:")
                 print(line)
-                dummy = raw_input("Press any key to continue.")
+                dummy = input("Press any key to continue.")
             if './scanscript' == line[:12]:
                 line_split = line.split()
                 for i in range(len(line_split)):
                     if '--cs' in line_split[i]:
-                        dummy = raw_input("Warning! This is a scan continuation (press any key)")
+                        dummy = input("Warning! This is a scan continuation (press any key)")
                     if '--np' in line_split[i]:
                         nprocs2 = int(line_split[i+1])
 
@@ -88,7 +88,7 @@ def check_batch_script():
                 line_split = line.split()
                 for i in range(len(line_split)):
                     if '--cs' in line_split[i]:
-                        dummy = raw_input("Warning! This is a scan continuation (press any key)")
+                        dummy = input("Warning! This is a scan continuation (press any key)")
                     if '--np' in line_split[i]:
                         nprocs2 = int(line_split[i+1])
         if nprocs == -1:
@@ -105,7 +105,7 @@ par.Read_Pars(parfile)
 pars = par.pardict
 pars['diagdir'] = pars['diagdir'].strip()[1:-1]
 
-print("diagdir", pars['diagdir'])
+print(("diagdir", pars['diagdir']))
 true_strings = ['t','.t.','true']
 # print "read_checkpoint", pars['read_checkpoint']
 # print pars['read_checkpoint'].lower()
@@ -156,7 +156,7 @@ elif pars['n_procs_sim']:
 
 if not os.path.isdir(pars['diagdir']):
     print("Error: diagdir doesn't exist.")
-    print("diagdir:",pars['diagdir'])
+    print(("diagdir:",pars['diagdir']))
     has_error = True
 
 if pars['read_checkpoint']:
@@ -172,4 +172,4 @@ if pars['read_checkpoint']:
 if not has_error:
     print("No errors detected.")
 else:
-    print "Fix errors before submitting!"
+    print("Fix errors before submitting!")

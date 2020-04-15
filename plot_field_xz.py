@@ -36,7 +36,7 @@ else:
 plot_format = 'display'
 #plot_format = 'ps'
 
-kygrid = range(pars['nky0'])
+kygrid = list(range(pars['nky0']))
 
 zInd = -1
 xInd = -1

@@ -63,16 +63,16 @@ def read_EFIT(EFIT_file_name):
     EFITdict['bcentr'] = bcentr    # vacuum toroidal magnetic field in Telsa
     EFITdict['current'] = current    # plasma current in Ampere
 
-    print('EFIT file Resolution: %d x %d' %(EFITdict['nw'],EFITdict['nh']))
-    print('Horizontal dimension(m): %10.4f' %EFITdict['rdim'])
-    print('Vertical dimension(m): %10.4f' %EFITdict['zdim'])
-    print('Minimum R of rectangular grid: %10.4f' %EFITdict['rleft'])
-    print('(R, Z) of magnetic axis: (%10.4f, %10.4f)' %(EFITdict['rmaxis'],EFITdict['zmaxis']))
-    print('poloidal flux at magnetic axis in Weber/rad: %10.4f' %EFITdict['simag'])
-    print('poloidal flux at the plasma boundary in Weber/rad: %10.4f' %EFITdict['sibry'])
-    print('Vacuum toroidal magnetic field at R = %10.4f: %10.4f Tesla' %(EFITdict['rcentr'],EFITdict['bcentr']))
-    print('Z of center of rectangular grid: %10.4f' %EFITdict['zmid'])
-    print('Plasma current: %10.4f Ampere' %EFITdict['current'])
+    print(('EFIT file Resolution: %d x %d' %(EFITdict['nw'],EFITdict['nh'])))
+    print(('Horizontal dimension(m): %10.4f' %EFITdict['rdim']))
+    print(('Vertical dimension(m): %10.4f' %EFITdict['zdim']))
+    print(('Minimum R of rectangular grid: %10.4f' %EFITdict['rleft']))
+    print(('(R, Z) of magnetic axis: (%10.4f, %10.4f)' %(EFITdict['rmaxis'],EFITdict['zmaxis'])))
+    print(('poloidal flux at magnetic axis in Weber/rad: %10.4f' %EFITdict['simag']))
+    print(('poloidal flux at the plasma boundary in Weber/rad: %10.4f' %EFITdict['sibry']))
+    print(('Vacuum toroidal magnetic field at R = %10.4f: %10.4f Tesla' %(EFITdict['rcentr'],EFITdict['bcentr'])))
+    print(('Z of center of rectangular grid: %10.4f' %EFITdict['zmid']))
+    print(('Plasma current: %10.4f Ampere' %EFITdict['current']))
 
     Rgrid = np.linspace(0, 1, nw, endpoint = True) * rdim + rleft
     Zgrid = np.linspace(0, 1, nh, endpoint = True) * zdim + (zmid - zdim/2.)
@@ -91,8 +91,8 @@ def read_EFIT(EFIT_file_name):
     
     start_line = 5
     wordsInLine = 5
-    lines=range(nw//wordsInLine)
-    if nw%wordsInLine!=0: lines=range(nw//wordsInLine+1)
+    lines=list(range(nw//wordsInLine))
+    if nw%wordsInLine!=0: lines=list(range(nw//wordsInLine+1))
     for i in lines:
         n_entries=len(eqdsk[i+start_line])//entrylength
         Fpol[i*wordsInLine:i*wordsInLine+n_entries] = \
@@ -125,8 +125,8 @@ def read_EFIT(EFIT_file_name):
     start_line=i+start_line+1
     EFITdict['Pprime'] = Pprime    # Pprime on psipn grid
 
-    lines_twod=range(nw*nh//wordsInLine)
-    if nw*nh%wordsInLine!=0: lines_twod=range(nw*nh//wordsInLine+1)
+    lines_twod=list(range(nw*nh//wordsInLine))
+    if nw*nh%wordsInLine!=0: lines_twod=list(range(nw*nh//wordsInLine+1))
     for i in lines_twod:
         n_entries=len(eqdsk[i+start_line])//entrylength
         psirz_1d[i*wordsInLine:i*wordsInLine+n_entries] = \

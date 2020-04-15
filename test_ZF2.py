@@ -100,7 +100,7 @@ nref = pars['nref']*1.0e19
 Tnorm = rhostar*Tref*1000.0*ee
 kynorm = 1.0/rhostar/Lref
 QGB = phinorm*Tnorm*kynorm*nref/Bref
-print "QGB (watts/m^2):",QGB
+print("QGB (watts/m^2):",QGB)
 
 
 

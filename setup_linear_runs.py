@@ -45,7 +45,7 @@ gene_dirname = 'gene_sep16/'
 x0_scan_string = str(x0_values[0])
 for i in range(1,len(x0_values)):
     x0_scan_string += ', '+str(x0_values[i])
-print "x0_scan_string:",x0_scan_string
+print("x0_scan_string:",x0_scan_string)
 basedir='/scratch1/scratchdirs/drhatch/iterp/'
 diagdir = basedir+case
 #homedir = '/home1/01658/drhatch/'
@@ -59,13 +59,13 @@ for i in range(len(x0_values)):
     probdirkxc.append(genedir+'prob_kxc_'+case+'_'+str(x0_values[i]))
 pmvdir = homedir+'pmv_eqs/'
 eqs_dir = pmvdir+case+'/'
-print "Checking existence of efit file."
+print("Checking existence of efit file.")
 if os.path.isfile(eqs_dir+efit_file_name):
-    print "Efit file exists:",efit_file_name
+    print("Efit file exists:",efit_file_name)
 else:
     sys.exit("Efit file does not exist.  Select different efit file.") 
 if os.path.isfile(eqs_dir+case+'.iterdb'):
-    print "Iterdb file exists:",case+'.iterdb'
+    print("Iterdb file exists:",case+'.iterdb')
 else:
     sys.exit("Iterdb file does not exist.  Select different iterdb file.") 
 
@@ -85,9 +85,9 @@ def calc_shat(q,rhot):
 #####Execute
 #####Execute
 if not os.path.exists(diagdir):
-    print diagdir," does not exist."  
+    print(diagdir," does not exist.")  
     os.makedirs(diagdir)
-    print "Now it does."
+    print("Now it does.")
 
 if x0_scan:
     if os.path.exists(probdirloc):
@@ -95,7 +95,7 @@ if x0_scan:
     call(['cp','-r',template_prob_dir_loc,probdirloc])
     call(['cp','-r',homedir+'/scripts/setup_linear_runs.py',probdirloc])
     if include_impurity:
-       print "Warning: include_impurity not ready for x0_scan!"
+       print("Warning: include_impurity not ready for x0_scan!")
        stop
 
 if setup_global:
@@ -104,7 +104,7 @@ if setup_global:
     call(['cp','-r',template_prob_dir_glob,probdirglob])
     call(['cp','-r',homedir+'/scripts/setup_linear_runs.py',probdirglob])
     if include_impurity:
-       print "Warning: include_impurity not ready for global!"
+       print("Warning: include_impurity not ready for global!")
        stop
 
 
@@ -114,7 +114,7 @@ if setup_lilo:
     call(['cp','-r',template_prob_dir_glob,probdirlilo])
     call(['cp','-r',homedir+'/scripts/setup_linear_runs.py',probdirlilo])
     if include_impurity:
-       print "Warning: include_impurity not ready for LILO!"
+       print("Warning: include_impurity not ready for LILO!")
        stop
 
 if kx_center_scan:
@@ -306,9 +306,9 @@ if kx_center_scan:
         rhot0,q0,shat = calc_shat(q,rhot)
         xind = np.argmin(abs(rhot0-x0_values[j]))
         shat_out = shat[xind]
-        print "Assuming shat = ",shat_out
+        print("Assuming shat = ",shat_out)
         if j==0:
-            print "Saving shat.dat"
+            print("Saving shat.dat")
             np.savetxt('shat.dat',np.column_stack((rhot0,q0,shat)))
 
         #change submit.cmd file
@@ -326,7 +326,7 @@ if kx_center_scan:
         for i in range(num_kxcenter-1):
             kx_center_scan_string += ', '+str(0.8*(i+1)/float(num_kxcenter)*2*np.pi)+'*'+str(shat_out)+'*kymin(1)'
 
-        print "kx_center_scan_string",kx_center_scan_string
+        print("kx_center_scan_string",kx_center_scan_string)
         #change diagdir
         f=open('parameters','r')
         parfile=f.read()
@@ -358,9 +358,9 @@ if kx_center_scan:
                 parfile_split[i] = 'n_procs_z = 8 ' 
              
         if include_impurity:
-            imp_charge = raw_input('Enter impurity charge:\n')
-            imp_mass = raw_input('Enter impurity mass:\n')
-            imp_label = raw_input('Enter impurity label:\n')
+            imp_charge = input('Enter impurity charge:\n')
+            imp_mass = input('Enter impurity mass:\n')
+            imp_label = input('Enter impurity label:\n')
         #print 'spec_ind',spec_ind
             parfile_split.insert(spec_ind[1],'\n')
             parfile_split.insert(spec_ind[1],'/')

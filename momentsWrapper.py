@@ -114,11 +114,11 @@ def LILO_moments_from_mom_file(pars,suffix,plot,setTime=-1):
     momen = momfile('mom_e'+suffix,pars)
     if (setTime == -1):
         momen.set_time(momen.tmom[setTime])
-        print 'Reading momentss are at t = ', momen.tmom[setTime]
+        print('Reading momentss are at t = ', momen.tmom[setTime])
     else:
         isetTime = np.argmin(abs(np.array(momen.tmom)-setTime))
         momen.set_time(momen.tmom[isetTime])
-        print 'Reading momentss are at t = ', momen.tmom[isetTime]
+        print('Reading momentss are at t = ', momen.tmom[isetTime])
 
     nz = pars['nz0']
     nx = pars['nx0']

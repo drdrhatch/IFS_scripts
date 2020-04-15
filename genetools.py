@@ -63,7 +63,7 @@ def read_parameters(paramfpath):
     for fid in range(len(paramflist)):
         if not os.path.isfile(paramflist[fid]):
            print('FATAL in read_parameters:')
-           print(paramflist[fid]+' FILE NOT FOUND. Exit!'); sys.exit()
+           print((paramflist[fid]+' FILE NOT FOUND. Exit!')); sys.exit()
     
         ofh = open(paramflist[fid],'r')
         lines = ofh.readlines()
@@ -71,7 +71,7 @@ def read_parameters(paramfpath):
 
         nspecs = 1
         for line in lines:
-            pkeys = geneparam.keys()
+            pkeys = list(geneparam.keys())
             if   line[0] == '&':
                  pkey = line[1:].strip()
                  if pkey == 'species':
@@ -81,7 +81,7 @@ def read_parameters(paramfpath):
             elif line.strip() in ['/', '!','']:
                  continue
             else:
-                 skeys = geneparam[pkey].keys()
+                 skeys = list(geneparam[pkey].keys())
                  items = (line.strip()).split('=')
                  skey  = items[0].strip()
                  if   pkey == "parallelization":
@@ -284,7 +284,7 @@ def read_parameters(paramfpath):
                          if   skey in ['antenna_type','perf_tsteps','hyp_z_order','hyp_y_order','hyp_x_order','ev_max_it','n_ev','timelim','ntimesteps']:
                               geneparam[pkey][skey] = int(items[1])
                          elif skey in ['ntimesteps']:
-                              geneparam[pkey][skey] = long(items[1])
+                              geneparam[pkey][skey] = int(items[1])
                          elif skey in ['nonlinear','hypz_compensation','x_local','calc_dt','include_f0_contr','bpar','delzonal','delzonal_fields','arakawa_zv','check qn gradients']:
                               geneparam[pkey][skey] = str2bool(items[1])
                          elif skey in ['hyp_z_with_dz_prefactor','hyp_v_with_dv_prefactor']:
@@ -306,7 +306,7 @@ def read_parameters(paramfpath):
                          if   skey in ['antenna_type','perf_tsteps','hyp_z_order','hyp_y_order','hyp_x_order','ev_max_it','n_ev','timelim','ntimesteps']:
                               geneparam[pkey][skey].append(int(items[1]))
                          elif skey in ['ntimesteps']:
-                              geneparam[pkey][skey].append(long(items[1]))
+                              geneparam[pkey][skey].append(int(items[1]))
                          elif skey in ['nonlinear','hypz_compensation','x_local','calc_dt','include_f0_contr','bpar','delzonal','delzonal_fields','arakawa_zv','check qn gradients']:
                               geneparam[pkey][skey].append(str2bool(items[1]))
                          elif skey in ['hyp_z_with_dz_prefactor','hyp_v_with_dv_prefactor']:
@@ -326,8 +326,8 @@ def read_parameters(paramfpath):
                               if geneparam[pkey][skey] != int(items[1]):
                                  geneparam[pkey][skey]  = [geneparam[pkey][skey],int(items[1])]
                          elif skey in ['ntimesteps']:
-                              if geneparam[pkey][skey] != long(items[1]):
-                                 geneparam[pkey][skey]  = [geneparam[pkey][skey],long(items[1])]
+                              if geneparam[pkey][skey] != int(items[1]):
+                                 geneparam[pkey][skey]  = [geneparam[pkey][skey],int(items[1])]
                          elif skey in ['nonlinear','hypz_compensation','x_local','calc_dt','include_f0_contr','bpar','delzonal','delzonal_fields','arakawa_zv','check qn gradients']:
                               if geneparam[pkey][skey] != str2bool(items[1]):
                                  geneparam[pkey][skey]  = [geneparam[pkey][skey],str2bool(items[1])]
@@ -383,7 +383,7 @@ def read_nrg(nrgfpath,nspecs=0,parameters={},normalized=True):
     nrgdata = {}
     for inrgf in nrgflist:
         if not os.path.isfile(inrgf):
-           print(inrgf+' FILE NOT FOUND. Exit!'); sys.exit()
+           print((inrgf+' FILE NOT FOUND. Exit!')); sys.exit()
 
         inrgfkey = inrgf
         nrgdata[inrgfkey] = {}
@@ -491,7 +491,7 @@ def read_neoclass(neoclassfpath,nspecs=0,parameters={},normalized=True):
     neoclassdata = {}
     for ineoclassf in neoclassflist:
         if not os.path.isfile(ineoclassf):
-           print(ineoclassf+' FILE NOT FOUND. Exit!'); sys.exit()
+           print((ineoclassf+' FILE NOT FOUND. Exit!')); sys.exit()
 
         ineoclassfkey = ineoclassf
         neoclassdata[ineoclassfkey] = {}
@@ -553,7 +553,7 @@ def read_scanfile(scanfpath):
          scanfpath = scanfpath[0:-8]
     if not os.path.isfile(scanfpath+'scan.log'):
        print('FATAL in read_scanfile:')
-       print(scanfpath+'scan.log FILE NOT FOUND. Exit!'); sys.exit()
+       print((scanfpath+'scan.log FILE NOT FOUND. Exit!')); sys.exit()
 
     ofh = open(scanfpath+'scan.log','r')
     lines = ofh.readlines()
@@ -595,7 +595,7 @@ def read_omega(omegafpath):
     for iomegaf in omegaflist:
         if not os.path.isfile(iomegaf):
            print('FATAL in read_omega:')
-           print(iomegaf+' FILE NOT FOUND. Exit!'); sys.exit()
+           print((iomegaf+' FILE NOT FOUND. Exit!')); sys.exit()
     
         recvr = npy.genfromtxt(iomegaf)
         kymin.append(float(recvr[0]))
@@ -670,7 +670,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print('WARNING: neg_loc < corr_time')
         corr_time = neg_loc
 
     if show_plot:
@@ -692,7 +692,7 @@ def read_mom(momfpath,specs='',timeslot=-1):
     for imomf in momflist:
         if not os.path.isfile(imomf):
            print('FATAL in read_mom:')
-           print(imomf+' FILE NOT FOUND. Exit!'); sys.exit()
+           print((imomf+' FILE NOT FOUND. Exit!')); sys.exit()
 
         momdata[imomf] = {}
 
@@ -749,7 +749,7 @@ def read_field(fieldfpath,timeslot=None,fieldfmt=None):
     for ifieldf in fieldflist:
         if not os.path.isfile(ifieldf):
            print('FATAL in read_field:')
-           print(ifieldf+' FILE NOT FOUND. Exit!'); sys.exit()
+           print((ifieldf+' FILE NOT FOUND. Exit!')); sys.exit()
 
         fielddata[ifieldf] = {}
 
@@ -936,10 +936,10 @@ def read_field(fieldfpath,timeslot=None,fieldfmt=None):
 def field_info(field,param={}):
    #Developed by Ehab Hassan on 2019-03-14
     for ifieldf in field:
-        if not param.keys():
+        if not list(param.keys()):
            param = read_parameters(ifieldf[:-10]+"parameters_"+ifieldf[-4:])
 
-        if 'x_local' in param['general'].keys():
+        if 'x_local' in list(param['general'].keys()):
            if param['general']['x_local']:
             x_local = True
            else:
@@ -1020,7 +1020,7 @@ def field_info(field,param={}):
            dkx = 2.0*npy.pi*float(param['geometry']['shat'])
            phi2tot = npy.sum(npy.sum(abs(phikx)**2,axis=0),axis=0)
            kxgrid = npy.empty(int(param['box']['nx0']),dtype='float64')
-           if 'kx_center' in param['box'].keys():
+           if 'kx_center' in list(param['box'].keys()):
               kxgrid[0] = float(param['box']['kx_center'])
            else:
               kxgrid[0] = 0.0
@@ -1358,12 +1358,12 @@ def find_mode_frequency(fieldfpath,fraction=0.9,bgn_t=None,end_t=None,method='fa
 def mode_type(modeinfo,parameters):
    #Developed by Ehab Hassan on 2019-03-28
    #Based on the work done by David Hatch
-    if 'external contr' in parameters.keys():
-       if 'ExBrate' in parameters['external contr'].keys() and parameters['external contr']['ExBrate'] != 0.0: wExBshear = True
+    if 'external contr' in list(parameters.keys()):
+       if 'ExBrate' in list(parameters['external contr'].keys()) and parameters['external contr']['ExBrate'] != 0.0: wExBshear = True
     else:                                                                                                      wExBshear = False
     epar_threshold = 0.2
     epar_threshold2 = 0.6
-    if 'x_local' in parameters['general'].keys() and not parameters['general']['x_local']:
+    if 'x_local' in list(parameters['general'].keys()) and not parameters['general']['x_local']:
         epar_threshold = 0.4
         epar_threshold2 = 0.7
     dz = 2.0/parameters['box']['nz0']
@@ -1460,17 +1460,17 @@ def mode_info(genefpath):
         mode_info[iky] = {}
 
         mode_info[iky]['kymin'] = paramdata['box']['kymin']
-        if   'x0'        in paramdata['box'].keys():
+        if   'x0'        in list(paramdata['box'].keys()):
              mode_info[iky]['x0'] = paramdata['box']['x0']
         else:
              mode_info[iky]['x0'] = npy.nan
 
-        if   'kx_center' in paramdata['box'].keys():
+        if   'kx_center' in list(paramdata['box'].keys()):
              mode_info[iky]['kx_center'] = paramdata['box']['kx_center']
         else:
              mode_info[iky]['kx_center'] = 0.0
 
-        if   'n0_global' in paramdata['box'].keys():
+        if   'n0_global' in list(paramdata['box'].keys()):
              mode_info[iky]['n0_global'] = paramdata['box']['n0_global']
         else:
              mode_info[iky]['n0_global'] = npy.nan
@@ -1482,41 +1482,41 @@ def mode_info(genefpath):
              mode_info[iky]['gamma'] = npy.nan
              mode_info[iky]['omega'] = npy.nan
 
-        if 'zavg' in fieldinfo.keys():
+        if 'zavg' in list(fieldinfo.keys()):
              mode_info[iky]['zavg'] = fieldinfo['zavg']
         else:
              mode_info[iky]['zavg'] = npy.nan
 
-        if 'corr_len' in fieldinfo.keys():
+        if 'corr_len' in list(fieldinfo.keys()):
              mode_info[iky]['corr_len'] = fieldinfo['corr_len']
         else:
              mode_info[iky]['corr_len'] = npy.nan
 
-        if 'parity_factor_apar' in fieldinfo.keys():
+        if 'parity_factor_apar' in list(fieldinfo.keys()):
              mode_info[iky]['parity_factor_apar'] = fieldinfo['parity_factor_apar']
         else:
              mode_info[iky]['parity_factor_apar'] = npy.nan
 
-        if 'parity_factor_phi' in fieldinfo.keys():
+        if 'parity_factor_phi' in list(fieldinfo.keys()):
              mode_info[iky]['parity_factor_phi'] = fieldinfo['parity_factor_phi']
         else:
              mode_info[iky]['parity_factor_phi'] = npy.nan
 
-        if 'Epar_Cancellation' in fieldinfo.keys():
+        if 'Epar_Cancellation' in list(fieldinfo.keys()):
              mode_info[iky]['Epar_Cancellation'] = fieldinfo['Epar_Cancellation']
         else:
              mode_info[iky]['Epar_Cancellation'] = npy.nan
 
-        if 'global_factor' in fieldinfo.keys():
+        if 'global_factor' in list(fieldinfo.keys()):
              mode_info[iky]['glabal_factor'] = fieldinfo['global_factor']
         else:
              mode_info[iky]['glabal_factor'] = npy.nan
 
-        inrgf  = nrgdata.keys()[0]
-        if   len(nrgdata[inrgf].keys()) >= 3:
+        inrgf  = list(nrgdata.keys())[0]
+        if   len(list(nrgdata[inrgf].keys())) >= 3:
               mode_info[iky]['Qem/Qes']  = nrgdata[inrgf]['i']['HFluxem'][-1]
               mode_info[iky]['Qem/Qes'] /= (abs(nrgdata[inrgf]['i']['HFluxes'][-1])+abs(nrgdata[inrgf]['e']['HFluxes'][-1]))
-        elif len(nrgdata[inrgf].keys()) >= 2:
+        elif len(list(nrgdata[inrgf].keys())) >= 2:
               mode_info[iky]['Qem/Qes']  = nrgdata[inrgf]['e']['HFluxem'][-1]
               mode_info[iky]['Qem/Qes'] /= abs(nrgdata[inrgf]['e']['HFluxes'][-1])
 
@@ -1571,7 +1571,7 @@ def flux_info(genefpath):
 
         nrgfpath = os.path.abspath(nrgid)
         nrgdata = read_nrg(nrgfpath)
-        nrgid   = nrgdata.keys()[0]
+        nrgid   = list(nrgdata.keys())[0]
 
         flux_info[iky]={}
         for ispecs in range(paramdata['box']['n_spec']):

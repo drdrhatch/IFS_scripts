@@ -14,7 +14,7 @@ def read_EFIT_file(efit_file_name):
     line1=eqdsk[0].split()
     nw=int(eqdsk[0].split()[-2])
     nh=int(eqdsk[0].split()[-1])
-    print 'EFIT file Resolution: %d x %d' %(nw,nh)
+    print('EFIT file Resolution: %d x %d' %(nw,nh))
 
     entrylength=16
     #note: here rmin is rleft from EFIT
@@ -63,8 +63,8 @@ def read_EFIT_file(efit_file_name):
     psirz_1d=empty(nw*nh,dtype=float)
     
     start_line=5
-    lines=range(nw/5)
-    if nw%5!=0: lines=range(nw/5+1)
+    lines=list(range(nw/5))
+    if nw%5!=0: lines=list(range(nw/5+1))
     for i in lines:
         n_entries=len(eqdsk[i+start_line])/entrylength
         F[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
@@ -85,8 +85,8 @@ def read_EFIT_file(efit_file_name):
         pprime[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
 
-    lines_twod=range(nw*nh/5)
-    if nw*nh%5!=0: lines_twod=range(nw*nh/5+1)
+    lines_twod=list(range(nw*nh/5))
+    if nw*nh%5!=0: lines_twod=list(range(nw*nh/5+1))
     for i in lines_twod:
         n_entries=len(eqdsk[i+start_line])/entrylength
         psirz_1d[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]

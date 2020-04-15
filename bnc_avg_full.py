@@ -143,9 +143,9 @@ bnc_avg_omd = lambda_int(N_avg_omd *abs(N_avg_phi)**2 * int_dz_N) \
 
 f = open('bnc2_avg_full' + suffix, 'w')
 sys.stdout = f
-print('[central period only] frac_trap = {}'.format(np.round(frac_trap, 4)))
-print('[central period only] bounce averaged omega_d = {}'.format(np.round(bnc_avg_omd, 4)))
-print('[central period only] bounce averaged for SKiM omega_d = {}'.format(np.round(bnc_avg_omd / pars['kymin'], 4)))
+print(('[central period only] frac_trap = {}'.format(np.round(frac_trap, 4))))
+print(('[central period only] bounce averaged omega_d = {}'.format(np.round(bnc_avg_omd, 4))))
+print(('[central period only] bounce averaged for SKiM omega_d = {}'.format(np.round(bnc_avg_omd / pars['kymin'], 4))))
 
 
 if show_plots:
@@ -190,8 +190,8 @@ for i in ikx_grid_full:
 frac_trap_full = sum(frac_trap_numer) / sum(frac_trap_denom)
 bnc_avg_omd_full = sum(bnc_avg_omd_numer) / sum(bnc_avg_omd_denom)
 
-print('[full simulation periods] frac_trap = {}'.format(np.round(frac_trap_full, 4)))
-print('[full simulation periods] bounce averaged omega_d = {}'.format(np.round(bnc_avg_omd_full, 4)))
-print('[full simulation periods] bounce averaged for SKiM omega_d = {}'.format(np.round(bnc_avg_omd_full / pars['kymin'], 4)))
+print(('[full simulation periods] frac_trap = {}'.format(np.round(frac_trap_full, 4))))
+print(('[full simulation periods] bounce averaged omega_d = {}'.format(np.round(bnc_avg_omd_full, 4))))
+print(('[full simulation periods] bounce averaged for SKiM omega_d = {}'.format(np.round(bnc_avg_omd_full / pars['kymin'], 4))))
 
 f.close()

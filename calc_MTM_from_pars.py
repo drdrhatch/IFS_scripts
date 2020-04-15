@@ -50,7 +50,7 @@ xgrid = profe[:,0]
 x0 = pars['x0']
 lx_a = pars['lx_a']
 qprof = geom['q']
-dummy = raw_input("Assuming ions are first species, ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
+dummy = input("Assuming ions are first species, ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
 
 Te = pars['Tref']
 Ti = Te*pars['temp1']
@@ -73,14 +73,14 @@ coll_prof = 2.3031E-5*Lref*(neprof)/(Teprof)**2*(24.0-np.log(sqrt(neprof*1.0E13)
 coll = pars['coll']
 nue = 4.0*coll*(mref/me)**0.5
 nue_prof = 4.0*coll_prof*(mref/me)**0.5
-print "nue",nue
-print "nue_prof[x0]",nue_prof[int(pars['nx0']/2.0)]
+print("nue",nue)
+print("nue_prof[x0]",nue_prof[int(pars['nx0']/2.0)])
 
 
 ixmin = int(pars['nx0']*pars['l_buffer_size'])
 ixmax = int(pars['nx0']-pars['nx0']*pars['u_buffer_size'])
-print "ixmin",ixmin
-print "ixmax",ixmax
+print("ixmin",ixmin)
+print("ixmax",ixmax)
 omte_avg = np.sum(omte[ixmin:ixmax])/(ixmax-ixmin)
 omne_avg = np.sum(omne[ixmin:ixmax])/(ixmax-ixmin)
 omte_max = np.max(omte[ixmin:ixmax])
@@ -91,8 +91,8 @@ shat_min = np.min(shat[ixmin:ixmax])
 n0 = pars['n0_global']
 #Assuming negligible variation of Bref
 rhostar_prof =  np.sqrt(1000.0*ee*Teprof/mref)*mref/ee/Bref/Lref
-print "pars['rhostar']",pars['rhostar']
-print "rhostar",rhostar_prof[int(pars['nx0']/2.0)]
+print("pars['rhostar']",pars['rhostar'])
+print("rhostar",rhostar_prof[int(pars['nx0']/2.0)])
 
 #Calculate radial dependence of omega_star for given n0
 omega_star_prof = n0*qprof/xgrid*rhostar_prof*(omte+omne)
@@ -145,18 +145,18 @@ plt.plot(xgrid[ixmin:ixmax],omte[ixmin:ixmax])
 plt.title("omte_avg "+str(omte_avg))
 plt.show()
 
-print "betae",beta
-print "betae max oms",beta_max_oms
-print "coll (from GENE)",coll
-print "coll0",coll0
-print "coll0/coll",coll0/coll
-print "Avg shat",shat_avg
-print "Min shat",shat_min
-print "Avg a/LTe",omte_avg
+print("betae",beta)
+print("betae max oms",beta_max_oms)
+print("coll (from GENE)",coll)
+print("coll0",coll0)
+print("coll0/coll",coll0/coll)
+print("Avg shat",shat_avg)
+print("Min shat",shat_min)
+print("Avg a/LTe",omte_avg)
 beta_hat_maxoms = beta_max_oms*(omte_omne_max_oms/shat_max_oms)**2
-print "beta_hat avg = betae*(Ls/LTe)^2",beta_avg*(omte_avg/shat_avg)**2
-print "beta_hat max oms = beta_max_oms*(omte_omne_max_oms/shat_max_oms)^2", beta_hat_maxoms
-print "nu_e (normalized to cs/a)", nue
+print("beta_hat avg = betae*(Ls/LTe)^2",beta_avg*(omte_avg/shat_avg)**2)
+print("beta_hat max oms = beta_max_oms*(omte_omne_max_oms/shat_max_oms)^2", beta_hat_maxoms)
+print("nu_e (normalized to cs/a)", nue)
 
 kygrid = np.linspace(0.0,1.0,num=10)
 plt.plot(kygrid,kygrid*omte_avg,label='omega* = ky rhos a/LTe)')

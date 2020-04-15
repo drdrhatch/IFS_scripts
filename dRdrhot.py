@@ -46,6 +46,6 @@ dRdrhot = fd_d1_o4(Rnew,rhot)
 
 ix0 = np.argmin(abs(rhot-x0))
 
-print "dR/drhot (m) at x0 ",x0
-print dRdrhot[ix0]
+print("dR/drhot (m) at x0 ",x0)
+print(dRdrhot[ix0])
 

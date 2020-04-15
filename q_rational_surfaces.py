@@ -45,9 +45,9 @@ qmax = np.max(geometry['q'])
 mmin = math.ceil(qmin*n0)
 mmax = math.floor(qmax*n0)
 mnums = np.arange(mmin,mmax+1)
-print "mnums",mnums
+print("mnums",mnums)
 qrats = mnums/float(n0)
-print "qrats",qrats
+print("qrats",qrats)
 
 plt.figure(figsize=(6,6))
 plt.subplot(2,1,1)

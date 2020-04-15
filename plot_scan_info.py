@@ -66,8 +66,8 @@ def classify_modes(data_in,pars):
         epar_threshold = 0.4
         epar_threshold2 = 0.7
     dz = 2.0/float(pars['nz0'])
-    print "epar_threshold",epar_threshold
-    print "epar_threshold2",epar_threshold2
+    print("epar_threshold",epar_threshold)
+    print("epar_threshold2",epar_threshold2)
     for i in range(ntot):
         #Test for numerical modes (i.e. grid-scale z)
         if data_in[i,7] <= 2*dz:
@@ -108,9 +108,9 @@ def classify_modes(data_in,pars):
             modes.append('ID')
         if len(modes) == i:
             modes.append('other')
-    print "len(modes)",len(modes)
+    print("len(modes)",len(modes))
     for i in range(len(modes)):
-        print i+1,modes[i]
+        print(i+1,modes[i])
     return modes
 
 def get_grids(data_in):
@@ -135,7 +135,7 @@ def get_grids(data_in):
             fill_index[kyind] += 1
             kxc_array[kyind,int(fill_index[kyind])] = data_in[i,2]
 
-    print 'fill_index',fill_index
+    print('fill_index',fill_index)
     return ky_array, x0_array, kxc_array
 
 def get_kxc_array(data_in,ky_array,x0_array):
@@ -161,8 +161,8 @@ def get_ky_arrays(data_in):
     return data_ky 
 
 def calc_pedestal_average_gHB(rbs):
-    rmin = float(raw_input("Enter xmin for pedestal average:\n"))
-    rmax = float(raw_input("Enter xmax for pedestal average:\n"))
+    rmin = float(input("Enter xmin for pedestal average:\n"))
+    rmax = float(input("Enter xmax for pedestal average:\n"))
     rhot = np.arange(2000)/1999.0
     ghb = interp(rbs[:,0],rbs[:,9],rhot)
     imin = np.argmin(abs(rhot-rmin))
@@ -247,7 +247,7 @@ if len(kxc_array[0,:]) > 1:
 
     kxcmax = kxc_array[-1,-1]
     kymax = ky_array[-1]
-    print 'kxcmax'
+    print('kxcmax')
     kxgrid = np.arange(100)/99.0*kxcmax
     kygrid = np.arange(100)/99.0*kymax
     zi = griddata(data[:,2],data[:,0],data[:,4],kxgrid,kygrid,interp='linear')
@@ -318,7 +318,7 @@ if len(kxc_array[0,:]) > 1:
             col = 'green'
         plt.plot(ky_array[i],max_gr_ky[i],color=col,marker=mark,markeredgewidth=2,markersize=5)
         #plt.plot(ky_array[i],max_gr_ky_fr[i],color=col,marker=mark,markeredgewidth=2,markersize=5)
-        print "modes_ky[i]",modes_ky[i]
+        print("modes_ky[i]",modes_ky[i])
         f.write(str(ky_array[i])+'\t'+modes_ky[i]+'\n')
       
     f.close()
@@ -352,7 +352,7 @@ if 'x_local' in pars and not pars['x_local']:
             mark = '+'
             col = 'green'
         plt.plot(ky_array[i],data[i,4],color=col,marker=mark,markeredgewidth=2,markersize=5)
-        print "modes[i]",modes[i]
+        print("modes[i]",modes[i])
         f.write(str(ky_array[i])+'\t'+modes[i]+'\n')
       
     f.close()
@@ -368,8 +368,8 @@ else:
     ghbpa, rmin, rmax = calc_pedestal_average_gHB(rbs) 
     ind_x0 = np.argmin(abs(rbs[:,0]-data[0,1]))
     gamma_HB_x0 = abs(rbs[ind_x0,9])
-    print "Local HB shear rate:",gamma_HB_x0
-    print "Pedestal averaged HB shear rate:",ghbpa
+    print("Local HB shear rate:",gamma_HB_x0)
+    print("Pedestal averaged HB shear rate:",ghbpa)
 
     for i in range(len(data[:,0])):
        if modes[i] == 'MTM':

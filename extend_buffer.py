@@ -30,14 +30,14 @@ impurity = options.impurity
 qtreatment = options.qtreatment
 
 geompars, geom = read_geometry_global(geom_file)
-print "np.shape(geom['gzz'])",np.shape(geom['gzz'])
+print("np.shape(geom['gzz'])",np.shape(geom['gzz']))
 
 if impurity:
     rhot_te, te, ti, ne, ni, nb, vrot = read_iterdb_file(iterdb_file)
 else:
     rhot_te, te, ti, ne, ni, vrot = read_iterdb_file(iterdb_file)
 
-print "len(rhot_te)",len(rhot_te)
+print("len(rhot_te)",len(rhot_te))
 #for i in range(len(rhot_te)):
 #    print "i, rhot",i,rhot_te[i]
 
@@ -51,23 +51,23 @@ rhot0 = np.linspace(rhotor_min,rhotor_max,pars['nx0'])
 if xbound == -1:
    xbound = rhotor_max
 
-print "This simulation is centered at x0="+str(pars['x0'])+" with lx_a ="+str(pars['lx_a'])+" and uses "+str(pars['nx0'])+" grid points."
-print "rho_tor = ["+str(pars['x0']-pars['lx_a']/2.0)+" , "+str(pars['x0']+pars['lx_a']/2.0)+"]"
+print("This simulation is centered at x0="+str(pars['x0'])+" with lx_a ="+str(pars['lx_a'])+" and uses "+str(pars['nx0'])+" grid points.")
+print("rho_tor = ["+str(pars['x0']-pars['lx_a']/2.0)+" , "+str(pars['x0']+pars['lx_a']/2.0)+"]")
 
-extra_nx0 = int(float(raw_input("How many gridpoints would you like to append to the simulation?\n")))
-print str(extra_nx0)+" additional gridpoints."
+extra_nx0 = int(float(input("How many gridpoints would you like to append to the simulation?\n")))
+print(str(extra_nx0)+" additional gridpoints.")
 drhotor = pars['lx_a']/(pars['nx0']-1)
 lx_extend = drhotor*extra_nx0
 erhotor_max = rhotor_max+lx_extend
 elx_a = erhotor_max - rhotor_min
 enx0 = int(pars['nx0']+extra_nx0)
-print "New simulation range: rho_tor = [" + str(rhotor_min) + "," + str(rhotor_max+lx_extend) +"]"
-print "New lx_a:", elx_a
-print "New nx0:", enx0
+print("New simulation range: rho_tor = [" + str(rhotor_min) + "," + str(rhotor_max+lx_extend) +"]")
+print("New lx_a:", elx_a)
+print("New nx0:", enx0)
 ex0 = rhotor_min + (erhotor_max - rhotor_min)/2.0
-print "New x0:", ex0
+print("New x0:", ex0)
 
-print "Starting profile smoothing at xbound = ",xbound
+print("Starting profile smoothing at xbound = ",xbound)
 
 if impurity:
    rhot_te, te, ti, ne, ni, nb, vrot = read_iterdb_file(iterdb_file)
@@ -117,10 +117,10 @@ if show_plots:
    plt.show()
 
 ixbound = np.argmin(abs(erhot-xbound))
-print 'ixbound =', ixbound
+print('ixbound =', ixbound)
 lambdaT = 8.0/(erhotor_max-rhotor_max)
 lambdaN = 6.0/(erhotor_max-rhotor_max)
-print "lambdaT",lambdaT
+print("lambdaT",lambdaT)
 omte = -1.0/ete*fd_d1_o4(ete,erhot)
 omti = -1.0/eti*fd_d1_o4(eti,erhot)
 omne = -1.0/ene*fd_d1_o4(ene,erhot)
@@ -195,8 +195,8 @@ geompars_new['s0'] = ex0**2
 geompars_new['minor_r'] = geompars['minor_r']
 geompars_new['major_R'] = geompars['major_R']
 if geompars['trpeps'] == 0.0:
-    print "Check trpeps!!"
-    dummy = raw_input("Press a key")
+    print("Check trpeps!!")
+    dummy = input("Press a key")
 geompars_new['trpeps'] = geompars['trpeps']
 geompars_new['beta'] = beta0
 geompars_new['Lref'] = geompars['Lref']
@@ -318,9 +318,9 @@ plt.plot(geom_new['q'])
 plt.title('q')
 plt.show()
 
-print "Writing new geometry file."
+print("Writing new geometry file.")
 write_tracer_efit_file(geompars_new,geom_new,geom_file_out)
-print "Done."
+print("Done.")
 
 plt.contourf(geom_new['gxz'])
 plt.title('gxz new (end)')

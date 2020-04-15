@@ -23,11 +23,11 @@ idb_file = options.idb_file
 par = Parameters()
 par.Read_Pars('parameters_'+suffix)
 pars = par.pardict
-print "pars",pars
+print("pars",pars)
 
 for i in range(3):
    if 'name'+str(i+1) in pars:
-      print "i",i,str(i+1),pars['name'+str(i+1)][1:-1]
+      print("i",i,str(i+1),pars['name'+str(i+1)][1:-1])
       if pars['name'+str(i+1)][1:-1] == 'e':
          specnum = i+1
 
@@ -39,7 +39,7 @@ mref = 2.0*mi
 
 
 
-dummy = raw_input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
+dummy = input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
 
 Te = pars['Tref']
 Ti = Te*pars['temp'+str(specnum)]
@@ -64,14 +64,14 @@ nue = 4.0*coll*(mref/me)**0.5
 shat = pars['shat']
 n0 = pars['n0_global']
 
-print "betae",beta
-print "coll (from GENE)",coll
-print "coll0",coll0
-print "coll0/coll",coll0/coll
-print "shat",shat
-print "a/LTe",omte
-print "beta_hat = betae*(Ls/LTe)^2",beta*(omte/shat)**2
-print "nu_e (normalized to cs/a)", nue
+print("betae",beta)
+print("coll (from GENE)",coll)
+print("coll0",coll0)
+print("coll0/coll",coll0/coll)
+print("shat",shat)
+print("a/LTe",omte)
+print("beta_hat = betae*(Ls/LTe)^2",beta*(omte/shat)**2)
+print("nu_e (normalized to cs/a)", nue)
 
 kygrid = np.linspace(0.0,1.0,num=10)
 plt.plot(kygrid,kygrid*(omte+omne),label='omega* = ky rhos a/LTe)')

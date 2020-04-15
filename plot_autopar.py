@@ -24,7 +24,7 @@ if (len(sys.argv)>2):
 #print af.data_array
 
 (best_par,best_pv)=af.getBestParallelization()
-print "Best parallelization: ",best_par,", with perf_vec = ",best_pv
+print("Best parallelization: ",best_par,", with perf_vec = ",best_pv)
 
 # now we have to convert the data to a numpy array
 if (show_bar_graph):
@@ -46,7 +46,7 @@ if (len(sys.argv)==2):
     # print data_array
     plt.matshow(np.transpose(af.data_array))
     # Labeling of the axes
-    plt.xticks(range(af.paral_index),af.paral_label,rotation='vertical')
+    plt.xticks(list(range(af.paral_index)),af.paral_label,rotation='vertical')
 
     # initialize the list with None values, because we need the whole
     # list for nonsequential access with the next loop
@@ -57,7 +57,7 @@ if (len(sys.argv)==2):
     for key in af.perf_vec_label:
         pv_label[af.perf_vec_label[key]]=key
 
-    plt.yticks(range(af.perf_vec_index),pv_label)
+    plt.yticks(list(range(af.perf_vec_index)),pv_label)
 
     # add a colorbar
     plt.colorbar()
@@ -82,13 +82,13 @@ if (len(sys.argv)>2):
     # normalize both to the minimum runtime
     min1 = np.nanmin(cutarray1)
     min2 = np.nanmin(cutarray2)
-    print "minvals = ", min1,min2
+    print("minvals = ", min1,min2)
     normarray1 = cutarray1/min1
     normarray2 = cutarray2/min2
 
     max1 = np.nanmax(normarray1)
     max2 = np.nanmax(normarray2)
-    print "maxvals after normalization = ", max1, max2
+    print("maxvals after normalization = ", max1, max2)
     #plt.subplots(2,1,sharex=True)
     # Calculate aspect ratio of the data
 
@@ -127,7 +127,7 @@ if (len(sys.argv)>2):
     fig=plt.figure(1)
     upax=fig.add_axes([left,up_bottom,width,up_height])
     upimg = upax.imshow(normarray1,aspect='auto',interpolation='nearest')
-    upax.xaxis.set_ticks(range(minlen))
+    upax.xaxis.set_ticks(list(range(minlen)))
     upax.xaxis.set_ticklabels(cut_paral_label,size='small',rotation='vertical')
     for tick in upax.xaxis.get_major_ticks():
         tick.tick1On=False
@@ -162,7 +162,7 @@ if (len(sys.argv)>2):
         tick.label2On=False
 
     loax.set_ylabel('Power 6',rotation='horizontal')
-    print loax.yaxis.get_label()
+    print(loax.yaxis.get_label())
 
     #loax.yaxis.set_ticks(range(af2.perf_vec_index))
     #loax.yaxis.set_ticklabels(lo_pv_label,size='x-small')
@@ -173,5 +173,5 @@ if (len(sys.argv)>2):
 
     fig.savefig('double_autopar.pdf', bbox_inches='tight')
 
-    print fig.axes
+    print(fig.axes)
     #plt.show()

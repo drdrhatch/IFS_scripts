@@ -116,7 +116,7 @@ def read_geometry_global(file_name):
         else:
             parameters[lsplit[0].strip()] = float(lsplit[1])
         l += 1
-        print(parameters[lsplit[0].strip()])
+        print((parameters[lsplit[0].strip()]))
 
 
     #lsplit = file_lines[11].split('=')

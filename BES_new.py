@@ -16,14 +16,14 @@ pars = init_read_parameters_file(suffix)
 moms = momfile('mom_e'+suffix,pars)
 time = moms.tmom[:]
 nz0 = pars['nz0']
-print 'nz0 =', nz0
+print('nz0 =', nz0)
 deln_t = {}
 for t in time:
     upar,deln,tpar,tperp,qpar,qperp = moments_from_mom_file(pars,suffix,True,False,t)
     deln_t[t] = deln
 #    print 'deln at outboard midplane', deln_t[t][nz0/2]
 t_f = time[-1]
-print 't_f', t_f
+print('t_f', t_f)
 t = []
 nrg_e = []
 nspec = pars['n_spec']
@@ -50,7 +50,7 @@ for i in range(len(t)):
 #    print t_c - t_f
     if abs(t_c - t_f) < 10**-9:
         i_f = i  
-        print 't_f', t_f, t_c
+        print('t_f', t_f, t_c)
 #print nrg_e[i_f].split()
 nrg_final_data = nrg_e[i_f].split()
 #print nrg_final_data
@@ -61,10 +61,10 @@ Gamma_es = float(nrg_final_data[4])
 Gamma_em = float(nrg_final_data[5])
 Q_es = float(nrg_final_data[6])
 Q_em = float(nrg_final_data[7])
-print 'Gamma_es', Gamma_es
-print 'Gamma_em', Gamma_em
-print 'Q_es', Q_es
-print 'Q_em', Q_em
+print('Gamma_es', Gamma_es)
+print('Gamma_em', Gamma_em)
+print('Q_es', Q_es)
+print('Q_em', Q_em)
 Gamma_tot = Gamma_es + Gamma_em
 Q_tot = Q_es + Q_em
 Tref = float(pars['Tref'])*10**3
@@ -92,19 +92,19 @@ T_si = e*Tref
 m_si = mp*mref
 #print 'T_si', T_si
 #print 'm_si', m_si
-print 'gamma_tot', Gamma_tot
-print 'q_tot', Q_tot
-print 'rhostar', rhostar
+print('gamma_tot', Gamma_tot)
+print('q_tot', Q_tot)
+print('rhostar', rhostar)
 #print 'GENE delta_n/n_0', delta_n
-print 'delta_n/n_0', abs(delta_n*rhostar)
+print('delta_n/n_0', abs(delta_n*rhostar))
 #print 'cref', cref
 c_si = math.sqrt(T_si/m_si)
 Lref = pars['Lref']
 R = pars['major_R']*Lref
 r = pars['minor_r']*Lref
-print 'n0 (m^-3)', n0
-print 'Tref (eV)', Tref
-print 'c_si', c_si
+print('n0 (m^-3)', n0)
+print('Tref (eV)', Tref)
+print('c_si', c_si)
 G_ratio = Gamma_tot*cref*nref/(delta_n**2)
 Q_ratio = Q_tot*pref/(delta_n**2)
 G_ratio_si = Gamma_tot*c_si*nref/(delta_n**2*Lref**2)
@@ -115,19 +115,19 @@ Area = (2*math.pi*R)*(2*math.pi*r*pars['x0'])
 Q = Q_gb*Q_tot*Area*10**-6/(delta_n*rhostar)**2
 G = G_gb*Gamma_tot*Area*10**-6/(delta_n*rhostar)**2
 #print "t_final Density fluctuation at outboard midplane.", delta_n*rhostar*100, "%"
-print "Gamma_gb (kW/(eV*m^2))", G_gb*10**-3
-print "Q_gb (kW/m^2)",Q_gb*10**-3 
+print("Gamma_gb (kW/(eV*m^2))", G_gb*10**-3)
+print("Q_gb (kW/m^2)",Q_gb*10**-3) 
 #print "GENE Q_tot", q_tot
 #print "Q estimate (MW/m^2)",q_gb*q_tot*10**-6
-print "Area (m^2)", Area
-print "Lref", Lref  
+print("Area (m^2)", Area)
+print("Lref", Lref)  
 #print "Gamma in MW: ", g_ratio_si*Area*10**-6
-print "Q estimate in MW/(delta_n/n)^2: ", Q
-print "Estimated Q(MW) using 1%: ",Q*(0.01)**2 
-print "Estimated Q(MW) using 3%: ",Q*(0.03)**2
-print "Gamma in MW/(delta_n/n)^2", G
-print "Estimated G(MW) using 1%: ",G*(0.01)**2 
-print "Estimated G(MW) using 3%: ",G*(0.03)**2
+print("Q estimate in MW/(delta_n/n)^2: ", Q)
+print("Estimated Q(MW) using 1%: ",Q*(0.01)**2) 
+print("Estimated Q(MW) using 3%: ",Q*(0.03)**2)
+print("Gamma in MW/(delta_n/n)^2", G)
+print("Estimated G(MW) using 1%: ",G*(0.01)**2) 
+print("Estimated G(MW) using 3%: ",G*(0.03)**2)
 
 #print "Density Fluctuation Data", dens_data[[dens_data.len()-1]]
 #print dens_data.visititems(print_attrs)

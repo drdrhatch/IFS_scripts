@@ -27,10 +27,10 @@ add_all = options.add_all
 sat_rule = options.sat_rule
 noplot = options.noplot
 most_unstable = options.most_unstable
-print "include_qn2",include_qn2
-print "add_all",add_all
-print "sat_rule",sat_rule
-print "most_unstable",most_unstable
+print("include_qn2",include_qn2)
+print("add_all",add_all)
+print("sat_rule",sat_rule)
+print("most_unstable",most_unstable)
 
 
 
@@ -47,7 +47,7 @@ pars = par.pardict
 if pars['n_spec'] == 1:
    omt = pars['omt1']
 elif pars['n_spec'] == 2:
-   print "Warning: Not ready for multiple species!"
+   print("Warning: Not ready for multiple species!")
    omt = pars['omt2']
 
 N=pars['nx0']/2+1
@@ -64,7 +64,7 @@ parlin = Parameters()
 parlin.Read_Pars('scanfiles'+sfsuffix+'/parameters')
 parslin = parlin.pardict
 IVEV = parslin['comp_type']
-print "IVEV",IVEV
+print("IVEV",IVEV)
 
 if sat_rule == 1:
     Qql0 = ldata[:,6]*omt
@@ -131,16 +131,16 @@ Qql_tot1 = np.sum(Qql_interp1)
 Qql_tot2 = np.sum(Qql_interp2)
 Qnl_tot = np.sum(Qes)
 #Qql2_tot = np.sum(Qql2_interp2)
-print "Sum Qql interp1:",np.sum(Qql_interp1)
-print "Sum Qql linear interp:",np.sum(Qql_interp2)
+print("Sum Qql interp1:",np.sum(Qql_interp1))
+print("Sum Qql linear interp:",np.sum(Qql_interp2))
 #print "Sum Qql (kp3) linear interp:",np.sum(Qql2_interp2)
-print "Sum Qnl:",np.sum(Qes)
+print("Sum Qnl:",np.sum(Qes))
 C0 = np.sum(Qes)/np.sum(Qql_interp2)
-print "C0:",C0
+print("C0:",C0)
 ikpeak = np.argmax(Qql_interp2)
-print "Qql peak ky",kygrid[ikpeak]
+print("Qql peak ky",kygrid[ikpeak])
 C0peak = np.sum(Qes)/np.sum(Qql_interp2[ikpeak])
-print "C0peak",C0peak
+print("C0peak",C0peak)
 
 #c3 = Qql_tot2/Qql2_tot
 outfile = 'QL_summary'+suffix+'_'+sfsuffix+'_iqn2'+str(include_qn2)[0]+'_sat'+str(sat_rule)+'_add'+str(add_all)[0]+'_mu'+str(most_unstable)[0]

@@ -70,9 +70,9 @@ if mode == 'eta':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
-    print 'ti =', tiMidPed
+    print('rhot =', rhotMidPed)
+    print('te =', teMidPed)
+    print('ti =', tiMidPed)
 
     newTe = teMidPed*np.power(te/teMidPed,alpha)
     newTi = tiMidPed*np.power(ti/tiMidPed,alpha)
@@ -100,8 +100,8 @@ if mode == 'eta':
 if mode == 'omte':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
+    print('rhot =', rhotMidPed)
+    print('te =', teMidPed)
 
     newTe = teMidPed*np.power(te/teMidPed,alpha)
     newTi = ti
@@ -123,7 +123,7 @@ if mode == 'omte':
     plt.plot(rhot,target_factor*omte0,'--',color='black',label='target')
     plt.plot(rhot,newomte,label='omte new')
     ax = plt.axis()
-    print "ax",ax
+    print("ax",ax)
     plt.axis([0.9,1.0,0.0,ax[3]])
     plt.legend()
     plt.show()
@@ -131,8 +131,8 @@ if mode == 'omte':
 if mode == 'omne':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     neMidPed = ne[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'ne =', neMidPed
+    print('rhot =', rhotMidPed)
+    print('ne =', neMidPed)
 
     newNe = neMidPed*np.power(ne/neMidPed,alpha)
     newNi = newNe/ne*ni
@@ -147,10 +147,10 @@ if mode == 'omne':
     #total pressure with new density and tempeturate profiles
     newPtot = newNe * newTe + newTi * (newNi + newNz)
 
-    qz = float(raw_input("Enter charge of impurity species:"))
+    qz = float(input("Enter charge of impurity species:"))
 
     qltest = np.sum(newNi-newNe+qz*newNz)/np.sum(newNe)
-    print("Test of quasineutrality (should be <<1):",qltest)
+    print(("Test of quasineutrality (should be <<1):",qltest))
  
     plt.plot(rhot,newNe,label='new ne')
     plt.plot(rhot,newNi,label='new ni')
@@ -172,8 +172,8 @@ if mode == 'omne':
 if mode == 'omti':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'ti =', tiMidPed
+    print('rhot =', rhotMidPed)
+    print('ti =', tiMidPed)
 
     newTi = tiMidPed*np.power(ti/tiMidPed,alpha)
     newTe = te
@@ -195,7 +195,7 @@ if mode == 'omti':
     plt.plot(rhot,target_factor*omti0,'--',color='black',label='target')
     plt.plot(rhot,newomti,label='omti new')
     ax = plt.axis()
-    print "ax",ax
+    print("ax",ax)
     plt.axis([0.9,1.0,0.0,ax[3]])
     plt.legend()
     plt.show()
@@ -204,9 +204,9 @@ if mode == 'etaTe':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
-    print 'ti =', tiMidPed
+    print('rhot =', rhotMidPed)
+    print('te =', teMidPed)
+    print('ti =', tiMidPed)
 
     newTe = teMidPed*np.power(te/teMidPed,alpha)
     #new Ti profile to keep total pressure the same
@@ -231,8 +231,8 @@ if mode == 'etaTe':
     plt.show()
 
 if mode == 'omnz':
-    Z = float(raw_input('Enter Z of impurity:\n'))
-    print "Using Z= ",Z
+    Z = float(input('Enter Z of impurity:\n'))
+    print("Using Z= ",Z)
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     nzMidPed = nz[midPedIndex]
 
@@ -283,7 +283,7 @@ if mode == 'TiTe':
 
 if set_Tesep:
     ix_Ts = np.argmin(abs(rhot-x0_Tsep)) 
-    print "ix_Ts",ix_Ts
+    print("ix_Ts",ix_Ts)
     dtedx_ts = fd_d1_o4_uneven(newTe,rhot)
     dtedx0 = dtedx_ts[ix_Ts]
     c0 = newTe[ix_Ts] - lambda_Tsep * abs(dtedx0)

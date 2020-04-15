@@ -130,11 +130,11 @@ def full_interp(func_xin,xin,xconv,yconv,yout):
     return func_yout
 
 eqdsk=file.readlines()
-print 'Header: %s' %eqdsk[0]
+print('Header: %s' %eqdsk[0])
 #set resolutions
 nw=int(eqdsk[0].split()[-2]);nh=int(eqdsk[0].split()[-1])
 pw=(nw/8/2)*2 #psi-width, number of flux surfaces around position of interest
-print 'Resolution: %d x %d' %(nw,nh)
+print('Resolution: %d x %d' %(nw,nh))
 
 entrylength=16
 #note: here rmin is rleft from EFIT
@@ -155,18 +155,18 @@ if psiax2!=psiax: sys.exit('Inconsistent psiax: %7.4g, %7.4g' %(psiax,psiax2))
 if zmag!=zmag2: sys.exit('Inconsistent zmag: %7.4g, %7.4g' %(zmag,zmag2) )
 if psisep2!=psisep: sys.exit('Inconsistent psisep: %7.4g, %7.4g' %(psisep,psisep2))
 
-print "rmag", rmag
-print "zmag", zmag
-print "psiax", psiax
-print "psisep", psisep
-print "Bctr", Bctr
+print("rmag", rmag)
+print("zmag", zmag)
+print("psiax", psiax)
+print("psisep", psisep)
+print("Bctr", Bctr)
 Rgrid = np.arange(nw)/float(nw-1)*rdim+rmin
-print "rdim",rdim
-print "rmin",rmin
+print("rdim",rdim)
+print("rmin",rmin)
 #print "Rgrid",Rgrid
 Zgrid = np.arange(nh)/float(nh-1)*zdim+(zmid-zdim/2.0)
-print "zdim",zdim
-print "zmid",zmid
+print("zdim",zdim)
+print("zmid",zmid)
 #print "Zgrid",Zgrid
 
 F=empty(nw,dtype=float)
@@ -176,8 +176,8 @@ pprime=empty(nw,dtype=float)
 qpsi=empty(nw,dtype=float)
 psirz_1d=empty(nw*nh,dtype=float)
 start_line=5
-lines=range(nw/5)
-if nw%5!=0: lines=range(nw/5+1)
+lines=list(range(nw/5))
+if nw%5!=0: lines=list(range(nw/5+1))
 for i in lines:
     n_entries=len(eqdsk[i+start_line])/entrylength
     F[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
@@ -198,8 +198,8 @@ for i in lines:
     pprime[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 
-lines_twod=range(nw*nh/5)
-if nw*nh%5!=0: lines_twod=range(nw*nh/5+1)
+lines_twod=list(range(nw*nh/5))
+if nw*nh%5!=0: lines_twod=list(range(nw*nh/5+1))
 for i in lines_twod:
     n_entries=len(eqdsk[i+start_line])/entrylength
     psirz_1d[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
@@ -309,13 +309,13 @@ if write_binfo:
     f.write('# R at magnetic axis = '+str(rmag)+'\n')
     f.write('# psisep - psiax = '+str(psisep-psiax)+'\n')
     Rmag_ind = np.argmin(abs(Rgrid - rmag))
-    print "rmag",rmag
-    print "Rmag_ind",Rmag_ind
-    print "Rgrid[Rmag_ind]",Rgrid[Rmag_ind]
+    print("rmag",rmag)
+    print("Rmag_ind",Rmag_ind)
+    print("Rgrid[Rmag_ind]",Rgrid[Rmag_ind])
     temp = psi_norm_out
     temp[0:Rmag_ind] = 0
     psi_ind_sep = np.argmin(abs(temp-1.05))
-    print "psi_ind_sep",psi_ind_sep
+    print("psi_ind_sep",psi_ind_sep)
     B_tor = F_out / Rgrid
     np.savetxt(f,np.column_stack((Rgrid[Rmag_ind:psi_ind_sep],psi_norm_out[Rmag_ind:psi_ind_sep],B_pol[Rmag_ind:psi_ind_sep],B_tor[Rmag_ind:psi_ind_sep],q_out[Rmag_ind:psi_ind_sep])))
     f.close()

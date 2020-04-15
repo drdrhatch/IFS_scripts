@@ -96,10 +96,10 @@ class Parameters(object):
                 parfileout.write('&'+item+'\n')
             if specflag:
                 [parfileout.write(par[0:-1]+'='+self.pardict[par]+'\n')
-                 for par in self.pardict.keys() if self.nmldict[par] == item]
+                 for par in list(self.pardict.keys()) if self.nmldict[par] == item]
             else:
                 [parfileout.write(par+'='+self.pardict[par]+'\n')
-                 for par in self.pardict.keys() if self.nmldict[par] == item]
+                 for par in list(self.pardict.keys()) if self.nmldict[par] == item]
             parfileout.write('/\n\n')
 
     def asnamedtuple(self):
@@ -109,4 +109,4 @@ class Parameters(object):
         for item in self.pardict:
             if " " not in item:
                 valid[item] = self.pardict[item]
-        return namedtuple('ParTuple', valid.keys())(*valid.values())
+        return namedtuple('ParTuple', list(valid.keys()))(*list(valid.values()))

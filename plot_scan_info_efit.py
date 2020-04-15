@@ -79,8 +79,8 @@ def classify_modes(data_in,pars):
         epar_threshold = 0.4
         epar_threshold2 = 0.7
     dz = 2.0/float(pars['nz0'])
-    print( "epar_threshold",epar_threshold)
-    print( "epar_threshold2",epar_threshold2)
+    print(( "epar_threshold",epar_threshold))
+    print(( "epar_threshold2",epar_threshold2))
     for i in range(ntot):
         #Test for numerical modes (i.e. grid-scale z)
         if data_in[i,7] <= 2*dz:
@@ -121,9 +121,9 @@ def classify_modes(data_in,pars):
             modes.append('ID')
         if len(modes) == i:
             modes.append('other')
-    print( "len(modes)",len(modes))
+    print(( "len(modes)",len(modes)))
     for i in range(len(modes)):
-        print( i+1,modes[i])
+        print(( i+1,modes[i]))
     return modes
 
 def get_grids(data_in):
@@ -148,7 +148,7 @@ def get_grids(data_in):
         kyind = np.argmin(abs(data_in[i,0]-ky_array))
         if data_in[i,2] not in kxc_array[kyind,:]:
             fill_index[kyind] += 1
-            print( 'kyind',kyind)
+            print(( 'kyind',kyind))
             kxc_array[kyind,fill_index[kyind]] = data_in[i,2]
 
     #print 'fill_index',fill_index
@@ -273,7 +273,7 @@ if len(kxc_array[0,:]) > 1:
     #z2 = griddata((data[:,2],data[:,0]),data[:,10],(kxgrid,kygrid))#,interp='linear')
     #print(np.shape(zi))
     #plt.contourf(kxgrid,kygrid,zi,50,cmap=plt.cm.RdYlBu)
-    print(data[:,4])
+    print((data[:,4]))
     grs = np.nan_to_num(data[:,4],nan=0.0)
     print(grs)
     plt.tricontourf(data[:,2],data[:,0],grs,levels=50)
@@ -346,7 +346,7 @@ if len(kxc_array[0,:]) > 1:
             col = 'green'
         plt.plot(ky_array[i],max_gr_ky[i],color=col,marker=mark,markeredgewidth=2,markersize=5)
         #plt.plot(ky_array[i],max_gr_ky_fr[i],color=col,marker=mark,markeredgewidth=2,markersize=5)
-        print( "modes_ky[i]",modes_ky[i])
+        print(( "modes_ky[i]",modes_ky[i]))
         f.write(str(ky_array[i])+'\t'+modes_ky[i]+'\n')
       
     f.close()
@@ -380,7 +380,7 @@ if 'x_local' not in pars or pars['x_local']:
             mark = '+'
             col = 'green'
         plt.plot(ky_array[i],data[i,4],color=col,marker=mark,markeredgewidth=2,markersize=5)
-        print( "modes[i]",modes[i])
+        print(( "modes[i]",modes[i]))
         f.write(str(ky_array[i])+'\t'+modes[i]+'\n')
       
     f.close()

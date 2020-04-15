@@ -170,8 +170,8 @@ for q_scale in np.arange(q_min,q_max,q_step):
                 ix = np.argmin(abs(q-qrats[i])) 
                 if uni_rhot[ix] >= range_min and uni_rhot[ix] <= range_max:
                     if ix in range_ind2:
-                        print('ky='+str(ky))
-                        print('(m,n)='+str((m,n)))
+                        print(('ky='+str(ky)))
+                        print(('(m,n)='+str((m,n))))
                         temp_str=str((n,m))
                         if plot==1:
                             plt.axvline(uni_rhot[ix],color='red', label= temp_str)
@@ -219,8 +219,8 @@ for q_scale in np.arange(q_min,q_max,q_step):
     if len(ky_range)==0:
         print('There is no unstabel MTM')
     else:
-        print('ky range from '+str(min(ky_range))+' to '+str(max(ky_range)))
-        print('n0 range from '+str(min(n0_range))+' to '+str(max(n0_range)))
+        print(('ky range from '+str(min(ky_range))+' to '+str(max(ky_range))))
+        print(('n0 range from '+str(min(n0_range))+' to '+str(max(n0_range))))
     print('**********************************************')
     print('***************End of report******************')
 

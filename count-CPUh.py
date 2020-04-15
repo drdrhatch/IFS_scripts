@@ -30,7 +30,7 @@ def traverse(dir):
         #if entry is directory, traverse it
         if osp.isdir(entry):
             chdir(entry)
-            print 'Entering ',entry
+            print('Entering ',entry)
             dcpuh,dmisscount,dnumjobs=traverse(osp.curdir)
             cpuh+=dcpuh;misscount+=dmisscount;numjobs+=dnumjobs
             chdir('..')
@@ -47,9 +47,9 @@ def traverse(dir):
                        1./tim
                        cpuh+=np*tim/3600
                        numjobs+=1
-                       print '%s: n_procs: %d, Runtime: %7.1f s, CPUh (cumulative per directory): %10.1f' %(entry,np,tim,cpuh)
+                       print('%s: n_procs: %d, Runtime: %7.1f s, CPUh (cumulative per directory): %10.1f' %(entry,np,tim,cpuh))
                    except:
-                       print 'missing data in %s' %entry
+                       print('missing data in %s' %entry)
                        misscount+=1
             except:
                 pass
@@ -59,7 +59,7 @@ def traverse(dir):
 sum=0;misscount=0;numjobs=0
 dsum,dmisscount,dnumjobs=traverse('.')
 sum+=dsum;misscount+=dmisscount;numjobs+=dnumjobs
-print '\nTotal CPU-hours spent on present subdir: %14.6g' %(sum)
-print 'Data was extracted from %d successful jobs.' %(numjobs)
+print('\nTotal CPU-hours spent on present subdir: %14.6g' %(sum))
+print('Data was extracted from %d successful jobs.' %(numjobs))
 if misscount!=0:
-    print 'Info: %d runs did not contain the necessary data to estimate their CPUh consumption!' %(misscount)
+    print('Info: %d runs did not contain the necessary data to estimate their CPUh consumption!' %(misscount))

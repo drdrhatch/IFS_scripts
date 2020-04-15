@@ -19,7 +19,7 @@ def parse_modes_file(dir):
         if line:
             if line[0] != "#":
                 modes.append(line.split()[1])
-    print "modes",modes
+    print("modes",modes)
     return modes
 
 def set_KBMs_to_0(data,modes):
@@ -75,14 +75,14 @@ for i in range(len(x0_array)):
     else:
         data_out = np.column_stack((data_out,data[str(x0_array[i])][:,1]))
 
-print "x0_array", x0_array
+print("x0_array", x0_array)
 ky_array = data[str(x0_array[0])][:,0]
 #plt.contourf(x0_array,ky_array,data_out,100,vmax=1.5)
 
 plt.contourf(x0_array,ky_array,data_out,100)
 plt.colorbar()
 for i in modes:
-    print "i in modes",i
+    print("i in modes",i)
     for j in range(len(ky_array)):
         if modes[i][j] == 'MTM':
             mark = 'x'
@@ -116,7 +116,7 @@ case = thisdir.split('/')[-1]
 #rbs = np.genfromtxt(homedir+'/pmv_eqs/'+case+'/rbsProfs')
 
 for i in modes:
-    print "i in modes",i
+    print("i in modes",i)
     for j in range(len(ky_array)):
         if modes[i][j] == 'MTM':
             mark = 'x'

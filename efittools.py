@@ -156,7 +156,7 @@ def plot_iterdb(iterdbdata,reportpath=''):
     axhand = figure.add_subplot(1,1,1)
     axhand.plot(rhotor['NE'],profiles['NE'],label='$n_e$')
     axhand.plot(rhotor['NM1'],profiles['NM1'],label='$n_i$')
-    if len(rhotor.keys()) >= 6:
+    if len(list(rhotor.keys())) >= 6:
        axhand.plot(rhotor['NM2'],profiles['NM2'],label='$n_z$')
     axhand.set_title('Density Profiles')
     axhand.set_xlabel('$\\rho_{tor}$')
@@ -182,7 +182,7 @@ def read_profiles_file(pfpath,setParam={}):
    #Developed by Ehab Hassan on 2019-02-17
     from scipy.interpolate import CubicSpline
     if not os.path.isfile(pfpath):
-       print('Fatal: file %s not found.' % pfpath)
+       print(('Fatal: file %s not found.' % pfpath))
        sys.exit()
 
     ofh = open(pfpath,'r')
@@ -232,7 +232,7 @@ def read_profiles_file(pfpath,setParam={}):
                    ary0[i] = float(recs[0])
                    ary1[i] = float(recs[1])
                    ary2[i] = float(recs[2])
-               if var0 in profiles.keys():
+               if var0 in list(profiles.keys()):
                   CS = CubicSpline(ary0,ary1)
                   units[var1]    = unit
                   profiles[var1] = CS(profiles[var0])
@@ -253,7 +253,7 @@ def read_profiles_file(pfpath,setParam={}):
 
     if 'rhotor' in setParam:
        if 'eqdskfpath' not in setParam:
-          eqdskfpath = raw_input('Path to EQDSK file: ')
+          eqdskfpath = input('Path to EQDSK file: ')
        elif 'eqdskfpath' in setParam:
           eqdskfpath = setParam['eqdskfpath']
 
@@ -277,7 +277,7 @@ def plot_profiles(pfpath):
     from matplotlib.backends.backend_pdf import PdfPages
     profiles = read_profiles(pfpath)
     nvars = sorted(profiles.keys())
-    print('Plotting profiles in: %s ...' % pfpath)
+    print(('Plotting profiles in: %s ...' % pfpath))
     figs  = PdfPages('profiles.pdf')
     for i in nvars:
         if i in ['n','z','a','psinorm']: continue
@@ -609,7 +609,7 @@ def magsurf_contours(eqdskfpath):
     return rcval,zcval-eqdskdata['ZLEN']/2
 
 def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-16):
-    if not eqdskdata.keys():
+    if not list(eqdskdata.keys()):
        if eqdskfpath:
           eqdskdata = read_efit_file(eqdskfpath.strip())
        else:
@@ -681,7 +681,7 @@ def magsurf_solvflines(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-16):
     return npy.array(rsln),npy.array(zsln)-eqdskdata['ZLEN']/2
 
 def magsurf_searching(eqdskfpath='',eqdskdata={},psi=1.0,eps=1.0e-6):
-    if not eqdskdata.keys():
+    if not list(eqdskdata.keys()):
        if eqdskfpath:
           eqdskdata = read_efit_file(eqdskfpath.strip())
        else:

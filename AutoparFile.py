@@ -62,7 +62,7 @@ class AutoparFile(object):
 
         afile.close()
         if (len(self.data[-1])==0):
-            print "Last element is empty, it will be removed."
+            print("Last element is empty, it will be removed.")
             del self.data[-1]
             self.paral_index -= 1
 
@@ -70,8 +70,8 @@ class AutoparFile(object):
         #self.data=templist
 
 
-        print "We have ",len(self.data)," parallelizations."
-        print "We have ",self.perf_vec_index," different perf_vecs."
+        print("We have ",len(self.data)," parallelizations.")
+        print("We have ",self.perf_vec_index," different perf_vecs.")
 
         self.data_array=np.zeros((self.paral_index,self.perf_vec_index),order='F')
         # initialize the data_array with None
@@ -109,9 +109,9 @@ class AutoparFile(object):
                     min_par = plabel
 
         for pv in self.perf_vec_label:
-            print pv
+            print(pv)
 
-        for (key,val) in self.perf_vec_label.iteritems():
+        for (key,val) in self.perf_vec_label.items():
             if min_pv==val:
                 perf_vec = key
 

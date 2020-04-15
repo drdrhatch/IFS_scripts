@@ -39,7 +39,7 @@ lx_a=float(args[1])
 rin = rt0 - lx_a/2.0
 rout = rt0 + lx_a/2.0
 
-print "Calculating average gene shear rate centered at ",rt0," with rhot_min = ",rin," and rhot_max = ",rout
+print("Calculating average gene shear rate centered at ",rt0," with rhot_min = ",rin," and rhot_max = ",rout)
 
 data = np.genfromtxt('rbsProfs')
 rho_tor = np.arange(4000)/3999.0
@@ -68,11 +68,11 @@ irout = np.argmin(abs(rho_tor-rout))
 gam_avg_norm = np.sum(abs(gamma_ExB_norm[irin:irout]))/(irout-irin)
 gam_avg_raw = np.sum(abs(gamma_ExB[irin:irout]))/(irout-irin)
 
-print "Minor radius a:", a
-print "Sound speed cs at "+str(rt0)+": ",cs[i0]
-print "GENE ExB shear rate at "+str(rt0)+": "+str(gamma_ExB_norm[i0])
-print "GENE ExB shear average from "+str(rin)+" to "+ str(rout) +": "+str(gam_avg_norm)
-print "GENE ExB shear average (normalized to box center) from "+str(rin)+" to "+ str(rout) +": "+str(gam_avg_raw*a/cs[i0])
+print("Minor radius a:", a)
+print("Sound speed cs at "+str(rt0)+": ",cs[i0])
+print("GENE ExB shear rate at "+str(rt0)+": "+str(gamma_ExB_norm[i0]))
+print("GENE ExB shear average from "+str(rin)+" to "+ str(rout) +": "+str(gam_avg_norm))
+print("GENE ExB shear average (normalized to box center) from "+str(rin)+" to "+ str(rout) +": "+str(gam_avg_raw*a/cs[i0]))
 
 if plot_shear_rate:
     plt.plot(rho_tor,gamma_ExB_norm)

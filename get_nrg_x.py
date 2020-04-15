@@ -3,23 +3,23 @@ import sys
 
 def get_nrg0(suffix,nspec=2,ncols=10):
 
-    print 'Getting data from nrg file'
+    print('Getting data from nrg file')
     time=np.empty(0,dtype='float')
     nrgi=np.empty((0,ncols),dtype='float')
     nrge=np.empty((0,ncols),dtype='float')
 
     if nspec == 1:
-        print "nspec =", nspec
-        print "Assume the kinetic species to be electrons."
+        print("nspec =", nspec)
+        print("Assume the kinetic species to be electrons.")
     if nspec == 2:
-        print "nspec =", nspec
-        print "Species order: first: ions, second: electrons."
+        print("nspec =", nspec)
+        print("Species order: first: ions, second: electrons.")
     if nspec==3:
         nrgz=np.empty((0,ncols),dtype='float')
-        print "nspec =", nspec
-        print "Species order: first: ions, second: electrons, third: impurity."
+        print("nspec =", nspec)
+        print("Species order: first: ions, second: electrons, third: impurity.")
     if nspec>=4:
-        print "nspec=",nspec
+        print("nspec=",nspec)
         sys.exit("nspec must be 1, 2 or 3")
 
     f=open('nrg'+suffix,'r')

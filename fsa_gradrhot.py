@@ -19,24 +19,24 @@ Please include parameters file name and GENE geometry file name.
 parfile = args[0]
 geomfile = args[1]
 
-print parfile[10:]
+print(parfile[10:])
 pars = init_read_parameters(parfile[10:])
 if 'x_local' in pars:
     gpars, geom = read_geometry_global(geomfile)
 else:
     gpars, geom = read_geometry_local(geomfile)
 
-print "gpars",gpars
+print("gpars",gpars)
 
-print "gl_dxdR",geom['gl_dxdR']
-print "gl_dxdZ",geom['gl_dxdZ']
+print("gl_dxdR",geom['gl_dxdR'])
+print("gl_dxdZ",geom['gl_dxdZ'])
 abs_grad_rhot = (geom['gl_dxdR']**2 + geom['gl_dxdZ']**2)**0.5
 
-print "abs(grad_rhot)",abs_grad_rhot
-print "1/abs(grad_rhot)",1/abs_grad_rhot
+print("abs(grad_rhot)",abs_grad_rhot)
+print("1/abs(grad_rhot)",1/abs_grad_rhot)
 
 zgrid = np.linspace(-np.pi,np.pi,num=pars['nz0'],endpoint = False)
-print "zgrid",zgrid
+print("zgrid",zgrid)
 
 plt.scatter(geom['gl_R'],geom['gl_z'])
 plt.show()

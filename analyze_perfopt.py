@@ -25,7 +25,7 @@ tlist=[]
 
 #read test points
 for file in filelist:
-    print 'analyzing %s'%file
+    print('analyzing %s'%file)
     pfile = open(file)
     for line in pfile:
         if ('best' in line) or ('Choice' in line):
@@ -61,7 +61,7 @@ for file in filelist:
 plots=[]
 graphs=[]
 for ind in range(len(plist)):
-    graphs=[graph("w p title 'perfvec(%i)=%i'" % (plist[ind][0],plist[ind][1]),range(len(tlist[ind])),tlist[ind])]
+    graphs=[graph("w p title 'perfvec(%i)=%i'" % (plist[ind][0],plist[ind][1]),list(range(len(tlist[ind]))),tlist[ind])]
     plots.append(plot(graphs,'number','relative speedup in percent'))
 mplots=[multiplot(plots,pause=-1)]
 show(mplots,'perf')

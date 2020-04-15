@@ -78,13 +78,13 @@ if 'edge_opt' in pars:
     edge_opt = pars['edge_opt']
 else:
     edge_opt = 1
-print( "edge_opt = ",edge_opt)
+print(( "edge_opt = ",edge_opt))
 if pars['n_spec'] == 3:
-   print( "Species 3:",pars['name3']   )
+   print(( "Species 3:",pars['name3']   ))
 #   dummy = raw_input("Warning!  Assuming species 3 is electrons (press any key):\n")
 
-print( type(pars['scan_dims']))
-print( "scan_dims",pars['scan_dims'])
+print(( type(pars['scan_dims'])))
+print(( "scan_dims",pars['scan_dims']))
 if type(pars['scan_dims']) == str:
     scan_dims = pars['scan_dims'].split()
     numscan_tot = 1
@@ -93,7 +93,7 @@ if type(pars['scan_dims']) == str:
 else:
     numscan_tot = pars['scan_dims']
 
-print( "Total number of runs: ", numscan_tot )
+print(( "Total number of runs: ", numscan_tot ))
 
 #Test if global scan
 if 'x_local' in pars and not pars['x_local']:
@@ -102,12 +102,12 @@ if 'x_local' in pars and not pars['x_local']:
         par0 = Parameters()
         scan_num = '000'+str(i+1)
         scan_num = scan_num[-4:]
-        print( "Analyzing ",scan_num)
+        print(( "Analyzing ",scan_num))
         if os.path.isfile('parameters_'+scan_num):
             par0.Read_Pars('parameters_'+scan_num)
             pars0 = par0.pardict
             nspec = pars0['n_spec']
-            print( pars0['kymin'])
+            print(( pars0['kymin']))
             scan_info[i,0] = pars0['kymin']
             if 'x0' in pars0:
                 scan_info[i,1] = pars0['x0']
@@ -221,15 +221,15 @@ if 'x_local' in pars and not pars['x_local']:
             #plt.plot(zgrid,(np.imag(gradphi[2:-2,0,3*field.nx/4])),'-.',color = 'black')
             #plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,3*field.nx/4])),'-.',color = 'red')
             #plt.show()
-            print( "omega_complex",omega_complex)
+            print(( "omega_complex",omega_complex))
             
             diff = np.sum(np.abs(gradphi[2:-2,:] + omega_complex*apar[:,:]))
             phi_cont = np.sum(np.abs(gradphi[2:-2,:]))
             apar_cont = np.sum(np.abs(omega_complex*apar[:,:]))
-            print( "diff",diff)
-            print( "phi_cont",phi_cont)
-            print( "apar_cont",apar_cont)
-            print( "diff/abs",diff/(phi_cont+apar_cont))
+            print(( "diff",diff))
+            print(( "phi_cont",phi_cont))
+            print(( "apar_cont",apar_cont))
+            print(( "diff/abs",diff/(phi_cont+apar_cont)))
             scan_info[i,11] = diff/(phi_cont+apar_cont)
             scan_info[i,12] = np.nan           
             scan_info[i,13] = np.nan
@@ -278,12 +278,12 @@ else:
         par0 = Parameters()
         scan_num = '000'+str(i+1)
         scan_num = scan_num[-4:]
-        print( "Analyzing ",scan_num)
+        print(( "Analyzing ",scan_num))
         if os.path.isfile('parameters_'+scan_num):
             par0.Read_Pars('parameters_'+scan_num)
             pars0 = par0.pardict
             nspec = pars0['n_spec']
-            print( pars0['kymin'])
+            print(( pars0['kymin']))
             scan_info[i,0] = pars0['kymin']
             if 'x0' in pars0:
                 scan_info[i,1] = pars0['x0']
@@ -405,7 +405,7 @@ else:
             apar0 = aparkx
             #Calculate <gamma_HB> / gamma
             geomfile = pars0['magn_geometry'][1:-1]+'_'+scan_num
-            print( "geomfile",geomfile)
+            print(( "geomfile",geomfile))
             #zgrid_pp, Btheta_R, prefactor = get_abs_psi_prime(geomfile,'../rbsProfs',pars['x0'])
             #rbs = np.genfromtxt('../rbsProfs')
             #ind_rbs_x0 = np.argmin(abs(rbs[:,0]-pars['x0'])) 
@@ -447,7 +447,7 @@ else:
                kxgrid[k+1] = kxgrid[0] + (k+1)*dkx  
             for k in range(int((pars0['nx0']-1)/2)):
                kxgrid[-k-1] = kxgrid[0] - (k+1)*dkx  
-            print( "kxgrid",kxgrid)
+            print(( "kxgrid",kxgrid))
             kxavg = 0.0
             #Get eigenmode averaged |kx|
             for k in range(pars0['nx0']):
@@ -474,7 +474,7 @@ else:
         if os.path.isfile('nrg_'+scan_num):
             for i0 in range(3):
               if 'name'+str(i0+1) in pars:
-                 print( "i0",i0,str(i0+1),pars['name'+str(i0+1)][1:-1])
+                 print(( "i0",i0,str(i0+1),pars['name'+str(i0+1)][1:-1]))
                  if pars['name'+str(i0+1)][1:-1] == 'e':
                     especnum = i0+1
                  if pars['name'+str(i0+1)][1:-1] == 'i':
@@ -491,7 +491,7 @@ else:
                    print( "Error: main ions must be first species.")
                 if especnum == 2:
                    scan_info[i,10]=nrg2[-1,7]/(abs(nrg2[-1,6])+abs(nrg1[-1,6]))
-                   print("!!!",scan_info[i,10])
+                   print(("!!!",scan_info[i,10]))
                 elif especnum == 3:
                    scan_info[i,10]=nrg3[-1,7]/(abs(nrg3[-1,6])+abs(nrg1[-1,6]))
                    print( "Error: Electrons must be second species!!")
@@ -515,7 +515,7 @@ else:
     f.close()
 
 for i in range(len(scan_info[:,0])):
-    print("QEM/QES",i,scan_info[i,10])
+    print(("QEM/QES",i,scan_info[i,10]))
 
 os.chdir('../')
 call(['plot_scan_info_efit.py',suffix])

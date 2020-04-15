@@ -24,7 +24,7 @@ for line in z_lines:
 
 i=0
 while i < len(Y_i):
-    print float(Y_i[i])/float(Y_z[i])
+    print(float(Y_i[i])/float(Y_z[i]))
     i += 1 
 
 plt.title('Ion and Impurity Density Profiles')

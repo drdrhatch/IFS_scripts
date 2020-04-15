@@ -20,7 +20,7 @@ parameters['q0'] = parameters['q0'] + qoff
 write_tracer_efit_file(parameters,geometry,geomfile+'_qmult'+str(qmult)+'_qoff'+str(qoff))
 
 if plot_change:
-   pfile = raw_input('Enter profile file name:\n')
+   pfile = input('Enter profile file name:\n')
    prof = np.genfromtxt(pfile)
    plt.plot(prof[:,0],geometry['q'],label='new')
    plt.plot(prof[:,0],q_original,label='original')

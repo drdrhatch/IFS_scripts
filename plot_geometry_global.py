@@ -21,18 +21,18 @@ pars, geom = read_geometry_global(geomfile)
 dz = float(2.0)/float(pars['gridpoints'])
 zgrid = np.arange(pars['gridpoints'])/float(pars['gridpoints']-1)*(2.0-dz)-1.0
 zgrid *= np.pi
-print "zgrid",zgrid
+print("zgrid",zgrid)
 
 Ly = 2.0*np.pi/kymin
 dy = Ly/ny0
 ygrid = np.arange(-Ly/2,Ly/2,dy)
-print "ygrid",ygrid
-print "Ly",Ly
+print("ygrid",ygrid)
+print("Ly",Ly)
 
-print np.shape(geom['geo_R'])
-print np.shape(geom['geo_Z'])
-print np.shape(geom['C_y'])
-print np.shape(geom['q'])
+print(np.shape(geom['geo_R']))
+print(np.shape(geom['geo_Z']))
+print(np.shape(geom['C_y']))
+print(np.shape(geom['q']))
 
 nx0 = len(geom['geo_R'][0,:])
 nz0 = pars['gridpoints']

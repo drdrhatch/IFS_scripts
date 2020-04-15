@@ -20,7 +20,7 @@ f_gz = False
 
 if options.f_gz:
   f_gz = options.f_gz
-  print "Impurity file:",f_gz
+  print("Impurity file:",f_gz)
 f_ge = args[0]
 f_gi = args[1]
 rhot0 = float(args[2])
@@ -63,9 +63,9 @@ if f_gz:
    omt3 = abs(1.0/t3*fd_d1_o4(t3,rhot3))
    omn3 = abs(1.0/n3*fd_d1_o4(n3,rhot3))
 
-print len(rhot1)
-print len(n1)
-print len(omt1)
+print(len(rhot1))
+print(len(n1))
+print(len(omt1))
 f = open('profile_info_'+f_ge,'w')
 f.write('#1.rhot 2.dummy 3.Te 4.ne 5.omte 6.omne 7.etae \n')
 np.savetxt(f,np.column_stack((rhot1,rhot1,t1,n1,omt1,omn1,omt1/omn1)))
@@ -88,11 +88,11 @@ irhot2= np.argmin(abs(rhot2[:]  - rhot0))
 if f_gz:
    irhot3= np.argmin(abs(rhot3[:]  - rhot0))
 
-print 'omte at rho_tor = '+str(rhot0)+': ',omt1[irhot1]
-print 'omti at rho_tor = '+str(rhot0)+': ',omt2[irhot2]
-print 'omne at rho_tor = '+str(rhot0)+': ',omn1[irhot1]
-print 'omni at rho_tor = '+str(rhot0)+': ',omn2[irhot2]
+print('omte at rho_tor = '+str(rhot0)+': ',omt1[irhot1])
+print('omti at rho_tor = '+str(rhot0)+': ',omt2[irhot2])
+print('omne at rho_tor = '+str(rhot0)+': ',omn1[irhot1])
+print('omni at rho_tor = '+str(rhot0)+': ',omn2[irhot2])
 if f_gz:
-   print 'omtz at rho_tor = '+str(rhot0)+': ',omt3[irhot1]
-   print 'omnz at rho_tor = '+str(rhot0)+': ',omn3[irhot2]
+   print('omtz at rho_tor = '+str(rhot0)+': ',omt3[irhot1])
+   print('omnz at rho_tor = '+str(rhot0)+': ',omn3[irhot2])
 

@@ -37,14 +37,14 @@ par = Parameters()
 par.Read_Pars('parameters'+suffix)
 pars = par.pardict
 
-print pars
+print(pars)
 if pars['n_spec'] == 1:
    time,nrg = get_nrg0(suffix,nspec=1)
 elif pars['n_spec'] == 2:
    time,nrg_ion,nrg = get_nrg0(suffix,nspec=2)
-   dummy = raw_input("Assuming electrons are second species (press any key to continue).")
+   dummy = input("Assuming electrons are second species (press any key to continue).")
 else:
-   print "Can only handle 1 or 2 species right now."
+   print("Can only handle 1 or 2 species right now.")
    exit()
    
 
@@ -53,13 +53,13 @@ plt.xlabel('t(cs/a)')
 plt.ylabel('Q/QGB')
 plt.show()
 
-start_time = float(raw_input('Enter start time for average:'))
+start_time = float(input('Enter start time for average:'))
 start_index = np.argmin(abs(time-start_time))
 
 Qavg = np.sum(nrg[start_index:,6])/(len(time)-start_index-1)
 Q_CV = np.std(nrg[start_index:,6])/Qavg
-print "Qavg",Qavg
-print "Q_CV",Q_CV
+print("Qavg",Qavg)
+print("Q_CV",Q_CV)
 
 summary = {}
 summary['Qavg'] = Qavg
@@ -97,7 +97,7 @@ if 'nustar_e' in pars:
     summary['nustar_e'] = pars['nustar_e']
 
 w = csv.writer(open('summary'+str(suffix)+'.csv','w'))
-for key, val in summary.items():
+for key, val in list(summary.items()):
    w.writerow([key, val])
 
 cwd = os.getcwd()
@@ -108,7 +108,7 @@ kx_center_scan_string = '  !scanlist: 0.0 '
 for i in range(num_kxcenter-1):
     kx_center_scan_string += ', '+str(0.5*(i+1)/float(num_kxcenter-1)*2*np.pi)+'*'+str(pars['shat'])+'*kymin(1)'
 
-print "kx_center_scan_string",kx_center_scan_string
+print("kx_center_scan_string",kx_center_scan_string)
 
 f=open('parameters'+suffix,'r')
 parfile=f.read()
@@ -120,7 +120,7 @@ for i in range(len(parfile_split)):
     if 'kymin' in parfile_split[i]: 
         parfile_split[i] = 'kymin = 0.05  !scanlist: '+ky_scan_string \
           +'\nkx_center = 0.0 '+kx_center_scan_string
-        print "parfile_split[i]",parfile_split[i]
+        print("parfile_split[i]",parfile_split[i])
     #if 'kx_center' in parfile_split[i]: 
     #    parfile_split[i] = ''
     if 'n_procs_v' in parfile_split[i]:
@@ -154,7 +154,7 @@ for i in range(len(parfile_split)):
     if 'nexc' in parfile_split[i]:
         parfile_split[i] = ''
     if 'magn_geometry' in parfile_split[i]:
-        print 'magn_geometry',pars['magn_geometry']
+        print('magn_geometry',pars['magn_geometry'])
         if pars['magn_geometry'] == '\'tracer_efit\'':
             parfile_split[i] = 'magn_geometry = \'gene\''
     if 'geomfile' in parfile_split[i]:

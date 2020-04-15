@@ -11,11 +11,11 @@ class Test:
         self.init_time=init_time
 
     def output(self):
-        print("\nTest no. %d:"%self.number)
-        print("\ttime for time loop was %8.3f"%self.timeloop)
-        print("\tparallelization used: %s"%self.parallelization)
-        print("\tperf_vec = ",self.perf_vec)
-        print("\tinit_time= ",self.init_time)
+        print(("\nTest no. %d:"%self.number))
+        print(("\ttime for time loop was %8.3f"%self.timeloop))
+        print(("\tparallelization used: %s"%self.parallelization))
+        print(("\tperf_vec = ",self.perf_vec))
+        print(("\tinit_time= ",self.init_time))
 
     def get_timeloop(self):
         return self.timeloop
@@ -32,7 +32,7 @@ class Testset:
         else:
             self.filename=filename
             self.label=label
-            print("Open perf file %s\n"%self.filename)
+            print(("Open perf file %s\n"%self.filename))
             fh=open(self.filename,"r")
             self.linebuffer=fh.readlines()
             fh.close()
@@ -52,7 +52,7 @@ class Testset:
             self.branch=mo.group(4)
             self.flags=mo.group(5)
         else:
-            print("header of file %s is malformed.\n"%self.filename)
+            print(("header of file %s is malformed.\n"%self.filename))
 
         for line in self.linebuffer[2:]:
             mo=re.search(r"test (\d+): time loop: ([0-9.]+) s \(parallelization: (\d \d \d \d \d \d), perf_vec: ([0-9 ]+)\), init_time ([0-9.]+) s",line)
@@ -66,7 +66,7 @@ class Testset:
 
     def output(self):
         print("\n\n=============================================")
-        print("File %s has %d tests:\n"%(self.filename,len(self.tests)))
+        print(("File %s has %d tests:\n"%(self.filename,len(self.tests))))
         for t in self.tests:
             t.output()
 
@@ -104,13 +104,13 @@ parser.add_argument('--tm',nargs=3,action='append',help='path to perf_data, test
 myopt=parser.parse_args()
 
 #print("args = ",myopt.filenames)
-print("myopt=",myopt)
+print(("myopt=",myopt))
 files=[]
 
 if myopt.tm:
     for tm in myopt.tm:
         header_line=tm[1]+' testsuite on '+tm[2]
-        print("Look for header_line(",header_line,") in ",tm[0]+"/perf_data")
+        print(("Look for header_line(",header_line,") in ",tm[0]+"/perf_data"))
         fh=open(tm[0]+"/perf_data","r")
         store_lines=False
         linebuffer=[]
@@ -147,7 +147,7 @@ labels=[]
 counter=0
 for tf in files:
     timeloop_arr=np.array(tf.get_timeloop())
-    xpos=range(tf.get_ntests())
+    xpos=list(range(tf.get_ntests()))
     print(timeloop_arr)
     #print([x+counter*width for x in xpos])
     labels.append(tf.get_machine()+' '+tf.get_label())

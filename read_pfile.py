@@ -13,7 +13,7 @@ def read_pfile(p_file_name,Z,add_impurity=False):
 
     sdata = data.split('\n')
     nr = int(sdata[0].split()[0]) 
-    print("p-file resolution: nr = ", nr)
+    print(("p-file resolution: nr = ", nr))
 
     # ne is electron density profile, dne is gradient of ne
     ne = np.empty(0)
@@ -34,7 +34,7 @@ def read_pfile(p_file_name,Z,add_impurity=False):
     psipti = np.empty(0)
     psiper = np.empty(0)
 
-    for i in np.array(range(nr)):
+    for i in np.array(list(range(nr))):
         temp = sdata[i+1].split()
         psipne = np.append(psipne,float(temp[0]))
         ne = np.append(ne,float(temp[1]))
@@ -102,7 +102,7 @@ def read_pfile_raw(p_file_name):
 
     sdata = data.split('\n')
     nr = int(sdata[0].split()[0])
-    print("p file resolution: nr = ", nr)
+    print(("p file resolution: nr = ", nr))
 
     # ne is electron density profile, dne is gradient of ne
     ne = np.empty(0)
@@ -122,7 +122,7 @@ def read_pfile_raw(p_file_name):
     psipti = np.empty(0)
     psiper = np.empty(0)
 
-    for i in np.array(range(nr)):
+    for i in np.array(list(range(nr))):
         temp = sdata[i+1].split()
         psipne = np.append(psipne,float(temp[0]))
         ne = np.append(ne,float(temp[1]))

@@ -7,17 +7,17 @@ from sys import exit
 from scipy.interpolate import UnivariateSpline
 import sys
 
-shotnr =   int(raw_input("Enter shot number: "))
-timept = float(raw_input("Enter time in sec: "))
+shotnr =   int(input("Enter shot number: "))
+timept = float(input("Enter time in sec: "))
 print( '')
 print( 'Hit Enter for defaults given in brackets')
-diag = raw_input("Select diag [eqi]: ")
+diag = input("Select diag [eqi]: ")
 if not diag:
 	diag='eqi'
-exp =  raw_input("Select exp [augd]: ")
+exp =  input("Select exp [augd]: ")
 if not exp:
 	exp='augd'
-edstr=raw_input("Enter edition [0]: ")
+edstr=input("Enter edition [0]: ")
 if not edstr:
 	ed = 0
 else:
@@ -210,7 +210,7 @@ show()
 #create G-EQDSK file
 filename='AUG_%d_%.4gs.eqd'%(shot.value,time.value)
 f=open(filename,'w')
-print( 'Writing G-EQDSK file "%s".' %(filename))
+print(( 'Writing G-EQDSK file "%s".' %(filename)))
 f.write('%8s%8d%7.4gs%8s%8s%8s%4d%4d%4d\n' %(str.upper(exp),shot.value,time.value,str.upper(diag),"","",ed,rdim,zdim))
 f.write('%16.9e%16.9e%16.9e%16.9e%16.9e\n' %(rmax-rmin,zmax-zmin,rmag,rmin,(zmax+zmin)/2.))
 f.write('%16.9e%16.9e%16.9e%16.9e%16.9e\n' %(rmag,zmag,psi_ax/2./pi,psi_sep/2./pi,Btor))

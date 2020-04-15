@@ -12,9 +12,9 @@ def read_parameters(paramfpath):
        if    paramfpath[-1] == "/": paramfpath+="parametrers"
        else:                        paramfpath+="/parameters"
     if os.path.isfile(paramfpath):
-         print(paramfpath+' FILE FOUND ...')
+         print((paramfpath+' FILE FOUND ...'))
     else:
-         print(paramfpath+' FILE NOT FOUND. Exit!'); sys.exit()
+         print((paramfpath+' FILE NOT FOUND. Exit!')); sys.exit()
 
     ofh = open(paramfpath,'r')
     lines = ofh.readlines()
@@ -57,9 +57,9 @@ def read_scanfile(scanfpath):
        if    scanfpath[-1] == "/": scanfpath+="scan.log"
        else:                       scanfpath+="/scan.log"
     if os.path.isfile(scanfpath):
-         print(scanfpath+' FILE FOUND ...')
+         print((scanfpath+' FILE FOUND ...'))
     else:
-         print(scanfpath+' FILE NOT FOUND. Exit!'); sys.exit()
+         print((scanfpath+' FILE NOT FOUND. Exit!')); sys.exit()
 
     ofh = open(scanfpath,'r')
     lines = ofh.readlines()
@@ -179,7 +179,7 @@ def plot_scans(scanfiles):
     plt.show(gammafig)
     plt.show(omegafig)
 
-    if raw_input('Do you want to save these figures [Yes/No]? ').lower() in ['yes','y']:
+    if input('Do you want to save these figures [Yes/No]? ').lower() in ['yes','y']:
        pdfpages = pdfh.PdfPages('scanfigs.pdf')
        for item in range(len(gammafig)):
            gammafig[item].savefig('gamma%02d.png' % (item+1))
@@ -196,13 +196,13 @@ if   len(sys.argv[1:]) >= 1:
      for iarg in sys.argv[1:]:
          scanfpath.append(iarg)
 else:
-     if raw_input('Do you want to compare several scans in several files? (yes/no)').lower() in ['yes','y']:
+     if input('Do you want to compare several scans in several files? (yes/no)').lower() in ['yes','y']:
         while True:
-              infpath = raw_input('Path to scan file: ')
+              infpath = input('Path to scan file: ')
               if len(infpath) > 0: scanfpath.append(infpath)
               else: break
      else:
-        scanfpath.append(raw_input('Path to the scan file: '))
+        scanfpath.append(input('Path to the scan file: '))
 
 plot_scans(scanfpath)
 

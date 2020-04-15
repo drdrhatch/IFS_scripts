@@ -12,7 +12,7 @@ parser.add_option('--number','-n',type='int',action='store',dest='number',help =
 parser.add_option('--niterations','-i',type='int',action='store',dest='niterations',help = 'Number of variations for each initial guess.',default=10)
 #parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
 options,args=parser.parse_args()
-print("options.number",options.number)
+print(("options.number",options.number))
 column = int(options.number)-1
 niterations = int(options.niterations)
 
@@ -56,7 +56,7 @@ while keep_going:
         keep_going = False
     i += 1
 
-print("Number of species:",num_spec )
+print(("Number of species:",num_spec ))
     
 time = np.empty(0)
 # delete header
@@ -77,13 +77,13 @@ for i in range(num_spec):
 
 ambipolarity = 0
 for i in range(num_spec):
-    print("species "+pars['name'+str(i+1)])
-    print( "Charge of species "+str(i+1)+": "+str(pars['charge'+str(i+1)]))
-    print("Flux/FluxGB",fluxes[-1,column,i])
+    print(("species "+pars['name'+str(i+1)]))
+    print(( "Charge of species "+str(i+1)+": "+str(pars['charge'+str(i+1)])))
+    print(("Flux/FluxGB",fluxes[-1,column,i]))
     ambipolarity += fluxes[-1,column,i]*pars['charge'+str(i+1)] 
    
-print("Ambipolarity:",ambipolarity)
-print("Normalized ambipolarity:",ambipolarity/(abs(fluxes[-1,column,0])+abs(fluxes[-1,column,1])+abs(fluxes[-1,column,2])))
+print(("Ambipolarity:",ambipolarity))
+print(("Normalized ambipolarity:",ambipolarity/(abs(fluxes[-1,column,0])+abs(fluxes[-1,column,1])+abs(fluxes[-1,column,2]))))
 
 def fit_func(t,G0,c0,gam):
     return G0+c0*np.e**(-gam*t)
@@ -97,7 +97,7 @@ for s in range(num_spec):
     gam = (fluxes[-2,column,s]-fluxes[-1,column,s])/(time[-1]-time[-2])/c0
     if s > 0:
         gam = bvals[2,s-1]
-    print("gam0",gam)
+    print(("gam0",gam))
     plt.plot(time,fluxes[:,column,s])
     plt.plot(time,G0+c0*np.e**(-gam*(time-time[0]))  )
     plt.show()
@@ -116,16 +116,16 @@ for s in range(num_spec):
                 break
             for k in range(len(f2)):
                 x0 = np.array([f0[i],f1[j],f2[k]])
-                print("i,j,k",i,j,k)
+                print(("i,j,k",i,j,k))
                 fit,pcov= optimize.curve_fit(fit_func,time-time[0],fluxes[:,column,s],p0=x0,maxfev = 10000) 
                 thiserr = np.sum(np.diag(pcov))
                 if abs(thiserr) < minerr:
                     minerr = thiserr
                     bestvals = np.array([fit[0],fit[1],fit[2]])
                     print("##############")
-                    print(i,j,k)
-                    print("fit",fit[0],fit[1],fit[2])
-                    print("minerr",minerr)
+                    print((i,j,k))
+                    print(("fit",fit[0],fit[1],fit[2]))
+                    print(("minerr",minerr))
                     if minerr < prec:
                         break
 
@@ -138,18 +138,18 @@ for s in range(num_spec):
 
 
 
-print("bvals",bvals)
+print(("bvals",bvals))
 
 ambipolarity = 0
 for s in range(num_spec):
-    print("species "+pars['name'+str(s+1)])
-    print("Charge of species "+str(s+1)+": "+str(pars['charge'+str(s+1)]))
-    print("Flux/FluxGB",bvals[0,s])
+    print(("species "+pars['name'+str(s+1)]))
+    print(("Charge of species "+str(s+1)+": "+str(pars['charge'+str(s+1)])))
+    print(("Flux/FluxGB",bvals[0,s]))
     ambipolarity += bvals[0,s]*pars['charge'+str(s+1)] 
    
 if column==0:
-    print("Ambipolarity:",ambipolarity)
-    print("Normalized ambipolarity:",ambipolarity/np.sum(abs(bvals[0,:])))
+    print(("Ambipolarity:",ambipolarity))
+    print(("Normalized ambipolarity:",ambipolarity/np.sum(abs(bvals[0,:]))))
 
 
 #proceed = input("Proceed with fit (0 = no)?:")
@@ -186,10 +186,10 @@ if column == 0:
         temp = fluxes[0,column,s]*q[s] + q[s]*dGdt[s]*t_ambi
         Gs[s] = fluxes[0,column,s] + dGdt[s]*t_ambi
         #print(pars['charge'+str(s+1)],"Gs",Gs[s]) 
-        print(pars['name'+str(s+1)],"Gs",Gs[s]) 
+        print((pars['name'+str(s+1)],"Gs",Gs[s])) 
         ambi_test += temp
 
-    print("Test of ambipolarity:",ambi_test)
+    print(("Test of ambipolarity:",ambi_test))
 
 tnew = np.linspace(0,10000,num=1000)
 for s in range(num_spec):

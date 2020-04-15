@@ -98,8 +98,8 @@ def omega_calc(suffix):
     #omega_final=np.average(omega_list[begin:end-1])
     #gamma_dev_final=np.std(gamma_avg[begin:end-1])
     #omega_dev_final=np.std(omega_avg[begin:end-1])
-    print(" gamma is: ",gamma_final, "\n gamma_dev is", gamma_dev_final)
-    print( "\n omega is: ", omega_final, "\n omega_dev is", omega_dev_final)
+    print((" gamma is: ",gamma_final, "\n gamma_dev is", gamma_dev_final))
+    print(( "\n omega is: ", omega_final, "\n omega_dev is", omega_dev_final))
     f.close()
 #    if show_plots:
 #        plt.plot((weight[:,t-1]*(gamma_avg-omega_diffs[:,t-1].real))**2/weight[:,t-1])

@@ -11,25 +11,25 @@ show_plots = False
 test_plots = True
 ####### Modify ######
 
-dummy = (raw_input('Warning! Modifying electron and ion density profiles to match pressure from rbsProfs (press any key): \n'))
-zimp = float(raw_input('Enter Z for impurity species: \n'))
-zeff = float(raw_input('Enter Zeff: \n'))
+dummy = (input('Warning! Modifying electron and ion density profiles to match pressure from rbsProfs (press any key): \n'))
+zimp = float(input('Enter Z for impurity species: \n'))
+zeff = float(input('Enter Zeff: \n'))
 
 def calc_nfracs(zeff,zimp):
     nc_frac = (zeff-1)/(zimp**2 - zimp)
     ni_frac = 1-zimp*nc_frac
 
-    print "Calculating impurity and main ion (z=1) fractions for:"
-    print "Zeff = ",zeff
-    print "Zimp = ",zimp
-    print "nc/ne:",nc_frac
-    print "ni/ne:",ni_frac
+    print("Calculating impurity and main ion (z=1) fractions for:")
+    print("Zeff = ",zeff)
+    print("Zimp = ",zimp)
+    print("nc/ne:",nc_frac)
+    print("ni/ne:",ni_frac)
 
     zeff_test = ni_frac + zimp**2*nc_frac
     qn_test = ni_frac+zimp*nc_frac
 
-    print "Zeff test:", zeff_test
-    print "Quasineutrality test (should be 1.0):", qn_test
+    print("Zeff test:", zeff_test)
+    print("Quasineutrality test (should be 1.0):", qn_test)
     return ni_frac,nc_frac
 
 def calc_a():
@@ -38,13 +38,13 @@ def calc_a():
    f.close()
    rbs = rbs.split('\n')  
    a_factor = float(rbs[1].split()[3])
-   print "a_factor",a_factor
+   print("a_factor",a_factor)
    rbs = np.genfromtxt('rbsProfs')
    isep = np.argmin(abs(rbs[:,0]-1.0))
-   print "rhotor[isep]",rbs[isep,0]   
+   print("rhotor[isep]",rbs[isep,0])   
    a = rbs[isep,22]
-   print "a[isep]",a
-   print "a_min_eff",a_factor*a
+   print("a[isep]",a)
+   print("a_min_eff",a_factor*a)
    return a_factor*a
 
 data = np.genfromtxt(file_in_name)
@@ -80,7 +80,7 @@ ne = ptot/alpha1*(zimp**2-zimp)/(zeff-1)
 nz = ptot/alpha1
 ni = ptot/alpha1*((zimp**2-zimp)*zeff/(zeff-1) - zimp**2)
 
-print "ion dilution:\n",ni[-1]/ne[-1]
+print("ion dilution:\n",ni[-1]/ne[-1])
 plt.plot(rhot,ni/ne,label='ion dilution ni/ne')
 plt.legend()
 plt.show()
@@ -94,18 +94,18 @@ if test_plots:
     plt.legend()
     plt.show()
 
-    print "Pressure test:"
+    print("Pressure test:")
     plt.plot(ptot,label='ptot')
     plt.plot(ti*ni+ti*nz+te*ne,label='ptot test')
     plt.legend()
     plt.show()
 
-    print "zeff test:"
+    print("zeff test:")
     plt.plot(rhot,(ni+zimp**2*nz)/ne,label='zeff')
     plt.legend()
     plt.show()
 
-    print "quasineutrality test:"
+    print("quasineutrality test:")
     plt.plot(rhot,ni+zimp*nz-ne,label='qn test (should be zero)')
     plt.legend()
     plt.show()

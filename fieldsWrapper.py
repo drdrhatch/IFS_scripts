@@ -121,10 +121,10 @@ def eigenfunction_average(z_grid,jacobian,kperp,omega_d,field,name):
     ave_kperp2 = ave_kperp2/denom
     ave_kperp = np.sqrt(ave_kperp2)
     #print name + ' weighted k_perp^2 =', ave_kperp2
-    print( name + ' weighted k_perp =', ave_kperp)
+    print(( name + ' weighted k_perp =', ave_kperp))
 
     ave_omegad = ave_omegad/denom
-    print( name + ' weighted omega_d =', ave_omegad)
+    print(( name + ' weighted omega_d =', ave_omegad))
 
     return ave_kperp, ave_omegad
 
@@ -140,9 +140,9 @@ def eigenfunction_squared(z_grid,jacobian,field):
             (z_grid[i+1]-z_grid[i])/jacobian[i]
 
     ave_sq_int = abs(ave_sq_int)
-    print( 'int phi**2 =', ave_sq_int)
+    print(( 'int phi**2 =', ave_sq_int))
     ave_int_sq= abs(ave_int_sq)**2
-    print( ' (int phi)**2 =', ave_int_sq)
+    print(( ' (int phi)**2 =', ave_int_sq))
 
     return ave_sq_int, ave_int_sq
 
@@ -163,8 +163,8 @@ def kz_from_dfielddz(zgrid, jacobian, field, plot, name, zstart = 0., zend = 0.)
     
     ##if not (zstart == 0. and zend == 0.):
     if zstart == zend:
-        zstart = float(raw_input("Enter start z: "))
-        zend = float(raw_input("Enter end z: "))
+        zstart = float(input("Enter start z: "))
+        zend = float(input("Enter end z: "))
     startInd = np.argmin(abs(zgrid - zstart))
     endInd = np.argmin(abs(zgrid - zend))
     for i in range(startInd, endInd + 1):
@@ -174,8 +174,8 @@ def kz_from_dfielddz(zgrid, jacobian, field, plot, name, zstart = 0., zend = 0.)
         denom = denom + 0.5*(abs(field[i])**2 + abs(field[i+1])**2)*\
                   (zgrid[i+1]-zgrid[i])/jacobian[i]
     ave_kz = np.sqrt(sum_ddz/denom)
-    print( name + ' averaged kz = ', ave_kz)
-    print( 'Input to SKiM kz = ', ave_kz)
+    print(( name + ' averaged kz = ', ave_kz))
+    print(( 'Input to SKiM kz = ', ave_kz))
     return ave_kz, zstart, zend
 
 def fourierTrans(pars,zgrid,jacobian,field,plot,name):
@@ -201,8 +201,8 @@ def fourierTrans(pars,zgrid,jacobian,field,plot,name):
         plt.legend()
         plt.show()
 
-    kzstart = float(raw_input("Enter start kz: "))
-    kzend = float(raw_input("Enter end kz: "))
+    kzstart = float(input("Enter start kz: "))
+    kzend = float(input("Enter end kz: "))
     startInd = np.argmin(abs(kz_grid - kzstart))
     endInd = np.argmin(abs(kz_grid - kzend))
     sum_kz2 = 0.
@@ -214,7 +214,7 @@ def fourierTrans(pars,zgrid,jacobian,field,plot,name):
         denom = denom + 0.5*(abs(field_kz[i])**2 + \
                 abs(field_kz[i+1])**2)*(kz_grid[i+1]-kz_grid[i])
     ave_kz = np.sqrt(sum_kz2/denom)
-    print( name + ' averaged kz = ', ave_kz)
+    print(( name + ' averaged kz = ', ave_kz))
     #print 'input to SKiM averaged kz = ', ave_kz/np.pi/pars['q0']/pars['major_R']
 
     return field_kz, kz_grid
@@ -227,11 +227,11 @@ def LILO_eigenfunctions_from_field_file(pars,suffix,plot,setTime=-1):
 
     if (setTime == -1):
         field.set_time(field.tfld[setTime])
-        print( 'Reading eigenfunctions are at t = ', field.tfld[setTime])
+        print(( 'Reading eigenfunctions are at t = ', field.tfld[setTime]))
     else:
         isetTime = np.argmin(abs(np.array(field.tfld)-setTime))
         field.set_time(field.tfld[isetTime])
-        print( 'Reading eigenfunctions are at t = ', field.tfld[isetTime])
+        print(( 'Reading eigenfunctions are at t = ', field.tfld[isetTime]))
 
     if 1 == 0:
         phi = np.zeros(nz,dtype='complex128')

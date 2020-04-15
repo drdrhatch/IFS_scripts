@@ -140,7 +140,7 @@ if 1 == 1:
 
     if 1 == 1:
         if prof_file == 'empty':
-            prof_file = raw_input("Enter gene output profiles file name:\n")
+            prof_file = input("Enter gene output profiles file name:\n")
 
         profData = np.genfromtxt(prof_file)
         rho = profData[:,0]
@@ -160,4 +160,4 @@ if 1 == 1:
                 weight = aparX
             norm = norm + weight
             totOmstar = totOmstar + omstar[i] * weight
-        print 'average Om_star_e = ', totOmstar / norm
+        print('average Om_star_e = ', totOmstar / norm)

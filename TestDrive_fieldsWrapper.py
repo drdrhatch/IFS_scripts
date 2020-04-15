@@ -33,24 +33,24 @@ elif xlocal:
 
     #phi = np.zeros(pars['nx0']*pars['nz0'],dtype='complex128')
     #apar = np.zeros(pars['nx0']*pars['nz0'],dtype='complex128')
-    print 'Eigenfunction at outboard midplane'
+    print('Eigenfunction at outboard midplane')
     zgrid, jacobian = reconstruct_zgrid(geom_coeff, pars, False, False,0.)
     kperp, omd_curv, omd_gradB = calc_kperp_omd(geom_type,geom_coeff,pars,False,False)
-    print 'Eigenfunction total'
+    print('Eigenfunction total')
     phi, apar = eigenfunctions_from_field_file(pars,suffix,False,False,-1)
     if avg:
         ave_kperp, ave_omd =  eigenfunction_average(zgrid, jacobian,kperp,omd_curv,phi,'phi')
         #ave_kperp, ave_omd =  eigenfunction_average(zgrid, jacobian,kperp,omd_curv,apar,'apar')
-        print 'Input to SKiM kperp =', ave_kperp / float(pars['kymin'])
-        print 'Input to SKiM omd =', ave_omd / pars['kymin']
-        print 'calculate average kz using FT'
+        print('Input to SKiM kperp =', ave_kperp / float(pars['kymin']))
+        print('Input to SKiM omd =', ave_omd / pars['kymin'])
+        print('calculate average kz using FT')
         phi1 = list(phi)
         apar1 = list(apar)
         #field_kz, kz_grid = fourierTrans(pars, zgrid, jacobian, apar1, True, 'apar')
-        print 'calculate average kz using d field/ dz'
+        print('calculate average kz using d field/ dz')
 #        ave_kz = kz_from_dfielddz(zgrid,jacobian,apar,True, 'apar')
         ave_kz = kz_from_dfielddz(zgrid,jacobian,phi,True, 'phi')
-        print 'ave_kz', ave_kz
+        print('ave_kz', ave_kz)
 
     if 'kx_center' in pars:
         kx_center = float(pars['kx_center'])

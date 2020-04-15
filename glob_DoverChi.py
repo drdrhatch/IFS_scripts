@@ -111,29 +111,29 @@ for i in range(len(species)):
     rho, t_fluxrho, n_fluxrho, omt_fluxrho, omn_fluxrho, fluxrho, Gamma_fluxrho, Qheat_fluxrho = readProfiles(s, suffix, subtract_convection)
     Gamma[i], Qheat[i], D[i], chi[i], t[i], n[i] = weightedAvg(fluxrho, Gamma_fluxrho, Qheat_fluxrho, omt_fluxrho, omn_fluxrho, t_fluxrho, n_fluxrho)
     outstr = 'D_'+s+'/ chi_'+s+' ='
-    print outstr, D[i] / chi[i]
-    print 'Gamma =', Gamma[i]
-    print 'Qheat =', Qheat[i]
-    print 'Gamma / Qheat =', Gamma[i] / Qheat[i]
+    print(outstr, D[i] / chi[i])
+    print('Gamma =', Gamma[i])
+    print('Qheat =', Qheat[i])
+    print('Gamma / Qheat =', Gamma[i] / Qheat[i])
 
     omt[i], omn[i] = weightedScaleLength(fluxrho, Qheat_fluxrho, omt_fluxrho, omn_fluxrho)
     outstr = 'omt_'+s+', omn_'+s+' ='
-    print outstr, omt[i], omn[i]
+    print(outstr, omt[i], omn[i])
     
 
 chi_tot = chi[0] + chi[1]
-print 'D_i / chi_tot =', D[0] / chi_tot
-print 'D_e / chi_tot =', D[1] / chi_tot
+print('D_i / chi_tot =', D[0] / chi_tot)
+print('D_e / chi_tot =', D[1] / chi_tot)
 #print 'D_z / chi_tot =', D[2] / chi_tot
 
-print 'chi_i / chi_e =', chi[0]/chi[1]
+print('chi_i / chi_e =', chi[0]/chi[1])
 #print 'D_z / chi_e =', D[2]/chi[1]
 
 Qheat_tot = Qheat[0] + Qheat[1]
-print Gamma
-print Qheat_tot
-print 'Gamma_i / Q_tot =', Gamma[0] / Qheat_tot
-print 'Gamma_e / Q_tot =', Gamma[1] / Qheat_tot
+print(Gamma)
+print(Qheat_tot)
+print('Gamma_i / Q_tot =', Gamma[0] / Qheat_tot)
+print('Gamma_e / Q_tot =', Gamma[1] / Qheat_tot)
 #print 'Gamma_z / Q_tot =', Gamma[2] / Qheat_tot * n[1] / n[2]
 
 if 1 == 0:

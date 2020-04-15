@@ -39,7 +39,7 @@ plot_format = 'display'
 nf = 200
 lf = 10.
 
-kygrid = range(pars['nky0'])
+kygrid = list(range(pars['nky0']))
 zInd = nz/2
 kyInd = -1
 xInd = nx * 5 / 8

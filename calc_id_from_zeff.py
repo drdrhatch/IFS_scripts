@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-Zeff = float(raw_input("Enter Zeff:\n"))
-Z = float(raw_input("Enter Z:\n"))
+Zeff = float(input("Enter Zeff:\n"))
+Z = float(input("Enter Z:\n"))
 ne = 1.0
 
 #zeff = (ni+Z**2*nz)/ne
@@ -13,11 +13,11 @@ ne = 1.0
 ni = (ne - Zeff*ne/Z)/(1-1.0/Z)
 nz = (Zeff*ne - ni)/Z**2 
 
-print "Zeff = ",Zeff
-print "Z = ", Z
-print "ni/ne", ni
-print "nz/ne", nz
+print("Zeff = ",Zeff)
+print("Z = ", Z)
+print("ni/ne", ni)
+print("nz/ne", nz)
 
-print "Quasineutrality (should be zero):",ni-ne+Z*nz
-print "Zeff",(ni+Z**2*nz)/ne
+print("Quasineutrality (should be zero):",ni-ne+Z*nz)
+print("Zeff",(ni+Z**2*nz)/ne)
 

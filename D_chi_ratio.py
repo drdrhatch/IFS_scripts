@@ -40,7 +40,7 @@ if pars['n_spec'] == 1:
     time,nrge = read_from_nrg_files(pars,suffix,False)
     Dochi, Q, Qes, Qem, Gamma, D, chi = \
         D_over_chi(time,nrge,omn_e,omt_e,temp_e,dens_e)
-    print 'electron: Q_em/Q_es = %12.5f' % float(Qem/Qes)
+    print('electron: Q_em/Q_es = %12.5f' % float(Qem/Qes))
 elif pars['n_spec'] == 2:
     q_i = 1.
     omn_i, omt_i = read_species_gradients(q_i,pars)
@@ -54,17 +54,17 @@ elif pars['n_spec'] == 2:
         D_over_chi(time,nrgi,omn_i,omt_i,temp_i,dens_i)
     Dochi_e, Q_e, Qes_e, Qem_e, Gamma_e, D_e, chi_e = \
         D_over_chi(time,nrge,omn_e,omt_e,temp_e,dens_e)
-    print 'electron: Q_em/Q_es = %12.5f' % float(Qem_e/Qes_e)
-    print 'Q_i/Q_e = %12.5f' % float(Q_i/Q_e)
-    print 'chi_i/chi_e =', chi_i / chi_e
+    print('electron: Q_em/Q_es = %12.5f' % float(Qem_e/Qes_e))
+    print('Q_i/Q_e = %12.5f' % float(Q_i/Q_e))
+    print('chi_i/chi_e =', chi_i / chi_e)
     Dsochi_tot_i = D_over_chi_tot(Gamma_i,omn_i,dens_i,Q_e,omt_e,Q_i,omt_i,temp_i, dens_i)
-    print 'D_i/chi_tot = %12.5f' % Dsochi_tot_i
+    print('D_i/chi_tot = %12.5f' % Dsochi_tot_i)
     Dsochi_tot_e = D_over_chi_tot(Gamma_e,omn_e,dens_e,Q_e,omt_e,Q_i,omt_i,temp_i, dens_i)
-    print 'D_e/chi_tot = %12.5f' % Dsochi_tot_e
-    print 'D_i/chi_e =', D_i / chi_e
-    print 'D_e/chi_e =', D_e / chi_e
-    print 'D_i/chi_i =', D_i / chi_i
-    print 'D_e/chi_i =', D_e / chi_i
+    print('D_e/chi_tot = %12.5f' % Dsochi_tot_e)
+    print('D_i/chi_e =', D_i / chi_e)
+    print('D_e/chi_e =', D_e / chi_e)
+    print('D_i/chi_i =', D_i / chi_i)
+    print('D_e/chi_i =', D_e / chi_i)
 elif pars['n_spec'] ==3:
     q_i = 1.
     omn_i, omt_i = read_species_gradients(q_i,pars)
@@ -83,22 +83,22 @@ elif pars['n_spec'] ==3:
         D_over_chi(time,nrge,omn_e,omt_e,temp_e,dens_e)
     Dochi_z, Q_z, Qes_z, Qem_z, Gamma_z, D_z, chi_z = \
         D_over_chi(time,nrgz,omn_z,omt_z,temp_z,dens_z)
-    print 'electron: Q_em/Q_es = %12.5f' % float(Qem_e/Qes_e)
-    print 'ion: Q_em/Q_es = %12.5f' % float(Qem_i/Qes_i)
-    print 'impurity: Q_em/Q_es = %12.5f' % float(Qem_z/Qes_z)
-    print 'Q_i/Q_e = %12.5f' % float(Q_i/Q_e)
-    print 'chi_i/chi_e =', chi_i / chi_e
+    print('electron: Q_em/Q_es = %12.5f' % float(Qem_e/Qes_e))
+    print('ion: Q_em/Q_es = %12.5f' % float(Qem_i/Qes_i))
+    print('impurity: Q_em/Q_es = %12.5f' % float(Qem_z/Qes_z))
+    print('Q_i/Q_e = %12.5f' % float(Q_i/Q_e))
+    print('chi_i/chi_e =', chi_i / chi_e)
     Dsochi_tot_i = D_over_chi_tot(Gamma_i,omn_i,dens_i,Q_e,omt_e,Q_i,omt_i,temp_i, dens_i)
-    print 'D_i/chi_tot = %12.5f' % Dsochi_tot_i
+    print('D_i/chi_tot = %12.5f' % Dsochi_tot_i)
     Dsochi_tot_e = D_over_chi_tot(Gamma_e,omn_e,dens_e,Q_e,omt_e,Q_i,omt_i,temp_i, dens_i)
-    print 'D_e/chi_tot = %12.5f' % Dsochi_tot_e
+    print('D_e/chi_tot = %12.5f' % Dsochi_tot_e)
     Dsochi_tot_z = D_over_chi_tot(Gamma_z,omn_z,dens_z,Q_e,omt_e,Q_i,omt_i,temp_i, dens_i)
-    print 'D_z/chi_tot = %12.5f' % Dsochi_tot_z
+    print('D_z/chi_tot = %12.5f' % Dsochi_tot_z)
 
-    print 'D_i/chi_e =', D_i / chi_e
-    print 'D_e/chi_e =', D_e / chi_e
-    print 'D_z/chi_e =', D_z / chi_e
-    print 'D_i/chi_i =', D_i / chi_i
-    print 'D_e/chi_i =', D_e / chi_i
-    print 'D_z/chi_i =', D_z / chi_i
+    print('D_i/chi_e =', D_i / chi_e)
+    print('D_e/chi_e =', D_e / chi_e)
+    print('D_z/chi_e =', D_z / chi_e)
+    print('D_i/chi_i =', D_i / chi_i)
+    print('D_e/chi_i =', D_e / chi_i)
+    print('D_z/chi_i =', D_z / chi_i)
 

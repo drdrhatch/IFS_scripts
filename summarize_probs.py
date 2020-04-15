@@ -15,7 +15,7 @@ files=os.listdir('.')
 #extract list of all prob directories
 probs=[item for item in files if item[0:4]=='prob']
 if len(probs)==0:
-    print 'No "prob" subdirectories found, please run this script from a GENE directory.'
+    print('No "prob" subdirectories found, please run this script from a GENE directory.')
     exit()
 #extract data from each probXX/parameters
 for prob in probs:
@@ -36,12 +36,12 @@ for prob in probs:
             pass
 
     #extract a general summary of the simulation
-    print 'Directory %s:' %(prob)
+    print('Directory %s:' %(prob))
     if istrue(p['nonlinear']):
         nl='nonlinear'
     else:
         nl='linear'
-    if 'x_local' in p.keys():
+    if 'x_local' in list(p.keys()):
         if istrue(p['x_local']):
             loc='Local'
         else:
@@ -51,7 +51,7 @@ for prob in probs:
     geom=sqt(p['magn_geometry'])
     res='%s x %s x %s x %s x %s' %(p['nx0'],p['nky0'],p['nz0'],p['nv0'],p['nw0'])
     sp=p['n_spec']
-    if 'collision_op' in p.keys():
+    if 'collision_op' in list(p.keys()):
         if sqt(p['collision_op'])=='none':
             coll='Collisionless'
         else:
@@ -62,8 +62,8 @@ for prob in probs:
     #formatted date/time of last parameters modification
     timestamp=strftime("%a, %d %b %Y %H:%M",localtime(os.path.getmtime(parfile)))
     #print everything
-    print '   %s %s, %s species, %s grid points' %(loc,nl,sp,res)
-    print '   %s run, %s geometry' %(coll,geom)
-    print '   Output dir: %s' %(outdir)
-    print '   Last edit: %s' %(timestamp)
-    print ''
+    print('   %s %s, %s species, %s grid points' %(loc,nl,sp,res))
+    print('   %s run, %s geometry' %(coll,geom))
+    print('   Output dir: %s' %(outdir))
+    print('   Last edit: %s' %(timestamp))
+    print('')

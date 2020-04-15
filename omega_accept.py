@@ -16,16 +16,16 @@ omega_gene_file = 'omega_'+suffix
 if os.path.isfile(omega_gene_file):
     omega_gene = np.genfromtxt(omega_gene_file)
     print( "GENE calculation:")
-    print( '  ' + 'kymin' + '      ' + 'gamma' + '    ' + 'omega' )
+    print(( '  ' + 'kymin' + '      ' + 'gamma' + '    ' + 'omega' ))
     print( omega_gene)
 
 par = Parameters()
 par.Read_Pars('parameters_'+suffix)
 pars = par.pardict
 print( "New calculation:")
-print( '  ' + 'kymin' + '      ' + 'gamma' + '    ' + 'omega' + 'std_gamma' + 'std_omega')
-print( str(pars['kymin']) + '    ' + vals_f[1] + '    ' + vals_f[2] + '    ' + vals_f[3] + '    ' + vals_f[4])
-selection = int(float(input('How to proceed:\n1. Accept calculation \n2. Manually enter gamma and omega \n3. Don\'t output anything\n')))
+print(( '  ' + 'kymin' + '      ' + 'gamma' + '    ' + 'omega' + 'std_gamma' + 'std_omega'))
+print(( str(pars['kymin']) + '    ' + vals_f[1] + '    ' + vals_f[2] + '    ' + vals_f[3] + '    ' + vals_f[4]))
+selection = int(float(eval(input('How to proceed:\n1. Accept calculation \n2. Manually enter gamma and omega \n3. Don\'t output anything\n'))))
 if selection == 1:
     f=open('omega_'+suffix,'w')
     f.write(str(pars['kymin'])+'    '+vals_f[1]+'    '+vals_f[2]+'\n')

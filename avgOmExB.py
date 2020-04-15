@@ -142,9 +142,9 @@ if 1 == 1:
 #    if 'ExBrate' in pars and pars['ExBrate'] == -1111: 
     if 1 == 1:
         if idb_file == 'empty':
-            idb_file = raw_input("Enter ITERDB file name:\n")
+            idb_file = input("Enter ITERDB file name:\n")
         if prof_file == 'empty':
-            prof_file = raw_input("Enter gene output profiles file name:\n")
+            prof_file = input("Enter gene output profiles file name:\n")
 
         rhot_idb,profs_idb,units_idb = read_iterdb(idb_file)
         profs = np.genfromtxt(prof_file)
@@ -181,4 +181,4 @@ if 1 == 1:
                 weight = aparX
             norm = norm + weight
             totOmExB = totOmExB + omegator0[i] * time_ref * pars['n0_global'] * weight
-        print 'average Om_ExB = ', totOmExB / norm
+        print('average Om_ExB = ', totOmExB / norm)

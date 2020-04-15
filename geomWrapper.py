@@ -167,7 +167,7 @@ def reconstruct_zgrid(geom_coeff, pars, center_only, plot = True, edge_opt = -1)
             zgrid = zgrid_edge
     else:
         if 'edge_opt' in pars and pars['edge_opt'] != 0:
-            print 'Warning:edge_opt ~= 0 code for zgrid is not ready.'
+            print('Warning:edge_opt ~= 0 code for zgrid is not ready.')
         if center_only:
             zgrid = zgrid_even_center
         else:
@@ -206,7 +206,7 @@ def calc_kperp_omd(geom_type, geom_coeff,pars,center_only,plot, ky =-1):
     lx = float(pars['lx'])
     if ky == -1:
         ky = float(pars['kymin'])
-    print 'ky = ', ky
+    print('ky = ', ky)
     dkx = 2. * np.pi * float(pars['shat']) * float(ky)
 
     dpdx_tot = float(pars['beta']) * \
@@ -297,7 +297,7 @@ def calc_kx_extended(pars,plot, ky =-1):
     lx = float(pars['lx'])
     if ky == -1:
         ky = float(pars['kymin'])
-    print 'ky = ', ky
+    print('ky = ', ky)
     dkx = 2. * np.pi * float(pars['shat']) * float(ky)
 
     dpdx_tot = float(pars['beta']) * \
@@ -339,7 +339,7 @@ def bounce_averaged_omd(suffix,pars,geom_coeff,omega_d1,omega_d2,z_grid,ky=-1):
     nx = pars['nx0']
     if ky == -1:
         ky = pars['kymin']
-    print 'ky = ', ky
+    print('ky = ', ky)
     nx = 1
 
     gBfield = geom_coeff['gBfield']
@@ -448,8 +448,8 @@ def bounce_averaged_omd(suffix,pars,geom_coeff,omega_d1,omega_d2,z_grid,ky=-1):
     #plt.legend()
     plt.show()
 
-    print 'bounce averaged omd = ', np.mean(bnc_avg_omd3)*me
-    print 'normalized <omd> = ', np.mean(bnc_avg_omd3)/bnc_avg_omd1[-1]*me
+    print('bounce averaged omd = ', np.mean(bnc_avg_omd3)*me)
+    print('normalized <omd> = ', np.mean(bnc_avg_omd3)/bnc_avg_omd1[-1]*me)
 
 def calc_shatloc(geom_coeff, z_grid, plot = False):
 
@@ -519,7 +519,7 @@ def ktheta_factor(geom_pars, geom_coeff, plot = False):
         plt.legend()
         plt.show()
 
-    print 'ktheta factor at z = 0', ktheta[geom_pars['gridpoints']/2]
+    print('ktheta factor at z = 0', ktheta[geom_pars['gridpoints']/2])
 
 def k2_factor(geom_type, geom_coeff, plot = False):
 
@@ -536,7 +536,7 @@ def k2_factor(geom_type, geom_coeff, plot = False):
         plt.legend()
         plt.show()
 
-    print('k2 factor min =', np.min(k2))
+    print(('k2 factor min =', np.min(k2)))
 
     return np.min(k2)
 
@@ -555,7 +555,7 @@ def k2_factor_global(geom_type, geom_coeff, xInd, plot = False):
         plt.legend()
         plt.show()
 
-    print 'k2 factor min =', np.min(k2)
+    print('k2 factor min =', np.min(k2))
 
     return np.min(k2)
 def ky(pars, geom_coeff, plot):

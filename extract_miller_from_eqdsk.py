@@ -38,12 +38,12 @@ def find(val, arr):
 
 
 eqdsk = file.readlines()
-print('Header: {0:s}'.format(eqdsk[0]))
+print(('Header: {0:s}'.format(eqdsk[0])))
 # set resolutions
 nw = np.int(eqdsk[0].split()[-2])
 nh = np.int(eqdsk[0].split()[-1])
 pw = np.int((nw/8/2)*2)  # psi-width, number of flux surfaces around position of interest
-print('Resolution: {0:4d} x {1:4d}'.format(nw, nh))
+print(('Resolution: {0:4d} x {1:4d}'.format(nw, nh)))
 
 entrylength = 16
 try:
@@ -77,9 +77,9 @@ pprime = np.empty(nw, dtype=np.float)
 qpsi = np.empty(nw, dtype=np.float)
 psirz_1d = np.empty(nw*nh, dtype=np.float)
 start_line = 5
-lines = range(nw//5)
+lines = list(range(nw//5))
 if nw%5 != 0:
-    lines = range(nw//5 + 1)
+    lines = list(range(nw//5 + 1))
 for i in lines:
     n_entries = len(eqdsk[i + start_line])//entrylength
     F[i*5:i*5 + n_entries] = [np.float(eqdsk[i + start_line][j*entrylength:(j + 1)*entrylength]) for
@@ -106,9 +106,9 @@ for i in lines:
         range(n_entries)]
 start_line = i + start_line + 1
 
-lines_twod = range(nw*nh//5)
+lines_twod = list(range(nw*nh//5))
 if nw*nh%5 != 0:
-    lines_twod = range(nw*nh//5 + 1)
+    lines_twod = list(range(nw*nh//5 + 1))
 for i in lines_twod:
     n_entries = len(eqdsk[i + start_line])//entrylength
     psirz_1d[i*5:i*5 + n_entries] = [
@@ -244,9 +244,9 @@ for i in range(1, nw):
     R_array = R[i, ntheta//4:3*ntheta//4]
     Z_array = Z[i, ntheta//4:3*ntheta//4]
     # low field side
-    Z_int = interp1d(Z_array, range(ntheta//2), kind=interpol_order)
+    Z_int = interp1d(Z_array, list(range(ntheta//2)), kind=interpol_order)
     ind_Zavg = Z_int(Z_avg[i])
-    R_int = interp1d(range(ntheta//2), R_array, kind=interpol_order)
+    R_int = interp1d(list(range(ntheta//2)), R_array, kind=interpol_order)
     R_out = R_int(ind_Zavg)
     R_max = np.amax(R_array)
     # high field side
@@ -254,11 +254,11 @@ for i in range(1, nw):
     Z_array = np.roll(Z[i, :-1], ntheta//2)[ntheta//4:3*ntheta//4]
 
     # have to use negative Z_array here to have increasing order
-    Z_int = interp1d(-Z_array, range(ntheta//2), kind=interpol_order)
+    Z_int = interp1d(-Z_array, list(range(ntheta//2)), kind=interpol_order)
     # again negative
     ind_Zavg = Z_int(-Z_avg[i])
 
-    R_int = interp1d(range(ntheta//2), R_array, kind=interpol_order)
+    R_int = interp1d(list(range(ntheta//2)), R_array, kind=interpol_order)
     R_in = R_int(ind_Zavg)
     R_min = np.amin(R_array)
     R0[i] = 0.5*(R_out + R_in)
@@ -270,13 +270,13 @@ if use_r_a:
     r_a = radpos
     # find psi index of interest (for the specified r/a position)
     poi_ind = find(radpos, r_avg/r_avg[-1])
-    print('\nExamine {0:3d} flux surfaces around position rho_tor={1:7.4g}...'.format(pw, radpos))
+    print(('\nExamine {0:3d} flux surfaces around position rho_tor={1:7.4g}...'.format(pw, radpos)))
 else:
     # find psi index of interest (for the specified rho_tor position)
     poi_ind = find(radpos, rho_tor)
     ravg_rho_spl = UnivariateSpline(rho_tor, r_avg/r_avg[-1], k=interpol_order, s=1e-5)
     r_a = np.float(ravg_rho_spl(radpos))
-    print('\nExamine {0:3d} flux surfaces around position r/a={1:7.4g}...'.format(pw, r_a))
+    print(('\nExamine {0:3d} flux surfaces around position r/a={1:7.4g}...'.format(pw, r_a)))
 
 # modified theta grid for each flux surface
 # arrays equidistant on modified theta grid are marked by 'tm' index!!!
@@ -296,10 +296,10 @@ Z0_pos = np.float(Z0_spl(r))
 F_pos = np.float(F_spl(r))
 Bref_miller = F_pos/R0_pos
 
-print('Coordinates: r={0:8.5g}, psi={1:8.5g}, psi_N={2:8.5g}, r/R0={3:8.5g}, rho_tor={4:8.5g}, '
+print(('Coordinates: r={0:8.5g}, psi={1:8.5g}, psi_N={2:8.5g}, r/R0={3:8.5g}, rho_tor={4:8.5g}, '
       'r_maxmin={5:8.5g}'.format(r, psi, psi_N, r/R0_pos, np.float(rho_tor_spl(psi)),
-                                 np.float(rmaxmin_spl(psi))))
-psi_stencil = range(poi_ind - pw//2, poi_ind + pw//2)
+                                 np.float(rmaxmin_spl(psi)))))
+psi_stencil = list(range(poi_ind - pw//2, poi_ind + pw//2))
 if psi_stencil[0] < 1:
     psi_stencil = [psi_stencil[i] + 1 - psi_stencil[0] for i in range(len(psi_stencil))]
 if psi_stencil[-1] > nw - 1:
@@ -383,10 +383,10 @@ for i in psi_stencil:
     for o in range(2):
         if o:
             ind = np.argmax(Z_sym[imod])
-            section = range(ind + stencil_width//2, ind - stencil_width//2, -1)
+            section = list(range(ind + stencil_width//2, ind - stencil_width//2, -1))
         else:
             ind = np.argmin(Z_sym[imod])
-            section = range(ind - stencil_width//2, ind + stencil_width//2)
+            section = list(range(ind - stencil_width//2, ind + stencil_width//2))
         x = R_sym[imod, section]
         y = Z_sym[imod, section]
         y_int = interp1d(x, y, kind=interpol_order)
@@ -439,7 +439,7 @@ for i in psi_stencil:
             searcharr2 = searcharr[0:ntheta//2]
             ind = find(searchval, searcharr2)
         #        print o,ind
-        section = range(ind - stencil_width//2, ind + stencil_width//2)
+        section = list(range(ind - stencil_width//2, ind + stencil_width//2))
         theta_sec = theta_arr[section]
         if o in [0, 1]:
             theta_int = interp1d(-searcharr[section], theta_sec, kind=interpol_order)
@@ -552,55 +552,55 @@ ax6.axvline(r, 0, 1, ls='--', color='k', lw=2)
 # select a given flux surface
 ind = poi_ind - psi_stencil[0]  # find(r_a,r_avg/r_avg[-1])
 Lref = R0_pos
-print('\n\nShaping parameters for flux surface r={0:9.5g}, r/a={1:9.5g}:'.format(r, r_a))
+print(('\n\nShaping parameters for flux surface r={0:9.5g}, r/a={1:9.5g}:'.format(r, r_a)))
 # print 'r_FS= %9.5g (flux-surface averaged radius)\n' %rFS_spl(r)
 print('Copy the following block into a GENE parameters file:\n')
-print('trpeps  = {0:9.5g}'.format(r/R0_pos))
-print('q0      = {0:9.5g}'.format(np.float(q_spl(r))))
-print('shat    = {0:9.5g} !(defined as r/q*dq_dr)'.format(
-        r/np.float(q_spl(r))*q_spl.derivatives(r)[1]))
+print(('trpeps  = {0:9.5g}'.format(r/R0_pos)))
+print(('q0      = {0:9.5g}'.format(np.float(q_spl(r)))))
+print(('shat    = {0:9.5g} !(defined as r/q*dq_dr)'.format(
+        r/np.float(q_spl(r))*q_spl.derivatives(r)[1])))
 # print 'shat=%9.5g (defined as (psi-psiax)/q*dq_dpsi)' %((psi-linpsi[0])/q_spl(
 # r)*q_spl_psi.derivatives(psi)[1])
-print('amhd    = {0:9.5g}'.format(np.float(amhd_spl(r))))
+print(('amhd    = {0:9.5g}'.format(np.float(amhd_spl(r)))))
 # print 'amhd_Miller=%9.5g' %amhd_Miller[ind]
 # print test[ind]
-print('drR     = {0:9.5g}'.format(np.float(drR_spl(r))))
-print('drZ     = {0:9.5g}'.format(np.float(drZ_spl(r))))
-print('kappa   = {0:9.5g}'.format(np.float(kappa_spl(r))))
-print('s_kappa = {0:9.5g}'.format(kappa_spl.derivatives(r)[1]*r/np.float(kappa_spl(r))))
-print('delta   = {0:9.5g}'.format(np.float(delta_spl(r))))
-print('s_delta = {0:9.5g}'.format(
-        delta_spl.derivatives(r)[1]*r/np.sqrt(1 - np.float(delta_spl(r)) ** 2)))
-print('zeta    = {0:9.5g}'.format(np.float(zeta_spl(r))))
-print('s_zeta  = {0:9.5g}'.format(zeta_spl.derivatives(r)[1]*r))
-print('minor_r = {0:9.5g}'.format(1.0))
-print('major_R = {0:9.5g}'.format(R0_pos/r*r_a))
+print(('drR     = {0:9.5g}'.format(np.float(drR_spl(r)))))
+print(('drZ     = {0:9.5g}'.format(np.float(drZ_spl(r)))))
+print(('kappa   = {0:9.5g}'.format(np.float(kappa_spl(r)))))
+print(('s_kappa = {0:9.5g}'.format(kappa_spl.derivatives(r)[1]*r/np.float(kappa_spl(r)))))
+print(('delta   = {0:9.5g}'.format(np.float(delta_spl(r)))))
+print(('s_delta = {0:9.5g}'.format(
+        delta_spl.derivatives(r)[1]*r/np.sqrt(1 - np.float(delta_spl(r)) ** 2))))
+print(('zeta    = {0:9.5g}'.format(np.float(zeta_spl(r)))))
+print(('s_zeta  = {0:9.5g}'.format(zeta_spl.derivatives(r)[1]*r)))
+print(('minor_r = {0:9.5g}'.format(1.0)))
+print(('major_R = {0:9.5g}'.format(R0_pos/r*r_a)))
 print('\nFor normalization to major radius, set instead:')
-print('minor_r = {0:9.5g}'.format(r/R0_pos/r_a))
-print('major_R = {0:9.5g}'.format(1.0))
+print(('minor_r = {0:9.5g}'.format(r/R0_pos/r_a)))
+print(('major_R = {0:9.5g}'.format(1.0)))
 print('The same conversion factor must be considered for input frequencies and gradients.')
 print('\nAdditional information:')
-print('Lref        = {0:9.5g} !for Lref=a convention'.format(r_avg[-1]))
-print('Lref        = {0:9.5g} !for Lref=R0 convention'.format(R0_pos))
-print('Bref        = {0:9.5g}'.format(Bref_miller))
+print(('Lref        = {0:9.5g} !for Lref=a convention'.format(r_avg[-1])))
+print(('Lref        = {0:9.5g} !for Lref=R0 convention'.format(R0_pos)))
+print(('Bref        = {0:9.5g}'.format(Bref_miller)))
 # minor radius at average flux surface elevation (GYRO definition)
-print('\na (avg elev)= {0:9.5g}'.format(r_avg[-1]))
-print('R0          = {0:9.5g}'.format(R0_pos))
-print('Z0          = {0:9.5g}'.format(np.float(Zavg_spl(r))))
-print('Lref_efit   = {0:9.5g}'.format(Lref_efit))
-print('Bref_efit   = {0:9.5g}'.format(Bref_efit))
-print('B_unit(GYRO)= {0:9.5g}'.format(q_spl(r)/r/ravg_spl.derivatives(psi)[1]))
+print(('\na (avg elev)= {0:9.5g}'.format(r_avg[-1])))
+print(('R0          = {0:9.5g}'.format(R0_pos)))
+print(('Z0          = {0:9.5g}'.format(np.float(Zavg_spl(r)))))
+print(('Lref_efit   = {0:9.5g}'.format(Lref_efit)))
+print(('Bref_efit   = {0:9.5g}'.format(Bref_efit)))
+print(('B_unit(GYRO)= {0:9.5g}'.format(q_spl(r)/r/ravg_spl.derivatives(psi)[1])))
 # print 'Vprime=%9.5g; dV_dr=%9.5g' %(Vprime[ind],dV_dr[ind])
 # print 'V=%9.5g' %V[ind]
 # minor radius defined by 0.5(R_max-R_min), where R_max and R_min can have any elevation
 # print 'a_maxmin    = %9.5g' %r_maxmin[-1]
-print('dpsi/dr     = {0:9.5g}'.format(1./ravg_spl.derivatives(psi)[1]))
+print(('dpsi/dr     = {0:9.5g}'.format(1./ravg_spl.derivatives(psi)[1])))
 # print 'dr_maxmin/dr     = %9.5g' %(rmaxmin_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1])
-print('drho_tor/dr = {0:9.5g}'.format(rho_tor_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1]))
-print('Gradient conversion omt(rho_tor) -> a/LT; factor = {0:9.5g}'.format(
-        r_avg[-1]*(rho_tor_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1])))
-print('Gradient conversion omt(rho_tor) -> R/LT; factor = {0:9.5g}'.format(
-        R0_pos*(rho_tor_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1])))
+print(('drho_tor/dr = {0:9.5g}'.format(rho_tor_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1])))
+print(('Gradient conversion omt(rho_tor) -> a/LT; factor = {0:9.5g}'.format(
+        r_avg[-1]*(rho_tor_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1]))))
+print(('Gradient conversion omt(rho_tor) -> R/LT; factor = {0:9.5g}'.format(
+        R0_pos*(rho_tor_spl.derivatives(psi)[1]/ravg_spl.derivatives(psi)[1]))))
 
 fig7 = plt.figure()
 ax7 = fig7.add_subplot(1, 1, 1)

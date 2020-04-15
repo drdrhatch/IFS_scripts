@@ -191,7 +191,7 @@ def findall(inlist,item):
 def getrecord(rec,datain):
     if type(datain) == dict:
        dataout = {}
-       keys = datain.keys()
+       keys = list(datain.keys())
        if type(datain[keys[0]]) in [int,float,complex]:
           dataout = datain.copy()
        else:
@@ -521,7 +521,7 @@ def read_chease(cheasefpath,setParam={},Normalized=False,**kwargs):
     expeqflag    = False
     interpflag   = False
     importedflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['eqdsk','eqdskdata','eqdskfpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    eqdskdata = read_eqdsk(eqdskfpath=value.strip())
@@ -637,7 +637,7 @@ def read_eqdsk(eqdskfpath,setParam={},Normalized=False,**kwargs):
     interpflag   = False
     cheaseflag   = False
     importedflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['chease','cheasedata','cheasefpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    cheasedata = read_chease(cheasefpath=value.strip())
@@ -711,7 +711,7 @@ def read_expeq(expeqfpath,setParam={},**kwargs):
     cheaseflag   = False
     interpflag   = False
     importedflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['chease','cheasedata','cheasefpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    cheasedata = read_chease(cheasefpath=value.strip())
@@ -858,7 +858,7 @@ def write_expeq(setParam={},outfile=True,**kwargs):
     exptnzflag   = False
     importedflag = False
     profilesflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if key in ['chease','cheasedata','cheasefpath']:
            if os.path.isfile(value.strip()):
               cheasepath = value.strip()
@@ -901,7 +901,7 @@ def write_expeq(setParam={},outfile=True,**kwargs):
        raise IOError('FATAL: NO VALID INPUT PROFILES AVAILABLE. EXIT!')
 
 
-    if 'nrhomesh' in setParam.keys():
+    if 'nrhomesh' in list(setParam.keys()):
        if   type(setParam['nrhomesh'])==list:
             if   type(setParam['nrhomesh'][0])==float: setParam['nrhomesh'][0] = int(setParam['nrhomesh'][0])
             elif type(setParam['nrhomesh'][0])==str:   setParam['nrhomesh'][0] = setParam['nrhomesh'][0].lower()
@@ -921,7 +921,7 @@ def write_expeq(setParam={},outfile=True,**kwargs):
             elif importedflag: nrhotype=[0,7]
 
 
-    if 'nppfun' in setParam.keys():
+    if 'nppfun' in list(setParam.keys()):
        if   type(setParam['nppfun'])==list:
             if   type(setParam['nppfun'][0])==float: setParam['nppfun'][0] = int(setParam['nppfun'][0])
             elif type(setParam['nppfun'][0])==str:   setParam['nppfun'][0] = setParam['nppfun'][0].lower()
@@ -947,7 +947,7 @@ def write_expeq(setParam={},outfile=True,**kwargs):
             elif iterdbflag:   nppfun=[4,5]
             elif importedflag: nppfun=[4,7]
 
-    if 'nsttp' in setParam.keys():
+    if 'nsttp' in list(setParam.keys()):
        if   type(setParam['nsttp'])==list:
             if   type(setParam['nsttp'][0])==float: setParam['nsttp'][0] = int(setParam['nsttp'][0])
             elif type(setParam['nsttp'][0])==str:   setParam['nsttp'][0] = setParam['nsttp'][0].lower()
@@ -967,7 +967,7 @@ def write_expeq(setParam={},outfile=True,**kwargs):
             elif expeqflag:    nsttp=[1,2]
             elif importedflag: nsttp=[1,7]
 
-    if 'boundary' in setParam.keys():
+    if 'boundary' in list(setParam.keys()):
          if   type(setParam['boundary'])==float:
               boundary = int(setParam['boundary'])
          elif type(setParam['boundary'])==str:
@@ -975,7 +975,7 @@ def write_expeq(setParam={},outfile=True,**kwargs):
     else:
               boundary = 0
 
-    if   'cheasemode' in setParam.keys():
+    if   'cheasemode' in list(setParam.keys()):
          cheasemode = int(setParam['cheasemode'])
     else:
          cheasemode = 1
@@ -1044,11 +1044,11 @@ def write_expeq(setParam={},outfile=True,**kwargs):
          expeq['aspect'] /= (max(rbound)+min(rbound))
          expeq['zgeom']   = eqdskdata['ZMAX']/expeq['R0EXP']
     elif 'expeqdata' in locals():
-         if   'R0EXP' in setParam.keys():
+         if   'R0EXP' in list(setParam.keys()):
               expeq['R0EXP'] = setParam['R0EXP']
          else:
               expeq['R0EXP'] = 1.0
-         if   'B0EXP' in setParam.keys():
+         if   'B0EXP' in list(setParam.keys()):
               expeq['B0EXP'] = setParam['B0EXP']
          else:
               expeq['B0EXP'] = 1.0
@@ -1493,7 +1493,7 @@ def read_imported(importeddata,setParam={},**kwargs):
     eqdskflag    = False
     cheaseflag   = False
     interpflag   = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['chease','cheasedata','cheasefpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    cheasedata = read_chease(cheasefpath=value.strip())
@@ -1696,7 +1696,7 @@ def read_exptnz(exptnzfpath,setParam={},**kwargs):
     cheaseflag   = False
     interpflag   = False
     importedflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['chease','cheasedata','cheasefpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    cheasedata = read_chease(cheasefpath=value.strip())
@@ -1815,7 +1815,7 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
     exptnzflag   = False
     importedflag = False
     profilesflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if key in ['chease','cheasedata','cheasefpath']:
            if os.path.isfile(value.strip()):
               cheasepath = value.strip()
@@ -1853,7 +1853,7 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
     if not (cheaseflag or exptnzflag or profilesflag or iterdbflag or importedflag):
        raise IOError('FATAL: NO VALID INPUT PROFILES AVAILABLE. EXIT!')
 
-    if 'nrhomesh' in setParam.keys():
+    if 'nrhomesh' in list(setParam.keys()):
        if   type(setParam['nrhomesh'])==list: 
             if   type(setParam['nrhomesh'][0])==float: setParam['nrhomesh'][0] = int(setParam['nrhomesh'][0])
             elif type(setParam['nrhomesh'][0])==str:   setParam['nrhomesh'][0] = setParam['nrhomesh'][0].lower()
@@ -1870,7 +1870,7 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
             elif eqdskflag:    nrhotype=[0,1]
             elif importedflag: nrhotype=[0,7]
 
-    if 'eprofile' in setParam.keys(): 
+    if 'eprofile' in list(setParam.keys()): 
             if   type(setParam['eprofile'])==float: setParam['eprofile'] = int(setParam['eprofile'])
             elif type(setParam['eprofile'])==str:   setParam['eprofile'] = setParam['eprofile'].lower()
             eprofile= setParam['eprofile']
@@ -1881,7 +1881,7 @@ def write_exptnz(setParam={},outfile=True,**kwargs):
             elif iterdbflag:   eprofile=5
             elif importedflag: eprofile=7
 
-    if 'iprofile' in setParam.keys():
+    if 'iprofile' in list(setParam.keys()):
             if   type(setParam['iprofile'])==float: setParam['iprofile'] = int(setParam['iprofile'])
             elif type(setParam['iprofile'])==str:   setParam['iprofile'] = setParam['iprofile'].lower()
             iprofile= setParam['iprofile']
@@ -2152,7 +2152,7 @@ def read_profiles(profilesfpath,setParam={},Zeffprofile=True,**kwargs):
     interpflag   = False
     cheaseflag   = False
     importedflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['chease','cheasedata','cheasefpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    cheasedata = read_chease(cheasefpath=value.strip())
@@ -2265,7 +2265,7 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
     if   'nrhomesh' in setParam:
          if   setParam['nrhomesh'] in [0,'rhopsi']: rhopsiflag = True
          elif setParam['nrhomesh'] in [1,'rhotor']: rhotorflag = True
-    elif kwargs.items():
+    elif list(kwargs.items()):
          rhopsiflag = True
     else:
          rhotorflag = True
@@ -2298,7 +2298,7 @@ def read_iterdb(iterdbfpath,setParam={},**kwargs):
     cheaseflag   = False
     interpflag   = False
     importedflag = False
-    for key,value in kwargs.items():
+    for key,value in list(kwargs.items()):
         if   key in ['chease','cheasedata','cheasefpath']:
              if    type(value)==str and os.path.isfile(value.strip()):
                    cheasedata = read_chease(cheasefpath=value.strip())
@@ -2426,7 +2426,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
 
        icounter = 1
        for h5fid in h5list[0::skipfigs+1]:
-           print('Plotting CHEASE data in: %s ...' % h5fid)
+           print(('Plotting CHEASE data in: %s ...' % h5fid))
            if   h5fid[13:17] == 'iter':
                 caselabel  = h5fid[13:21]
            elif h5fid[8:14] in ['KEFITD','MEFITD']:
@@ -2435,7 +2435,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
                 caselabel  = h5fid
 
            CHEASEdata = read_chease(cheasefpath=h5fid)
-           CHEASEdataKeys = CHEASEdata.keys()
+           CHEASEdataKeys = list(CHEASEdata.keys())
 
            EXPTNZdata   = read_exptnz(exptnzlist[h5list.index(h5fid)],eqdsk=eqdsklist[0])
            EXPEQdata    = read_expeq(expeqlist[h5list.index(h5fid)])
@@ -2610,7 +2610,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
 
     elif report:
        for h5fid in h5list[0::skipfigs+1]:
-           print('Plotting CHEASE data in: %s ...' % h5fid)
+           print(('Plotting CHEASE data in: %s ...' % h5fid))
 
            if reportpath[-1] != "/": reportpath += "/"
            if 'report' not in reportpath:
@@ -2619,7 +2619,7 @@ def plot_chease(OSPATH,reportpath='',skipfigs=1):
               os.system('mkdir %s' % reportpath)
 
            CHEASEdata = read_chease(cheasefpath=h5fid)
-           CHEASEdataKeys = CHEASEdata.keys()
+           CHEASEdataKeys = list(CHEASEdata.keys())
 
            ETMPfig = plt.figure("Electron Temperature")
            plt.plot(CHEASEdata['PSIN'],CHEASEdata['Te'],label='Te')
@@ -2691,17 +2691,17 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
     CEND = '\x1b[0m'
 
     while True:
-          print(CGRN+'Select on of the following options:'+CEND)
-          print(CGRN+'(1) Run the Code and Plot the Outputs.'+CEND)
-          print(CGRN+'(2) Plot the Available Outputs.'+CEND)
-          print(CGRN+'(3) Remove Input/Output Files.'+CEND)
-          print(CGRN+'(4) Exit.'+CEND)
+          print((CGRN+'Select on of the following options:'+CEND))
+          print((CGRN+'(1) Run the Code and Plot the Outputs.'+CEND))
+          print((CGRN+'(2) Plot the Available Outputs.'+CEND))
+          print((CGRN+'(3) Remove Input/Output Files.'+CEND))
+          print((CGRN+'(4) Exit.'+CEND))
           try:
               if 'runmode' in cheaseVals:
                  selection = int(cheaseVals['runmode'])
-                 print('Selected Option: %d' %selection)
+                 print(('Selected Option: %d' %selection))
               else:
-                 selection = int(input('Selected Option: '))
+                 selection = int(eval(input('Selected Option: ')))
               if    selection in [1,2,3,4]:
                     if    selection == 3:
                        if glob('./NGA'):                   os.system('rm NGA')
@@ -2728,7 +2728,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
                     else: break
               else: raise(NameError)
           except NameError:
-             print(CRED+'Select between 1,2,3, and 4 options.'+CEND)
+             print((CRED+'Select between 1,2,3, and 4 options.'+CEND))
              continue
 
     '''
@@ -2767,7 +2767,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
     n = 7 or 'imported'
     '''
 
-    srcValsKeys     = srcVals.keys()
+    srcValsKeys     = list(srcVals.keys())
     if   'iterTotal'   in srcVals: iterTotal     = srcVals['iterTotal']
     else:                          iterTotal     = 0  
 
@@ -2894,9 +2894,9 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
        elif EXPEQexist or EXPTNZexist or EQDSKexist or ITERDBexist or PROFILESexist:
             os.system('ls')
             if   PYTHON3:
-               removeinputs = str(input(CRED+'Remove input files from a previous run (yes/no)? '+CEND)).lower()
+               removeinputs = str(eval(input(CRED+'Remove input files from a previous run (yes/no)? '+CEND))).lower()
             elif PYTHON2:
-               removeinputs = raw_input(CRED+'Remove input files from a previous run (yes/no)? '+CEND).lower()
+               removeinputs = input(CRED+'Remove input files from a previous run (yes/no)? '+CEND).lower()
        else:
             removeinputs = True
  
@@ -2917,33 +2917,33 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
           if os.path.isfile('./chease_parameters.csv'): os.system('rm chease_parameters.csv')
 
        while True:
-             print(CYLW+'Select CHEASE running mode:'+CEND)
-             print(CYLW+'(1) Check Equilibrium Preservation Over Multiple Iterations.'+CEND)
-             print(CYLW+'(2) Converge to Total Current by correcting Current.'+CEND)
-             print(CYLW+'(3) Converge to Total Current by correcting Pressure.'+CEND)
+             print((CYLW+'Select CHEASE running mode:'+CEND))
+             print((CYLW+'(1) Check Equilibrium Preservation Over Multiple Iterations.'+CEND))
+             print((CYLW+'(2) Converge to Total Current by correcting Current.'+CEND))
+             print((CYLW+'(3) Converge to Total Current by correcting Pressure.'+CEND))
              try:
                 if 'cheasemode' in cheaseVals:
                    cheasemode = cheaseVals['cheasemode']
-                   print('Selected Option: %d' %cheasemode)
+                   print(('Selected Option: %d' %cheasemode))
                 else:
-                   cheasemode = int(input('Selected Option: '))
+                   cheasemode = int(eval(input('Selected Option: ')))
                 if    cheasemode in [1,2,3]: break
                 else: raise(NameError)
              except NameError:
-                print(CRED+'Select between 1, 2, and 3 options.'+CEND)
+                print((CRED+'Select between 1, 2, and 3 options.'+CEND))
                 continue
     
        namelistParam = {}
        namelistUpdate = False
        if namelistVals:
-          namelistValsKeys = namelistVals.keys()
-          if type(namelistVals[namelistVals.keys()[0]]) in [float,int,complex]:
-             for ikey in namelistVals.keys():
+          namelistValsKeys = list(namelistVals.keys())
+          if type(namelistVals[list(namelistVals.keys())[0]]) in [float,int,complex]:
+             for ikey in list(namelistVals.keys()):
                  namelistParam[ikey] = namelistVals[ikey]
           else:
-             namelistrecs   = len(namelistVals[namelistVals.keys()[0]])
+             namelistrecs   = len(namelistVals[list(namelistVals.keys())[0]])
              if namelistrecs > 1: namelistUpdate = True
-             for ikey in namelistVals.keys():
+             for ikey in list(namelistVals.keys()):
                  namelistParam[ikey] = namelistVals[ikey][0]
 
        if   'removeoutputs' in cheaseVals:
@@ -2951,13 +2951,13 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
                removeoutputs = cheaseVals['removeoutputs'].lower()
             else:
                removeoutputs = cheaseVals['removeoutputs']
-            print(CBLU+'Remove output files of previous a run (yes/no)? '+str(removeoutputs)+CEND)
+            print((CBLU+'Remove output files of previous a run (yes/no)? '+str(removeoutputs)+CEND))
        else:
             os.system('ls')
             if   PYTHON3:
-                 removeoutputs = str(input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND)).lower()
+                 removeoutputs = str(eval(input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND))).lower()
             elif PYTHON2:
-                 removeoutputs = raw_input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND).lower()
+                 removeoutputs = input(CBLU+'Remove output files from previous a run (yes/no)? '+CEND).lower()
 
        if removeoutputs in ['yes','y',1,True]:
           if glob('./NGA'):              os.system('rm NGA')
@@ -2973,7 +2973,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
           if glob('./EXPEQ_iter*.IN'):   os.system('rm EXPEQ_iter*.IN')
           if glob('./EXPTNZ_iter*.IN'):  os.system('rm EXPTNZ_iter*.IN')
           if glob('./chease_namelist*'): os.system('rm chease_namelist*')
-          print(CRED+'List of Available CHEASE Files:'+CEND)
+          print((CRED+'List of Available CHEASE Files:'+CEND))
           os.system('ls')
     
        shotlist = sorted(glob('./shots/*'))
@@ -2988,20 +2988,20 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
               else:
                   shotfile = shotpath[0:]
           elif type(shotrec)==int:
-              print('Select Shot Number: %d' %shotrec)
+              print(('Select Shot Number: %d' %shotrec))
               shotpath = shotlist[shotrec-1]
               shotfile = shotlist[shotrec-1][8:]
           else:
               raise IOError(shotrec+' IS NOT A DIRECTORY OR SHOT NUMBER. Exit!')
        else:
           while True:
-             print(CYLW+'List of the available shots:'+CEND)
+             print((CYLW+'List of the available shots:'+CEND))
              for ishot in range(len(shotlist)):
-                 print(CYLW+'(%02d) %s' % (ishot+1,shotlist[ishot][8:])+CEND)
+                 print((CYLW+'(%02d) %s' % (ishot+1,shotlist[ishot][8:])+CEND))
              try:
-                shotrec = int(input('Select Shot Number: '))
+                shotrec = int(eval(input('Select Shot Number: ')))
                 if shotrec-1 in range(len(shotlist)):
-                   print(CGRN+'Chease runs the %s shot.' % shotlist[shotrec-1][8:]+CEND)
+                   print((CGRN+'Chease runs the %s shot.' % shotlist[shotrec-1][8:]+CEND))
                    shotpath = shotlist[shotrec-1]
                    if shotpath[-1]!='/': shotpath+='/'
                    shotfile = shotlist[shotrec-1][8:]
@@ -3009,7 +3009,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
                 else:
                    raise(NameError)
              except NameError:
-                print(CRED+'Choose ONLY from the %0d available shots.' % len(shotlist)+CEND)
+                print((CRED+'Choose ONLY from the %0d available shots.' % len(shotlist)+CEND))
                 continue
 
        if os.path.isfile('%s/%s_EXPEQ' % (shotpath,shotfile)):    EXPEQexist = True
@@ -3289,13 +3289,13 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
        os.system('ls')
        if cheaseVals!={}:
           runchease = 'yes'
-          print(CBLU+'Do you want to continue? (yes/no)? '+str(runchease)+CEND)
+          print((CBLU+'Do you want to continue? (yes/no)? '+str(runchease)+CEND))
        else:
           while True:
              if   PYTHON3:
-                  runchease = str(input(CBLU+'Do you want to continue? (yes/no)? '+CEND)).lower()
+                  runchease = str(eval(input(CBLU+'Do you want to continue? (yes/no)? '+CEND))).lower()
              elif PYTHON2:
-                  runchease = raw_input(CBLU+'Do you want to continue? (yes/no)? '+CEND).lower()
+                  runchease = input(CBLU+'Do you want to continue? (yes/no)? '+CEND).lower()
              if    runchease in ['yes','y','no','n',1,True,False]: break
              else: print('Enter a valid value (y,yes,no,n)');      continue
 
@@ -3641,10 +3641,10 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
        cheasedata = read_chease(cheasefpath=cheasefpath)
 
        ITErr = (cheasedata['Itor']-ITEXP)/ITEXP
-       print('Iter  = ', it)
-       print('ITOR  = ', cheasedata['Itor'])
-       print('ITEXP = ', ITEXP)
-       print('ITErr = ', abs(ITErr))
+       print(('Iter  = ', it))
+       print(('ITOR  = ', cheasedata['Itor']))
+       print(('ITEXP = ', ITEXP))
+       print(('ITErr = ', abs(ITErr)))
     
        while (abs(ITErr) > 1.0e-6):
            if (cheasemode == 1) and (it >= iterTotal): break
@@ -3981,7 +3981,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
 
            if namelistUpdate:
               irun = min(namelistrecs-1,it+1)
-              for ikey in namelistVals.keys():
+              for ikey in list(namelistVals.keys()):
                   namelistParam[ikey] = namelistVals[ikey][irun]
 
            namelist = namelistcreate(setParam=namelistParam)
@@ -4004,10 +4004,10 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
            cheasedata = read_chease(cheasefpath=cheasepath)
 
            ITErr = (cheasedata['Itor']-ITEXP)/ITEXP
-           print('Iter  = ', it+1)
-           print('ITOR = ', cheasedata['Itor'])
-           print('ITEXP = ', ITEXP)
-           print('ITErr = ', abs(ITErr))
+           print(('Iter  = ', it+1))
+           print(('ITOR = ', cheasedata['Itor']))
+           print(('ITEXP = ', ITEXP))
+           print(('ITErr = ', abs(ITErr)))
     
            it+=1
     
@@ -4019,7 +4019,7 @@ def cheasepy(srcVals={},namelistVals={},pltVals={},cheaseVals={},importedVals={}
        if glob('./EXPEQ.OUT.TOR'):  os.system('rm EXPEQ.OUT.TOR')
        if glob('./EXPEQ_EQDSK.IN'): os.system('rm EXPEQ_EQDSK.IN')
     
-       pltValsKeys = pltVals.keys()
+       pltValsKeys = list(pltVals.keys())
        if 'skipfigs' in pltValsKeys: skipfigs = pltVals['skipfigs']     
        else:                         skipfigs = 0  
        plot_chease('./',skipfigs=0)

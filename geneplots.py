@@ -43,7 +43,7 @@ def str2bool(vin):
 
 def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={}):
    #Developed by Ehab Hassan on 2019-07-22
-    inrgf=nrgdata.keys()[0]
+    inrgf=list(nrgdata.keys())[0]
     if    inrgf[-3:] == 'dat': inrgfpath = inrgf[:-7]
     else:                      inrgfpath = inrgf[:-8]
 
@@ -77,7 +77,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
          siunits = False
 
     time      = nrgdata[inrgf]['time']
-    specstype = nrgdata[inrgf].keys()
+    specstype = list(nrgdata[inrgf].keys())
     specstype.remove('time')
 
     for inrgf in nrgdata:
@@ -414,7 +414,7 @@ def plot_nrg(nrgdata,reportpath='',bgn_t=None,end_t=None,fraction=0.9,setParam={
 
 def plot_neoclass(neoclassdata,reportpath='',setParam={}):
    #Developed by Ehab Hassan on 2019-08-20
-    ineoclassf=neoclassdata.keys()[0]
+    ineoclassf=list(neoclassdata.keys())[0]
     if    ineoclassf[-3:] == 'dat': ineoclassfpath = ineoclassf[:-12]
     else:                           ineoclassfpath = ineoclassf[:-13]
     if 'report' not in reportpath:
@@ -437,7 +437,7 @@ def plot_neoclass(neoclassdata,reportpath='',setParam={}):
          display = False
 
     time      = neoclassdata[ineoclassf]['time']
-    specstype = neoclassdata[ineoclassf].keys()
+    specstype = list(neoclassdata[ineoclassf].keys())
     specstype.remove('time')
 
     for ineoclassf in neoclassdata:
@@ -539,7 +539,7 @@ def plot_scandata(scandata,params={},normalize=True):
     #Modified by Ehab Hassan on 2019-03-11
     slashinds=findall(scandata['scanpath'],"/")
     scan_title = scandata['scanpath'][slashinds[-2]+1:slashinds[-1]]
-    if not params.keys():
+    if not list(params.keys()):
        params = genetools.read_parameters(scandata['scanpath'])
     vlist = list(set(scandata.keys())-{'omega','gamma','scanpath'})
     if   len(vlist) == 1:
@@ -550,7 +550,7 @@ def plot_scandata(scandata,params={},normalize=True):
                    plabel = '$x_0$='+str(params['geometry']['flux_pos'])
               else:
                    plabel = '$x_0$=?'
-              if 'kx_center' in params['box'].keys():
+              if 'kx_center' in list(params['box'].keys()):
                  plabel += ", $k_{x_center}$="+str(params['box']['kx_center'])
          else:
               plabel = '$\\rho_{ref}k_y$ = '+str(rhoref*params['box']['kymin'])
@@ -700,7 +700,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print("WARNING: neg_loc < corr_time")
         corr_time = neg_loc
 
     if show_plot:
@@ -712,7 +712,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
 
 def plot_mom(mom,param={},reportpath=''):
    #Developed by Ehab Hassan on 2019-03-14
-    imomf=mom.keys()[0]
+    imomf=list(mom.keys())[0]
     if reportpath == '':
        if not os.path.isdir(imomf[:-10]+"report"):
           os.system('mkdir '+imomf[:-10]+"report")
@@ -723,7 +723,7 @@ def plot_mom(mom,param={},reportpath=''):
        reportpath += "/"
 
     for imomf in mom:
-        if not param.keys():
+        if not list(param.keys()):
            param = genetools.read_parameters(imomf[:-10]+"parameters_"+imomf[-4:])
 
         if 'x_local' in param['general']:
@@ -766,7 +766,7 @@ def plot_mom(mom,param={},reportpath=''):
 
 def plot_field(field,param={},reportpath='',setParam={}):
    #Developed by Ehab Hassan on 2019-03-14
-    ifieldf=field.keys()[0]
+    ifieldf=list(field.keys())[0]
     if    ifieldf[-3:] == 'dat': ifieldfpath = ifieldf[:-9]
     else:                        ifieldfpath = ifieldf[:-10]
     if ifieldfpath[-1] != '/':   ifieldfpath+= "/"
@@ -783,7 +783,7 @@ def plot_field(field,param={},reportpath='',setParam={}):
     else:                     display = False
 
     for ifieldf in field:
-        if not param.keys():
+        if not list(param.keys()):
            if 'dat' in ifieldf:
               paramfpath = ifieldf[:-9]+"parameters"+ifieldf[-4:]
            else:

@@ -51,7 +51,7 @@ time0 = np.fromfile(f,dtype='float64',count=1)
 zgrid = np.empty(pars['nz0'])
 xgrid = np.linspace(pars['x0'] - pars['lx_a']/2.0 , pars['x0'] + pars['lx_a']/2.0, pars['nx0'])
 zgrid = np.linspace(-np.pi,np.pi, pars['nz0'],endpoint = False)
-print 'xgrid',xgrid
+print('xgrid',xgrid)
 
 continue_read = True
 i=0
@@ -65,13 +65,13 @@ while continue_read:
       continue_read = False
 
 i -= 1
-print "i",i
-print "time",time
+print("i",i)
+print("time",time)
 
 f.seek(4+i*8+i*mem_tot+i*56+16)
 ein = np.fromfile(f,dtype='float64',count=ntot)
 ein = np.reshape(ein,(pars['nky0'],pars['nx0'],pars['nz0']),order='F')
-print "np.shape(ein)",np.shape(ein)
+print("np.shape(ein)",np.shape(ein))
 plt.contourf(xgrid,zgrid,np.transpose(ein[0,:,:]),50)
 plt.colorbar()
 plt.show()
@@ -80,7 +80,7 @@ plt.colorbar()
 plt.show()
 
 for i in range(5):
-   print pars['nx0']/(i+2)
+   print(pars['nx0']/(i+2))
    plt.plot(zgrid,ein[1,pars['nx0']/(i+2),:])
    #plt.plot(zgrid,ein[1,190,:])
 plt.show()

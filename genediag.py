@@ -66,7 +66,7 @@ if   findtau:
      psiloc = inputs[0]
      profilefpath = inputs[1]
      tau = genetools.calc_tau(psiloc,profilepath=profilefpath)
-     print('tau = Zeff*Te/Ti = %7.5f' % tau)
+     print(('tau = Zeff*Te/Ti = %7.5f' % tau))
 else:
      orderlist = [str('%04d') % (i+1) for i in range(9999)]
      orderlist.append('dat')
@@ -86,21 +86,21 @@ if siunits:
    elif os.path.isfile('parameters_0001'):
         paramfpath = 'parameters_0001'
    units = genetools.units_conversion(paramfpath=paramfpath)
-   print('nref = ',units['nref'])
-   print('Lref = ',units['Lref'])
-   print('Bref = ',units['Bref'])
-   print('Tref = ',units['Tref'])
-   print('mref = ',units['mref'])
-   print('qref = ',units['qref'])
-   print('vref = ',units['vref'])
-   print('cref = ',units['cref'])
-   print('gyrofreq = ',units['gyrofreq'])
-   print('gyroradius = ',units['gyroradius'])
-   print('rhostar = ', units['rhostar'])
-   print('Pref = ',units['pref'])
-   print('Ggb = ',units['Ggb'])
-   print('Qgb = ',units['Qgb'])
-   print('Pgb = ',units['Pgb'])
+   print(('nref = ',units['nref']))
+   print(('Lref = ',units['Lref']))
+   print(('Bref = ',units['Bref']))
+   print(('Tref = ',units['Tref']))
+   print(('mref = ',units['mref']))
+   print(('qref = ',units['qref']))
+   print(('vref = ',units['vref']))
+   print(('cref = ',units['cref']))
+   print(('gyrofreq = ',units['gyrofreq']))
+   print(('gyroradius = ',units['gyroradius']))
+   print(('rhostar = ', units['rhostar']))
+   print(('Pref = ',units['pref']))
+   print(('Ggb = ',units['Ggb']))
+   print(('Qgb = ',units['Qgb']))
+   print(('Pgb = ',units['Pgb']))
 
 if not modeorder: sys.exit()
 
@@ -125,9 +125,9 @@ for mode in modeorder:
        ky,freq = genetools.omega_to_hz(genefpath=genepath)
        if 'n0_global' in paramdata['box']:
           n0 = paramdata['box']['n0_global']
-          print('omega(x0=%5.3f,ky=%5.3f,n0=%d) = %7.5f Hz' % (x0,ky[0],n0,freq[0]))
+          print(('omega(x0=%5.3f,ky=%5.3f,n0=%d) = %7.5f Hz' % (x0,ky[0],n0,freq[0])))
        else:
-          print('omega(x0=%5.3f,ky=%5.3f,n0=%d) = %7.5f Hz' % (x0,ky[0],n0,freq[0]))
+          print(('omega(x0=%5.3f,ky=%5.3f,n0=%d) = %7.5f Hz' % (x0,ky[0],n0,freq[0])))
 
     if findomega:
        if   mode.isdigit():
@@ -136,7 +136,7 @@ for mode in modeorder:
             fieldfname = 'field.dat'
        fieldfpath = os.path.abspath(fieldfname)
        if not os.path.isfile(fieldfpath):
-          print('File: %s is not in the given path.' % fieldfname); sys.exit()
+          print(('File: %s is not in the given path.' % fieldfname)); sys.exit()
        t1       = 2.00
        t2       = 2.15
        tpercent = 0.9
@@ -158,36 +158,36 @@ for mode in modeorder:
        if conv_units:
           omegaref = conv_units['cref']/conv_units['Lref']
           print('From Electric Potential Field:')
-          print('ky    = %7.4f (Normalized), %7.4f (1/m)' % (ky,ky/conv_units['Lref']))
-          print('Omega = %7.4f (Normalized), %7.4f (Hz)'  % (omega_phi,omega_phi*omegaref/(2.0*npy.pi)))
-          print('Gamma = %7.4f (Normalized), %7.4f (Hz)'  % (gamma_phi,gamma_phi*omegaref/(2.0*npy.pi)))
+          print(('ky    = %7.4f (Normalized), %7.4f (1/m)' % (ky,ky/conv_units['Lref'])))
+          print(('Omega = %7.4f (Normalized), %7.4f (Hz)'  % (omega_phi,omega_phi*omegaref/(2.0*npy.pi))))
+          print(('Gamma = %7.4f (Normalized), %7.4f (Hz)'  % (gamma_phi,gamma_phi*omegaref/(2.0*npy.pi))))
           if aparFlag:
              print('From Magnetic Potential Field:')
-             print('ky    = %7.4f (Normalized), %7.4f (1/m)' % (ky,ky/conv_units['Lref']))
-             print('Omega = %7.4f (Normalized), %7.4f (Hz)'  % (omega_apr,omega_apr*omegaref/(2.0*npy.pi)))
-             print('Gamma = %7.4f (Normalized), %7.4f (Hz)'  % (gamma_apr,gamma_apr*omegaref/(2.0*npy.pi)))
+             print(('ky    = %7.4f (Normalized), %7.4f (1/m)' % (ky,ky/conv_units['Lref'])))
+             print(('Omega = %7.4f (Normalized), %7.4f (Hz)'  % (omega_apr,omega_apr*omegaref/(2.0*npy.pi))))
+             print(('Gamma = %7.4f (Normalized), %7.4f (Hz)'  % (gamma_apr,gamma_apr*omegaref/(2.0*npy.pi))))
        else:
           print('From Electric Potential Field:')
-          print('ky    = %7.4f (Normalized)'  % (ky))
-          print('Omega = %7.4f (Normalized)'  % (omega_phi))
-          print('Gamma = %7.4f (Normalized)'  % (gamma_phi))
+          print(('ky    = %7.4f (Normalized)'  % (ky)))
+          print(('Omega = %7.4f (Normalized)'  % (omega_phi)))
+          print(('Gamma = %7.4f (Normalized)'  % (gamma_phi)))
           if aparFlag:
              print('From Magnetic Potential Field:')
-             print('ky    = %7.4f (Normalized)'  % (ky))
-             print('Omega = %7.4f (Normalized)'  % (omega_apr))
-             print('Gamma = %7.4f (Normalized)'  % (gamma_apr))
+             print(('ky    = %7.4f (Normalized)'  % (ky)))
+             print(('Omega = %7.4f (Normalized)'  % (omega_apr)))
+             print(('Gamma = %7.4f (Normalized)'  % (gamma_apr)))
 
        while True:
              if   PYTHON3:
-                  saveomega = str(input('Do you want to update omega file? (Yes/No) ')).lower()
+                  saveomega = str(eval(input('Do you want to update omega file? (Yes/No) '))).lower()
              elif PYTHON2:
-                  saveomega = raw_input('Do you want to update omega file? (Yes/No) ').lower()
+                  saveomega = input('Do you want to update omega file? (Yes/No) ').lower()
              if saveomega in ['yes','y']:
                 if aparFlag:
                    if   sys.version_info[0] >=3:
-                        omegatype = input('Source?\n(1)Electric Potential,\n(2)Magnetic Potential.\nSelection:  ')
+                        omegatype = eval(input('Source?\n(1)Electric Potential,\n(2)Magnetic Potential.\nSelection:  '))
                    elif sys.version_info[0] < 3:
-                        omegatype = input('Source?\n(1)Electric Potential,\n(2)Magnetic Potential.\nSelection:  ')
+                        omegatype = eval(input('Source?\n(1)Electric Potential,\n(2)Magnetic Potential.\nSelection:  '))
                 else:
                    omegatype = 1
                 if saveomega in ['yes','y','no','n']: break
@@ -212,7 +212,7 @@ for mode in modeorder:
             fieldfname = 'field.dat'
        fieldfpath = os.path.abspath(fieldfname)
        if not os.path.isfile(fieldfpath):
-          print('File: %s is not in the given path.' % fieldfname); sys.exit()
+          print(('File: %s is not in the given path.' % fieldfname)); sys.exit()
        fielddata = genetools.read_field(fieldfpath=fieldfpath)
        plotParam = {}
        if display: plotParam['display'] = True
@@ -225,7 +225,7 @@ for mode in modeorder:
             nrgfname   = 'nrg.dat'
        nrgfpath   = os.path.abspath(nrgfname)
        if not os.path.isfile(nrgfpath):
-          print('File: %s is not in the given path.' % nrgfname); sys.exit()
+          print(('File: %s is not in the given path.' % nrgfname)); sys.exit()
        mergeplots = True
        plotParam = {}
        if display:    plotParam['display']    = True
@@ -245,7 +245,7 @@ for mode in modeorder:
             neoclassfname   = 'neoclass.dat'
        neoclassfpath   = os.path.abspath(neoclassfname)
        if not os.path.isfile(neoclassfpath):
-          print('File: %s is not in the given path.' % neoclassfname); sys.exit()
+          print(('File: %s is not in the given path.' % neoclassfname)); sys.exit()
        plotParam = {}
        if logscale: plotParam['logplots'] = True
        if display:  plotParam['display']  = True
@@ -277,7 +277,7 @@ for mode in modeorder:
                   geomfpath  = os.path.abspath(geomfname)
 
        if not os.path.isfile(geomfpath):
-          print('File: %s is not in the given path.' % geomfname); sys.exit()
+          print(('File: %s is not in the given path.' % geomfname)); sys.exit()
        plotParam = {}
        if display: plotParam['display'] = True
        geomplot   = geneplots.plot_geometry(geometryfpath=geomfpath,setParam=plotParam)
@@ -304,7 +304,7 @@ for mode in modeorder:
 
        geomfpath  = os.path.abspath(geomfname)
        area  = genetools.calculate_surface_area(geomfpath,paramfpath)
-       print('Magnetic Surface Area = %7.5f' % area)
+       print(('Magnetic Surface Area = %7.5f' % area))
 
     if fluxinfo:
        genepath = os.path.abspath('./')
@@ -317,20 +317,20 @@ for mode in modeorder:
        parampath = os.path.abspath(paramfname)
 
        fluxinfo = genetools.flux_info(genefpath=parampath)
-       kyflux = fluxinfo.keys()[0]
+       kyflux = list(fluxinfo.keys())[0]
        print('Mode Flux Info:')
-       print("ky = %5.3f" % (kyflux))
-       print("Xi/Xe = %5.3f" % (fluxinfo[kyflux]['i']['Chi']/fluxinfo[kyflux]['e']['Chi']))
-       print("De/Xe = %5.3f" % (fluxinfo[kyflux]['e']['Dee']/fluxinfo[kyflux]['e']['Chi']))
-       print("Dz/Xe = %5.3f" % (fluxinfo[kyflux]['z']['Dee']/fluxinfo[kyflux]['e']['Chi']))
-       print("De/(Xe+Xi) = %5.3f" % (fluxinfo[kyflux]['e']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
-       print("Dz/(Xe+Xi) = %5.3f" % (fluxinfo[kyflux]['z']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi'])))
-       print("Instability Type: %s" % (fluxinfo[kyflux]['Type']))
+       print(("ky = %5.3f" % (kyflux)))
+       print(("Xi/Xe = %5.3f" % (fluxinfo[kyflux]['i']['Chi']/fluxinfo[kyflux]['e']['Chi'])))
+       print(("De/Xe = %5.3f" % (fluxinfo[kyflux]['e']['Dee']/fluxinfo[kyflux]['e']['Chi'])))
+       print(("Dz/Xe = %5.3f" % (fluxinfo[kyflux]['z']['Dee']/fluxinfo[kyflux]['e']['Chi'])))
+       print(("De/(Xe+Xi) = %5.3f" % (fluxinfo[kyflux]['e']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi']))))
+       print(("Dz/(Xe+Xi) = %5.3f" % (fluxinfo[kyflux]['z']['Dee']/(fluxinfo[kyflux]['e']['Chi']+fluxinfo[kyflux]['i']['Chi']))))
+       print(("Instability Type: %s" % (fluxinfo[kyflux]['Type'])))
 
        if   PYTHON3:
-            saveinfo = str(input('Do you want to save info to file?(Yes/No) ')).lower()
+            saveinfo = str(eval(input('Do you want to save info to file?(Yes/No) '))).lower()
        elif PYTHON2:
-            saveinfo = raw_input('Do you want to save info to file?(Yes/No) ').lower()
+            saveinfo = input('Do you want to save info to file?(Yes/No) ').lower()
 
        if saveinfo in ['yes','y']:
           if not os.path.isdir(genepath+"report"):
@@ -365,24 +365,24 @@ for mode in modeorder:
        parampath = os.path.abspath(paramfname)
 
        modeinfo = genetools.mode_info(genefpath=parampath)
-       kymode = modeinfo.keys()[0]
+       kymode = list(modeinfo.keys())[0]
        print('Mode General Info:')
-       print("ky = %5.3f" % (kymode))
-       print("Qem/Qes = %5.3f" % (modeinfo[kymode]['Qem/Qes']))
-       print("Correlation Length = %5.3f" % (modeinfo[kymode]['corr_len']))
-       print("Parity Factor (A||) = %5.3f" % (modeinfo[kymode]['parity_factor_apar']))
-       print("Parity Factor (Phi) = %5.3f" % (modeinfo[kymode]['parity_factor_phi']))
-       print("E|| Cancelllation = %5.3f" % (modeinfo[kymode]['Epar_Cancellation']))
-       print("Zavg = %5.3f" % (modeinfo[kymode]['zavg']))
-       print("Gamma = %5.3f" % (modeinfo[kymode]['gamma']))
-       print("Omega = %5.3f" % (modeinfo[kymode]['omega']))
-       print("Sqrt(Gamma**2+Omega**2) = %5.3f" % (npy.sqrt(modeinfo[kymode]['gamma']**2+modeinfo[kymode]['omega']**2)))
-       print("Instability Type: %s" % (modeinfo[kymode]['Type']))
+       print(("ky = %5.3f" % (kymode)))
+       print(("Qem/Qes = %5.3f" % (modeinfo[kymode]['Qem/Qes'])))
+       print(("Correlation Length = %5.3f" % (modeinfo[kymode]['corr_len'])))
+       print(("Parity Factor (A||) = %5.3f" % (modeinfo[kymode]['parity_factor_apar'])))
+       print(("Parity Factor (Phi) = %5.3f" % (modeinfo[kymode]['parity_factor_phi'])))
+       print(("E|| Cancelllation = %5.3f" % (modeinfo[kymode]['Epar_Cancellation'])))
+       print(("Zavg = %5.3f" % (modeinfo[kymode]['zavg'])))
+       print(("Gamma = %5.3f" % (modeinfo[kymode]['gamma'])))
+       print(("Omega = %5.3f" % (modeinfo[kymode]['omega'])))
+       print(("Sqrt(Gamma**2+Omega**2) = %5.3f" % (npy.sqrt(modeinfo[kymode]['gamma']**2+modeinfo[kymode]['omega']**2))))
+       print(("Instability Type: %s" % (modeinfo[kymode]['Type'])))
 
        if   PYTHON3:
-            saveinfo = str(input('Do you want to save info to file?(Yes/No) ')).lower()
+            saveinfo = str(eval(input('Do you want to save info to file?(Yes/No) '))).lower()
        elif PYTHON2:
-            saveinfo = raw_input('Do you want to save info to file?(Yes/No) ').lower()
+            saveinfo = input('Do you want to save info to file?(Yes/No) ').lower()
 
        if saveinfo in ['yes','y']:
           if not os.path.isdir(genepath+"report"):

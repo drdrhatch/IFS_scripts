@@ -18,7 +18,7 @@ def read_iterdb_file(iterdb_filename):
             num=data_linesplit[i].split()[0]
             num=float(num)
             num=int(num)
-            print( "number of points in iterdb file:",num)
+            print(( "number of points in iterdb file:",num))
             keep_going=(1==2)
         if i == len(data_linesplit):
             keep_going=(1==2)
@@ -44,7 +44,7 @@ def read_iterdb_file(iterdb_filename):
             lnum=lnum+1
 
         if quantity=='TE':
-           print( "Reading :",quantity)
+           print(( "Reading :",quantity))
            rhot_te=np.empty(0)
            lnum0 = lnum
            for j in range(int(lnum0),int(lnum0+sec_num_lines)):
@@ -68,7 +68,7 @@ def read_iterdb_file(iterdb_filename):
                lnum=lnum+1
 
         if quantity=='TI':
-           print( "Reading :",quantity)
+           print(( "Reading :",quantity))
            rhot_ti=np.empty(0)
            lnum0 = lnum
            for j in range(int(lnum0),int(lnum0+sec_num_lines)):
@@ -94,7 +94,7 @@ def read_iterdb_file(iterdb_filename):
 #           lnum = lnum + 2*sec_num_lines + 1
 
         if quantity=='NE':
-           print( "Reading :",quantity)
+           print(( "Reading :",quantity))
            rhot_ne=np.empty(0)
            lnum0 = lnum
            for j in range(int(lnum0),int(lnum0+sec_num_lines)):
@@ -118,7 +118,7 @@ def read_iterdb_file(iterdb_filename):
                lnum=lnum+1
 
         if quantity=='NM1':
-           print( "Reading :",quantity)
+           print(( "Reading :",quantity))
            rhot_ni=np.empty(0)
            lnum0 = lnum
            for j in range(int(lnum0),int(lnum0+sec_num_lines)):
@@ -143,7 +143,7 @@ def read_iterdb_file(iterdb_filename):
 
         if quantity=='NM2':
            with_impurity = True
-           print( "Reading :",quantity)
+           print(( "Reading :",quantity))
            rhot_nb=np.empty(0)
            lnum0 = lnum
            for j in range(int(lnum0),int(lnum0+sec_num_lines)):
@@ -167,7 +167,7 @@ def read_iterdb_file(iterdb_filename):
                lnum=lnum+1
 
         if quantity=='VROT':
-           print( "Reading :",quantity)
+           print(( "Reading :",quantity))
            rhot_vrot=np.empty(0)
            lnum0 = lnum
            for j in range(int(lnum0),int(lnum0+sec_num_lines)):

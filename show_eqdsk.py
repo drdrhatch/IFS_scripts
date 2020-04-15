@@ -23,11 +23,11 @@ except IOError:
     sys.exit("EQDSK file not found")
 
 endline=len(eqdsk)
-print('Header: {0:s}'.format(eqdsk[0]))
+print(('Header: {0:s}'.format(eqdsk[0])))
 #set resolutions
 nw=int(eqdsk[0].split()[-2])
 nh=int(eqdsk[0].split()[-1])
-print('Resolution: {0:4d} x {1:4d}'.format(nw,nh))
+print(('Resolution: {0:4d} x {1:4d}'.format(nw,nh)))
 
 entrylength=16
 try:
@@ -57,13 +57,13 @@ if zmag!=zmag2:
 if psisep2!=psisep:
     sys.exit('Inconsistent psisep: {:7.4g}, {:7.4g}'.format(psisep,psisep2))
 
-print('R of magn. axis [m]:                 {0:6.3f}'.format(rmag))
-print('Z of magn. axis [m]:                 {0:6.3f}'.format(zmag))
-print('Pol. flux at magn. axis [Weber/rad]: {0:6.3f}'.format(psiax))
-print('Pol. flux at separatrix [Weber/rad]: {0:6.3f}'.format(psisep))
-print('R of vacuum tor. magn. field [m]:    {0:6.3f}'.format(rctr))
-print('Vacuum toroidal magnetic field [T]:  {0:6.3f}'.format(Bctr))
-print('Plasma current [MA]:                 {0:6.3f}'.format(current/1E6))
+print(('R of magn. axis [m]:                 {0:6.3f}'.format(rmag)))
+print(('Z of magn. axis [m]:                 {0:6.3f}'.format(zmag)))
+print(('Pol. flux at magn. axis [Weber/rad]: {0:6.3f}'.format(psiax)))
+print(('Pol. flux at separatrix [Weber/rad]: {0:6.3f}'.format(psisep)))
+print(('R of vacuum tor. magn. field [m]:    {0:6.3f}'.format(rctr)))
+print(('Vacuum toroidal magnetic field [T]:  {0:6.3f}'.format(Bctr)))
+print(('Plasma current [MA]:                 {0:6.3f}'.format(current/1E6)))
 
 fpol=np.empty(nw,dtype=float)
 pres=np.empty(nw,dtype=float)
@@ -72,15 +72,15 @@ pprime=np.empty(nw,dtype=float)
 qpsi=np.empty(nw,dtype=float)
 psirz_1d=np.empty(nw*nh,dtype=float)
 start_line=5
-lines=range(nw//5)
+lines=list(range(nw//5))
 if nw%5!=0:
-    lines=range(nw//5+1)
+    lines=list(range(nw//5+1))
 for i in lines:
     n_entries=len(eqdsk[i+start_line])//entrylength
     fpol[i*5:i*5+n_entries]=([float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength])
                               for j in range(n_entries)])
 start_line=i+start_line+1
-print('Toroidal magn. field on axis [T]:    {0:6.3f}'.format(fpol[0]/rmag))
+print(('Toroidal magn. field on axis [T]:    {0:6.3f}'.format(fpol[0]/rmag)))
 
 for i in lines:
     n_entries=len(eqdsk[i+start_line])//entrylength
@@ -100,9 +100,9 @@ for i in lines:
                                 for j in range(n_entries)])
 start_line=i+start_line+1
 
-lines_twod=range(nw*nh//5)
+lines_twod=list(range(nw*nh//5))
 if nw*nh%5!=0:
-    lines_twod=range(nw*nh//5+1)
+    lines_twod=list(range(nw*nh//5+1))
 for i in lines_twod:
     n_entries=len(eqdsk[i+start_line])//entrylength
     psirz_1d[i*5:i*5+n_entries]=([float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength])
@@ -115,8 +115,8 @@ for i in lines:
     qpsi[i*5:i*5+n_entries]=([float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength])
                               for j in range(n_entries)])
 start_line=i+start_line+1
-print('Safety factor q on axis:             {0:6.3f}'.format(qpsi[0]))
-print('Safety factor q at separatrix:       {0:6.3f}'.format(qpsi[nw-1]))
+print(('Safety factor q on axis:             {0:6.3f}'.format(qpsi[0])))
+print(('Safety factor q at separatrix:       {0:6.3f}'.format(qpsi[nw-1])))
 
 #invert sign of psi if necessary to guarantee increasing values for interpolation
 if psisep<psiax:
@@ -130,8 +130,8 @@ if psisep<psiax:
 if start_line<endline:
     nbbbs=int(eqdsk[start_line].split()[0])
     limitr=int(eqdsk[start_line].split()[1])
-    print('Boundary grid points: {0:4d}'.format(nbbbs))
-    print('Limiter grid points:  {0:4d}'.format(limitr))
+    print(('Boundary grid points: {0:4d}'.format(nbbbs)))
+    print(('Limiter grid points:  {0:4d}'.format(limitr)))
     start_line = start_line+1
 
     rzbbbs=np.empty(2*nbbbs,dtype=float)
@@ -139,8 +139,8 @@ if start_line<endline:
     zbbbs=np.empty(nbbbs+1,dtype=float)
 
     if (2*nbbbs)%5!=0:
-        lines=range((2*nbbbs)//5+1)
-    else: lines=range((2*nbbbs)//5)
+        lines=list(range((2*nbbbs)//5+1))
+    else: lines=list(range((2*nbbbs)//5))
     for i in lines:
         n_entries=len(eqdsk[i+start_line])//entrylength
         rzbbbs[i*5:i*5+n_entries]=([float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength])
@@ -156,9 +156,9 @@ if start_line<endline:
     rlim=np.empty(limitr+1,dtype=float)
     zlim=np.empty(limitr+1,dtype=float)
     if (2*limitr)%5!=0:
-        lines=range((2*limitr)//5+1)
+        lines=list(range((2*limitr)//5+1))
     else:
-        lines=range((2*limitr)//5)
+        lines=list(range((2*limitr)//5))
     for i in lines:
         n_entries=len(eqdsk[i+start_line])//entrylength
         rzlim[i*5:i*5+n_entries]=([float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength])

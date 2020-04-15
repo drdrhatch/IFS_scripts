@@ -11,5 +11,5 @@ f = open(file_name,'rb')
 f.seek(6)
 time=np.fromfile(f,dtype='float64',count=1)
 f.close()
-print  time
+print(time)
 

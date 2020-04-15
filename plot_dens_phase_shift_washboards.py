@@ -25,15 +25,15 @@ parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help 
 parser.add_option('--idb','-i',type = 'str',action='store',dest="idb_file",help = 'ITERDB file name.',default='empty')
 parser.add_option('--pfile','-f',type = 'str',action='store',dest="prof_file",help = 'ITERDB file name.',default='empty')
 options,args=parser.parse_args()
-print "options",options
-print "args",args
+print("options",options)
+print("args",args)
 if len(args)!=1:
     exit("""
 Please include run number as argument (e.g., 0001)."
     \n""")
 suffix = args[0]
 plot_all=options.plot_all
-print "options.plot_ballooning", options.plot_ballooning
+print("options.plot_ballooning", options.plot_ballooning)
 plot_ballooning=options.plot_ballooning
 plot_theta=options.plot_theta
 idb_file = options.idb_file
@@ -60,7 +60,7 @@ else:
     itime = np.argmin(abs(time - time0))
     itime0 = itime
 
-print "Looking at the mode structure at time:",time[itime]
+print("Looking at the mode structure at time:",time[itime])
 #field.set_time(time[itime],itime0)
 field.set_time(time[itime])
 moms.set_time(timemom[itime])
@@ -100,7 +100,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print("WARNING: neg_loc < corr_time")
         corr_time = neg_loc
 
     if show_plot:
@@ -157,7 +157,7 @@ if x_local:
                     apar[(field.nx/2-i-1)*field.nz : (field.nx/2-i)*field.nz ]=field.apar()[:,0,-1-i]*phase_fac**(-(i+1))
     
     zavg=np.sum(np.abs(phi)*np.abs(zgrid))/np.sum(np.abs(phi))
-    print "zavg (for phi)",zavg
+    print("zavg (for phi)",zavg)
     phi = phi/field.phi()[field.nz/2,0,0]
     apar = apar/field.phi()[field.nz/2,0,0]
     
@@ -186,13 +186,13 @@ if x_local:
     np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
     
     cfunc,zed,corr_len=my_corr_func_complex(phi,phi,zgrid,show_plot=False)
-    print "correlation length (for phi): ", corr_len
+    print("correlation length (for phi): ", corr_len)
     parity_factor_apar = np.abs(np.sum(apar))/np.sum(np.abs(apar))
-    print "parity factor (for apar):",parity_factor_apar
+    print("parity factor (for apar):",parity_factor_apar)
     parity_factor_phi = np.abs(np.sum(phi))/np.sum(np.abs(phi))
-    print "parity factor (for phi):",parity_factor_phi
+    print("parity factor (for phi):",parity_factor_phi)
     apar_phase = np.sum(abs(np.real(apar)+np.imag(apar)))/np.sum(abs(np.real(apar))+abs(np.imag(apar)))
-    print "Phase factor (apar):",apar_phase
+    print("Phase factor (apar):",apar_phase)
     
     #Estimate E_parallel
     #phiR = np.real(phi)
@@ -236,8 +236,8 @@ if x_local:
     #plt.show()
     omega_complex = (om[2]*(0.0+1.0J) + om[1])
     omega_phase = np.log(omega_complex/np.abs(omega_complex))/(0.0+1.0J)
-    print "omega_complex",omega_complex
-    print "omega_phase",omega_phase
+    print("omega_complex",omega_complex)
+    print("omega_phase",omega_phase)
     phase_array = np.empty(len(zgrid))
     phase_array[:] = np.real(omega_phase)
     
@@ -262,10 +262,10 @@ if x_local:
     diff = np.sum(np.abs(gradphi + omega_complex*apar))
     phi_cont = np.sum(np.abs(gradphi))
     apar_cont = np.sum(np.abs(omega_complex*apar))
-    print "diff",diff
-    print "phi_cont",phi_cont
-    print "apar_cont",apar_cont
-    print "diff/abs",diff/(phi_cont+apar_cont)
+    print("diff",diff)
+    print("phi_cont",phi_cont)
+    print("apar_cont",apar_cont)
+    print("diff/abs",diff/(phi_cont+apar_cont))
     
 else:  #x_local = False
 
@@ -286,9 +286,9 @@ else:  #x_local = False
     mmin = math.ceil(qmin*pars['n0_global'])
     mmax = math.floor(qmax*pars['n0_global'])
     mnums = np.arange(mmin,mmax+1)
-    print "mnums",mnums
+    print("mnums",mnums)
     qrats = mnums/float(pars['n0_global'])
-    print "qrats",qrats
+    print("qrats",qrats)
     zgridm = np.arange(mmax*20)/float(mmax*20)*2.0-1.0
     nm = int(mmax*20)
 
@@ -358,7 +358,7 @@ else:  #x_local = False
     #plt.plot(xgrid,np.imag(phi_bnd[3*pars['nz0']/4,0,:]),'--',color = 'blue')
     #plt.show()
 
-    print "shape of dens",np.shape(moms.dens())
+    print("shape of dens",np.shape(moms.dens()))
     dens = moms.dens()
 
 
@@ -667,13 +667,13 @@ else:  #x_local = False
     #    plt.colorbar()
     #    plt.show()
     
-    print "omega_complex",omega_complex
+    print("omega_complex",omega_complex)
     #print "np.shape(field.apar())",np.shape(field.apar())
     if 'ExBrate' in pars and pars['ExBrate'] == -1111: 
         if idb_file == 'empty':
-            idb_file = raw_input("Enter ITERDB file name:\n")
+            idb_file = input("Enter ITERDB file name:\n")
         if prof_file == 'empty':
-            prof_file = raw_input("Enter gene output profiles file name:\n")
+            prof_file = input("Enter gene output profiles file name:\n")
         rhot_idb,profs_idb,units_idb = read_iterdb(idb_file)
         profs = np.genfromtxt(prof_file)
         omegator0 = interp(rhot_idb['VROT'],profs_idb['VROT'],profs[:,0])
@@ -692,10 +692,10 @@ else:  #x_local = False
         diff = np.sum(np.abs(gradphi[2:-2,:,:] + omega_complex*field.apar()[:,:,:]))
         apar_cont = np.sum(np.abs(omega_complex*field.apar()[:,:,:]))
     phi_cont = np.sum(np.abs(gradphi[2:-2,:,:]))
-    print "diff",diff
-    print "phi_cont",phi_cont
-    print "apar_cont",apar_cont
-    print "diff/abs",diff/(phi_cont+apar_cont)
+    print("diff",diff)
+    print("phi_cont",phi_cont)
+    print("apar_cont",apar_cont)
+    print("diff/abs",diff/(phi_cont+apar_cont))
     #for i in range(pars['nx0']/10-2):
     #    print "i"
     #    for i in range(pars['nx0']/10-2):

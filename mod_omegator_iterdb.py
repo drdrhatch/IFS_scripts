@@ -14,19 +14,19 @@ reverse_sign = 1 #-1 for reverse, 1 otherwise
 rhot,profs,units = read_iterdb(filename)
 
 include_impurity = False
-if 'NM2' in profs.keys():
+if 'NM2' in list(profs.keys()):
    include_impurity = True
 
 maxVROT = np.max(abs(profs['VROT']))
-print "maxVROT",maxVROT
+print("maxVROT",maxVROT)
 offset = np.empty(len(profs['VROT']))
 offset[:] = 1.0
 VROT_out = reverse_sign*profs['VROT'] + offset*maxVROT*VROT_factor*sign
 
-print profs.keys()
-for x in rhot.keys():
+print(list(profs.keys()))
+for x in list(rhot.keys()):
   diff =  np.sum(np.abs(rhot[x]-rhot['TE']))
-  print "diff",diff
+  print("diff",diff)
   if diff > len(x)*1.0e-14:
      stop
 

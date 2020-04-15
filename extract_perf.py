@@ -53,7 +53,7 @@ for gene_out_file in args:
         # we have to go through all ../prob* directories to look for
         # GENE.jobid.out files
         gene_out_file = search_for_output("..",jobid)
-        print "Working on ",gene_out_file
+        print("Working on ",gene_out_file)
     #end if
 
     # Get the jobid and the path out of the passed filename
@@ -131,7 +131,7 @@ for gene_out_file in args:
     infile.close()
 #end for
 
-print "Number of analyzed runs is ",len(perflist)
+print("Number of analyzed runs is ",len(perflist))
 
 # perflist is a list of all files given as input. Each file is a dictionary with the elements
 # jobid, all processes of the parallelization  and another dictionary blocks, which contains
@@ -159,29 +159,29 @@ for this_run in perflist:
     #print "comparison of the blocks",complabel_list," for the metric",options.METRIC
     blocklabel_list = [x["label"] for x in blocks]
     if first_run:
-        print "Metric printed is ",options.METRIC
-        print "jobid   s  v  w  x  y  z nblocks",
+        print("Metric printed is ",options.METRIC)
+        print("jobid   s  v  w  x  y  z nblocks", end=' ')
         for label in complabel_list:
-            print "%10s"%label,
-        print
+            print("%10s"%label, end=' ')
+        print()
         first_run = False
     #end if
-    print "%6s %2u %2u %2u %2u %2u %2u %5u "%(this_run["jobid"],this_run["n_procs_s"],this_run["n_procs_v"],
+    print("%6s %2u %2u %2u %2u %2u %2u %5u "%(this_run["jobid"],this_run["n_procs_s"],this_run["n_procs_v"],
                                       this_run["n_procs_w"],this_run["n_procs_x"],
-                                      this_run["n_procs_y"],this_run["n_procs_z"],this_run["nblocks"]),
+                                      this_run["n_procs_y"],this_run["n_procs_z"],this_run["nblocks"]), end=' ')
 
     for complabel in complabel_list:
         if complabel=="datasize":
-            print "%10g"%this_run["datasize"],
+            print("%10g"%this_run["datasize"], end=' ')
         else:
             try:
                 comp_index = blocklabel_list.index(complabel)
             except ValueError:
-                print "          ",
+                print("          ", end=' ')
             else:
-                print "%10g"%blocks[comp_index][options.METRIC],
+                print("%10g"%blocks[comp_index][options.METRIC], end=' ')
             #end try
         #end if
     #end for
-    print
+    print()
 #end for

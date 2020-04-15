@@ -29,9 +29,9 @@ if 1 == 1:
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
-    print 'ti =', tiMidPed
+    print('rhot =', rhotMidPed)
+    print('te =', teMidPed)
+    print('ti =', tiMidPed)
 
     alpha = 1.1
     newTe = teMidPed*np.power(te/teMidPed,alpha)
