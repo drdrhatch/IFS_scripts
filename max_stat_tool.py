@@ -36,8 +36,13 @@ def avg(avg_list,bin_size):
     #print std_temp
     avg=avg+avg_temp/(std_temp)**2
     dev_sum=dev_sum+1/(std_temp)**2
-  avg=avg/dev_sum #average
-  dev_sum=np.sqrt(1/dev_sum)
+  if dev_sum == 0: 
+    avg=avg
+    dev_sum=10**20
+  else:
+    avg=avg/dev_sum #average
+    dev_sum=np.sqrt(1/dev_sum)
+  
   output=np.zeros(2)
   output[0]=avg
   output[1]=dev_sum
