@@ -191,7 +191,7 @@ def Epar_judge(epar):
     elif epar<0.7 and epar>0.3:
         mode="MTM"
     elif epar>0.9:
-        mode="ITG"
+        mode="ITG/TEM"
     else:
         mode="other"
     return mode
@@ -221,18 +221,18 @@ def f_judge(fe, fi, omega):  #judge from the typical frquency
     #ITG=(omega-f_ITG)/np.max((omega,f_ITG))
     #KBM=(omega-f_KBM)/np.max((omega,f_KBM))
     #MTM=(omega-f_MTM)/np.max((omega,f_MTM))
-    ITG=abs((omega-f_ITG)/omega) #likelyhood to be ITG in percentage
-    ETG=0                   #likelyhood to be ETG in percentage
-    KBM=abs((omega-f_KBM)/omega) #likelyhood to be KBM in percentage
-    MTM=abs((omega-f_MTM)/omega) #likelyhood to be MTM in percentage
+    ITG=abs((omega-f_ITG)/f_ITG) #likelyhood to be ITG in percentage
+    ETG=0                        #likelyhood to be ETG in percentage
+    KBM=abs((omega-f_KBM)/f_KBM) #likelyhood to be KBM in percentage
+    MTM=abs((omega-f_MTM)/f_MTM) #likelyhood to be MTM in percentage
 
     mode_percent=[ITG,ETG,KBM,MTM]
     if np.argmax(mode_percent) == 0 and ion_direction==1:
-        mode="ITG/TEM"
+        mode="ITG/TEM/KBM"
     elif np.argmax(mode_percent) == 1 and electron_direction==1:
         mode="ETG"
     elif np.argmax(mode_percent) == 2 and ion_direction==1:
-        mode="KBM"
+        mode="ITG/TEM/KBM"
     elif np.argmax(mode_percent) == 3 and electron_direction==1:
         mode="MTM"
     else:
@@ -305,7 +305,7 @@ def federal_court(suffix):
         tot_mode="KBM"
     elif D_chi_mode=="MTM" and f_mode=="MTM":
         tot_mode="MTM"
-    elif D_chi_mode=="ITG/TEM" and f_mode=="ITG/TEM":
+    elif D_chi_mode=="ITG/TEM" and f_mode=="ITG/TEM/KBM":
         tot_mode="ITG/TEM"
     elif D_chi_mode=="ETG" and f_mode=="ETG":
         tot_mode="ETG"
