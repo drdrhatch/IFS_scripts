@@ -1,3 +1,5 @@
+#import sys as sys
+#sys.path.insert(1, '/global/u1/m/maxcurie/max/scripts')
 from finite_differences import *
 import matplotlib.pyplot as plt
 from interp import *
@@ -18,19 +20,18 @@ from fieldlib import *
 
 #**************Block for user******************************************
 #**************Setting up*********************************************
-iterdb_file_name = 'DIIID175823.iterdb' #name of the iterdb file
-geomfile = 'g175823.04108_257x257'             #name of the magnetic geometry file
+iterdb_file_name = 'DIIID162940.iterdb' #name of the iterdb file
+geomfile = 'g162940.02944_670'             #name of the magnetic geometry file
 suffix="_1"
 #suffix=".dat"
-f_max=250      #upper bound of the frequency experimentally observed 
-f_min=200        #lower bound of the frequency experimentally observed 
+f_max=500      #upper bound of the frequency experimentally observed 
+f_min=0        #lower bound of the frequency experimentally observed 
 plot = 1         #set to 1 if you want to plot the result
 report=1         #set to 1 if you want to export a csv report
-omega_percent=1  #choose the omega within the top that percent defined in(0,100)
+omega_percent=2  #choose the omega within the top that percent defined in(0,100)
 n0_min=1         #minmum mode number (include) that finder will cover
 n0_max=100       #maximum mode number (include) that finder will cover
 q_scale=1        #set the q to q*q_scale
-x0_center=0.96   #radial location where ky will be calculated.
 mref = 2.        # mass of ion in proton mass
 #**************End of Setting up*********************************************
 #**************End of Block for user******************************************
@@ -57,6 +58,8 @@ elif not x_local:
 
 field = fieldfile('field'+suffix,pars)
 
+x0_center=pars['x0']   #radial location where ky will be calculated.
+
 #Setup the field file
 #************************Setting up the time*****************
 
@@ -69,7 +72,7 @@ if time0 == -1:
 else: 
     itime = np.argmin(abs(time - time0))
     itime0 = itime
-print(("Looking at the RIP at time:",time[itime]))
+
 #field.set_time(time[itime],itime0)
 field.set_time(time[itime])
 
@@ -90,18 +93,26 @@ Lref, Bref, R_major, q0, shat0=get_geom_pars(geomfile,x0_center)
 xgrid_EFIT = EFITdict['psipn']
 q_EFIT = EFITdict['qpsi']*q_scale
 
-uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10.)
+rhot0_range_min=np.argmin(abs(rhot0-xgrid[0]))
+rhot0_range_max=np.argmin(abs(rhot0-xgrid[-1]))
 
-te_u = interp(rhot0,te0,uni_rhot)
-ne_u = interp(rhot0,ne0,uni_rhot)
-vrot_u = interp(rhot0,vrot0,uni_rhot)
+print(rhot0_range_min)
+print(rhot0_range_max)
+
+rhot0_2=rhot0[rhot0_range_min:rhot0_range_max]
+print(np.shape(rhot0))
+uni_rhot = np.linspace(min(rhot0_2),max(rhot0_2),len(rhot0_2)*10.)
+
+te_u = interp(rhot0_2,te0[rhot0_range_min:rhot0_range_max],uni_rhot)
+ne_u = interp(rhot0_2,ne0[rhot0_range_min:rhot0_range_max],uni_rhot)
+vrot_u = interp(rhot0_2,vrot0[rhot0_range_min:rhot0_range_max],uni_rhot)
 q      = interp(xgrid,q,uni_rhot)
 tprime_e = -fd_d1_o4(te_u,uni_rhot)/te_u
 nprime_e = -fd_d1_o4(ne_u,uni_rhot)/ne_u
 
 plt.clf()
 plt.title('Safety factor')
-plt.plot(xgrid, q_GENE,label='GENE',color='green',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
+plt.plot(uni_rhot, q,label='GENE',color='green',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
 plt.plot(xgrid_EFIT, q_EFIT,label='Interpolated from EFIT',color='red',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
 plt.legend()
 plt.show()
@@ -173,7 +184,6 @@ for n0 in range(n0_min,n0_max+1):
     ind_min  =min(range_ind)
     range_max=max(omega_range)
     ind_max  =max(range_ind)
-    
     xgrid_ind_min  =np.argmin(abs(range_min-xgrid))
     xgrid_ind_max  =np.argmin(abs(range_max-xgrid))
 
