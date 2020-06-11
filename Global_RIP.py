@@ -17,7 +17,7 @@ from max_stat_tool import *
 from momlib import *
 import sys
 from nrgWrapper import *
-from momentsWrapper import *
+from momentsWrapper_max import *
 from read_write_geometry import *
 from read_pfile import *
 from SI_Gauss_GENE_unit import *
@@ -29,7 +29,7 @@ import csv
 #testing path:    /global/cscratch1/sd/maxcurie/global_scan/n0_10
 #short-cut:      RIP_global
 #short-cut for testing:      RIP_global_test 
-#This is the V2 that include the real BES ratio
+#This is the V3 that interprelate the dB include the real BES ratio
 
 def g_RIP(suffix):
 
@@ -40,6 +40,10 @@ def g_RIP(suffix):
     z_BES=0       #theta/pi of the location of BES
     grides_BES=2  #Take average tot_grid=(1+grides_BES)^2 grids around (z_BES, R_BES), 
     real_grid= 0.02 # unit: meter, resolution of the the line integral on height
+    
+
+    ratio_location=0. #mid-plan
+    aveage_delta=0.010  #average around the z=ratio_location\pm aveage_delta (beam width) in meter
     #minor radius
     #read-in radial location
 
@@ -138,7 +142,7 @@ def g_RIP(suffix):
     Lref = pars['Lref']         #in m
     mref = pars['mref']         #in proton mass(kg)
     nref = nref * 1.E19         #in the unit of /m^3
-    Tref = Tref * qref * 1000   #in the unit of J
+    Tref = Tref * qref * 1000.   #in the unit of J
     mref = mref * m_kg          #in the unit of kg
     pref = nref * Tref          #in Pa*kB
     cref = np.sqrt(Tref / mref) #in the unit of m/s
@@ -600,6 +604,29 @@ def g_RIP(suffix):
     #plt.show()
 
     print("End ploting")
+
+
+    x0=smooth(Z,15)[0]
+    y0=smooth(Ratio_BES_r,15)[0]
+    location_index_max=np.argmin(abs(x0-ratio_location-aveage_delta))
+    location_index_min=np.argmin(abs(x0-ratio_location+aveage_delta))
+    local_temp=0
+    if location_index_max > location_index_min: 
+        location_index_max = location_index_max
+        location_index_min = location_index_min
+    elif location_index_min > location_index_max:
+        local_temp = location_index_max
+        location_index_max = location_index_min
+        location_index_min = local_temp
+    else:
+        local_temp=np.argmin(abs(x0-ratio_location))
+        location_index_max=local_temp
+        location_index_min=local_temp-1
+        
+    print(location_index_min)
+    print(location_index_max)
+    RIP_0=np.mean(y0[location_index_min:location_index_max])
+    print("RIP ratio average at Z="+str(ratio_location)+":  "+str(RIP_0))
 
 
 
