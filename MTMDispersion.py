@@ -30,9 +30,9 @@ from max_pedestal_finder import find_pedestal
 
 iterdb_file_name='DIIID175823.iterdb'  #name of the iterdb file
 geomfile='g175823.04108_257x257'       #name of the magnetic geometry file
-omega_percent=10                       #choose the omega within the top that percent defined in(0,100)
-n_min=18                               #minmum mode number (include) that finder will cover
-n_max=25                               #maximum mode number (include) that finder will cover
+omega_percent=5                        #choose the omega within the top that percent defined in(0,100)
+n_min=0                               #minmum mode number (include) that finder will cover
+n_max=50                               #maximum mode number (include) that finder will cover
 plot_profile=False                     #Set to True is user want to have the plot of the profile
 plot_n_scan=True                       #Set to True is user want to have the plot of the gamma over n
 csv_profile=False                      #Set to True is user want to have the csv file "profile_output.csv" of the profile
@@ -261,13 +261,21 @@ def Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent):
 def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,x_peak_range,x_range_ind,n_min,n_max,plot,output_csv):
     ind_min  =min(x_range_ind)
     ind_max  =max(x_range_ind)
-    uni_rhot=uni_rhot[ind_min:ind_max]
-    nu=nu[ind_min:ind_max]
-    eta=eta[ind_min:ind_max]
-    shat=shat[ind_min:ind_max]
-    beta=beta[ind_min:ind_max]
-    ky=ky[ind_min:ind_max]
-    q=q[ind_min:ind_max]
+    uni_rhot_full=uni_rhot
+    nu_full=nu
+    eta_full=eta
+    shat_full=shat
+    beta_full=beta
+    ky_full=ky
+    q_full=q
+
+    uni_rhot_top=uni_rhot[ind_min:ind_max]
+    nu_top=nu[ind_min:ind_max]
+    eta_top=eta[ind_min:ind_max]
+    shat_top=shat[ind_min:ind_max]
+    beta_top=beta[ind_min:ind_max]
+    ky_top=ky[ind_min:ind_max]
+    q_top=q[ind_min:ind_max]
 
     n_list=[]
     m_list=[]
@@ -287,15 +295,15 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,x_peak_range,x_range_ind,n_
     for n0 in range(n_min,n_max+1):
         print("************"+str(n0)+"************")
 
-        gamma,omega,factor=Dispersion_list(uni_rhot,nu/float(n0),eta,shat,beta,ky*float(n0),plot=False)
-        x_list, m_list=Rational_surface(uni_rhot,q,n0)
+        gamma,omega,factor=Dispersion_list(uni_rhot_full,nu_full/float(n0),eta_full,shat_full,beta_full,ky_full*float(n0),plot=False)
+        x_list, m_list=Rational_surface(uni_rhot_top,q_top,n0)
         if plot==True and max(gamma)>0:
             plt.plot(uni_rhot,gamma,label='n='+str(n0))
         for i in range(len(x_list)):
             x=x_list[i]
             m=m_list[i]
-            x_index=np.min(abs(x-uni_rhot))
-            gamma,omega,factor=Dispersion(uni_rhot[x_index],nu[x_index]/float(n0),eta[x_index],shat[x_index],beta[x_index],ky[x_index]*float(n0),plot=False)
+            x_index=np.min(abs(x-uni_rhot_top))
+            gamma,omega,factor=Dispersion(uni_rhot_top[x_index],nu_top[x_index]/float(n0),eta_top[x_index],shat_top[x_index],beta_top[x_index],ky_top[x_index]*float(n0),plot=False)
             gamma_list.append(gamma)
             omega_list.append(omega)
             factor_list.append(factor)
@@ -303,7 +311,8 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,x_peak_range,x_range_ind,n_
             m_list.append(m)
             x_list.append(x)
     if plot==True:
-
+        plt.axvline(min(uni_rhot_top),color='green',label="near the peak of omega*")
+        plt.axvline(max(uni_rhot_top),color='green',label="near the peak of omega*")
     	plt.legend()
         plt.show()
 
