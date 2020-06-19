@@ -6,7 +6,8 @@ import csv
 from read_EFIT import *
 from read_EFIT_file import *
 from read_iterdb_file import *
-#Last edited by Max Curie 03/21/2020
+from max_pedestal_finder import find_pedestal
+#Last edited by Max Curie 06/10/2020
 #Supported by David R Hatch's script mtmDopplerFreqs.py
 
 
@@ -57,14 +58,15 @@ q      = interp(xgrid,q,uni_rhot)
 tprime_e = -fd_d1_o4(te_u,uni_rhot)/te_u
 nprime_e = -fd_d1_o4(ne_u,uni_rhot)/ne_u
 
-center_index = np.argmax(q * np.sqrt(te_u)*(tprime_e+nprime_e))
-x0_center=uni_rhot[center_index]
+
+midped, topped=find_pedestal(file_name=geomfile, path_name='', plot=False)
+x0_center = midped
 
 print('mid pedestal is at r/a = '+str(x0_center))
 
 Lref, Bref, R_major, q0, shat0=get_geom_pars(geomfile,x0_center)
 
-index_begin=np.argmin(abs(uni_rhot-x0_center+1.5*(1-x0_center)))
+index_begin=np.argmin(abs(uni_rhot-x0_center+2*(1-x0_center)))
 
 te_u = te_u[index_begin:len(uni_rhot)-1]
 ne_u = ne_u[index_begin:len(uni_rhot)-1]
@@ -74,7 +76,7 @@ tprime_e = tprime_e[index_begin:len(uni_rhot)-1]
 nprime_e = nprime_e[index_begin:len(uni_rhot)-1]
 uni_rhot = uni_rhot[index_begin:len(uni_rhot)-1]
 
-center_index = np.argmax(abs(tprime_e*nprime_e))
+center_index = np.argmin(abs(uni_rhot-x0_center))
 
 #*************End of loading the data******************************************
 
