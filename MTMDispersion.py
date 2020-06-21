@@ -2,9 +2,10 @@
 """
 Created on Sat Jun 13 16:56:45 2020
 
-@author: jlara
+@author: jlara, maxcurie
 """
 import numpy as np
+import pandas as pd
 from finite_differences import *
 import matplotlib.pyplot as plt
 from interp import *
@@ -14,6 +15,7 @@ from read_EFIT import *
 from read_EFIT_file import *
 from read_iterdb_file import *
 from max_pedestal_finder import find_pedestal
+from max_stat_tool import *
 #The following function computes the growth rate of the slab MTM. The input are the physical parameters and it outputs the growth rate in units of omega_{*n}
 #Parameters for function:
 #nu: normalized to omega_{*n} 
@@ -22,7 +24,7 @@ from max_pedestal_finder import find_pedestal
 #eta=L_n/L_T
 #ky normalized to rho_i (ion gyroradius)
 
-#Late Edited by Max Curie, 06/15/2020
+#Late Edited by Max Curie, 06/21/2020
 
 
 #**************Block for user******************************************
@@ -30,9 +32,10 @@ from max_pedestal_finder import find_pedestal
 
 iterdb_file_name='DIIID162940.iterdb'  #name of the iterdb file
 geomfile='g162940.02944_670'       #name of the magnetic geometry file
-omega_percent=5                        #choose the omega within the top that percent defined in(0,100)
+omega_percent=40                        #choose the omega within the top that percent defined in(0,100)
 n_min=1                                #minmum mode number (include) that finder will cover
 n_max=50                               #maximum mode number (include) that finder will cover
+bins=400                               #sizes of bins to smooth the function
 plot_profile=False                     #Set to True is user want to have the plot of the profile
 plot_n_scan=True                       #Set to True is user want to have the plot of the gamma over n
 csv_profile=False                      #Set to True is user want to have the csv file "profile_output.csv" of the profile
@@ -331,7 +334,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omegaDoppler,x_peak
             print(gamma)
             print("x="+str(x)+", gamma(kHz)="+str(gamma_kHz))
             if plot==True and gamma>0:
-                plt.axvline(x,color='red',alpha=0.5)
+                plt.axvline(x,color='red',alpha=0.05)
             gamma_list.append(gamma)
             omega_list.append(omega)
             factor_list.append(factor)
@@ -370,20 +373,25 @@ def Spectrogram(gamma_list_kHz,omega_list_kHz):
     omega_max=max(omega_list_kHz)
     #print(omega_min)
     #print(omega_max)
-    f=np.arange(omega_min,omega_max,0.1)
-    
+    f=np.arange(omega_min,omega_max,0.01)
+    gamma_f=np.zeros(len(np.arange(omega_min,omega_max,0.01)))
+    #print(gamma_f)
     for i in range(len(gamma_list_kHz)):
         if gamma_list_kHz[i]>0:
             x0=gamma_list_kHz[i]
         else:
             x0=0
         mu=omega_list_kHz[i]
-        sigma=2.
-        gamma_f=normal(f,x0,mu,sigma)
+        sigma=0.2
+        gamma_f=gamma_f+normal(f,x0,mu,sigma)
     return f,gamma_f
 
-def Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,plot):
+def Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,bins,plot):
+    
     f_lab,gamma_f_lab=Spectrogram(gamma_list_kHz,omega_list_Lab_kHz)
+    #f_lab_pd_frame=pd.DataFrame(f_lab, columns=['a']) 
+    #f_lab_smooth=f_lab_pd_frame.diff().rolling(window=dt).mean()
+    #gamma_f_lab_smooth=gamma_f_lab.diff().rolling(window=dt).mean()
     if plot==True:
         plt.clf()
         plt.title('Spectrogram in lab frame')
@@ -391,6 +399,15 @@ def Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,plot):
         plt.ylabel('gamma(a.u.)') 
         plt.plot(f_lab,gamma_f_lab)
         plt.show()
+
+        plt.clf()
+        plt.title('Spectrogram in lab frame(rolling average)')
+        plt.xlabel('f(kHz)')
+        plt.ylabel('gamma(a.u.)') 
+        plt.plot(smooth(f_lab,bins)[0],smooth(gamma_f_lab,bins)[0])
+        plt.show()
+
+
     f_plasma,gamma_f_plasma=Spectrogram(gamma_list_kHz,omega_list_kHz)
     if plot==True:
         plt.clf()
@@ -399,9 +416,16 @@ def Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,plot):
         plt.ylabel('gamma(a.u.)') 
         plt.plot(f_plasma,gamma_f_plasma)
         plt.show()
+
+        plt.clf()
+        plt.title('Spectrogram in plasma frame(rolling average)')
+        plt.xlabel('f(kHz)')
+        plt.ylabel('gamma(a.u.)') 
+        plt.plot(smooth(f_plasma,bins)[0],smooth(gamma_f_plasma,bins)[0])
+        plt.show()
     return f_lab,gamma_f_lab,f_plasma,gamma_f_plasma
 
-def MTM_scan(iterdb_file_name,geomfile,omega_percent,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan): 
+def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan): 
     #return nu,ky for the case n_tor=1 for the given location(default to be pedestal)
     uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
     x_peak_range, x_range_ind=Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent)
@@ -413,9 +437,9 @@ def MTM_scan(iterdb_file_name,geomfile,omega_percent,n_min,n_max,plot_profile,pl
     omega_n,omegaDoppler,x_peak_range,x_range_ind,\
     n_min,n_max,plot=plot_n_scan,output_csv=csv_n_scan)
 
-    f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,plot=plot_spectrogram)
+    f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,bins,plot=plot_spectrogram)
     return x_list,n_list,m_list,gamma_list,omega_list,factor_list
 
-x_list,n_list,m_list,gamma_list,omega_list,factor_list=MTM_scan(iterdb_file_name,geomfile,omega_percent,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan)
+x_list,n_list,m_list,gamma_list,omega_list,factor_list=MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan)
 
 #print(gamma)
