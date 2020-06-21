@@ -28,8 +28,8 @@ from max_pedestal_finder import find_pedestal
 #**************Block for user******************************************
 #**************Setting up*********************************************
 
-iterdb_file_name='DIIID175823.iterdb'  #name of the iterdb file
-geomfile='g175823.04108_257x257'       #name of the magnetic geometry file
+iterdb_file_name='DIIID162940.iterdb'  #name of the iterdb file
+geomfile='g162940.02944_670'       #name of the magnetic geometry file
 omega_percent=5                        #choose the omega within the top that percent defined in(0,100)
 n_min=1                                #minmum mode number (include) that finder will cover
 n_max=50                               #maximum mode number (include) that finder will cover
@@ -352,7 +352,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omegaDoppler,x_peak
             data = csv.writer(csvfile, delimiter=',')
             data.writerow(['x/a','n','m','gamma(kHz)','omega_plasma(kHz)','omega_lab(kHz)','factor'])
             for i in range(len(x_list)):
-                data.writerow([x_list[i],n_list[i],m_list[i],gamma_list_kHz[i],omega_list_kHz[i],,omega_list_Lab_kHz[i],factor_list[i]])
+                data.writerow([x_list[i],n_list[i],m_list[i],gamma_list_kHz[i],omega_list_kHz[i],omega_list_Lab_kHz[i],factor_list[i]])
         csvfile.close()
 
     return x_list,n_list,m_list,gamma_list,omega_list,factor_list,gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz
