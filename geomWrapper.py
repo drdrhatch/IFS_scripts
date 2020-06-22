@@ -167,7 +167,7 @@ def reconstruct_zgrid(geom_coeff, pars, center_only, plot = True, edge_opt = -1)
             zgrid = zgrid_edge
     else:
         if 'edge_opt' in pars and pars['edge_opt'] != 0:
-            print 'Warning:edge_opt ~= 0 code for zgrid is not ready.'
+            print ('Warning:edge_opt ~= 0 code for zgrid is not ready.')
         if center_only:
             zgrid = zgrid_even_center
         else:
@@ -180,8 +180,7 @@ def reconstruct_zgrid(geom_coeff, pars, center_only, plot = True, edge_opt = -1)
     if not center_only:
         jacobian = np.zeros(nx * nz, dtype = 'float128')
         for i in ikx_grid:
-	    jacobian[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=\
-                jacobian_center
+            jacobian[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=jacobian_center
     if center_only:
         jacobian = jacobian_center
 
@@ -206,7 +205,7 @@ def calc_kperp_omd(geom_type, geom_coeff,pars,center_only,plot, ky =-1):
     lx = float(pars['lx'])
     if ky == -1:
         ky = float(pars['kymin'])
-    print 'ky = ', ky
+    print ('ky = ', ky)
     dkx = 2. * np.pi * float(pars['shat']) * float(ky)
 
     dpdx_tot = float(pars['beta']) * \
@@ -241,16 +240,16 @@ def calc_kperp_omd(geom_type, geom_coeff,pars,center_only,plot, ky =-1):
         omd_gradB = np.zeros(nx*nz,dtype='float128')
 
     for i in ikx_grid:
-	kx = i*dkx+kx_center
-	this_kperp = np.sqrt(ggxx*kx**2+2.*ggxy*kx*ky+ggyy*ky**2)
+        kx = i*dkx+kx_center
+        this_kperp = np.sqrt(ggxx*kx**2+2.*ggxy*kx*ky+ggyy*ky**2)
         this_omegad_gradB = -(Kx*kx+Ky*ky)/gBfield
         this_omegad_curv = this_omegad_gradB + \
                            ky * float(pars['dpdx_pm'])/gBfield**2/2.
         #this_omegad_curv = 2.*this_omegad
 
-	kperp[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_kperp
-	omd_curv[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_omegad_curv
-	omd_gradB[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_omegad_gradB
+        kperp[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_kperp
+        omd_curv[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_omegad_curv
+        omd_gradB[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_omegad_gradB
 
     if geom_type == 's_alpha' or geom_type == 'slab':
         if 'amhd' in pars:
@@ -267,7 +266,7 @@ def calc_kperp_omd(geom_type, geom_coeff,pars,center_only,plot, ky =-1):
         gxx0 = 1.
         gxy0 = pars['shat']*z_grid*np.pi-amhd*np.sin(z_grid*np.pi)
         gyy0 = 1+(pars['shat']*z_grid*np.pi-amhd*np.sin(z_grid*np.pi))**2
-	kperp0 = np.sqrt(gxx0*kx_center**2+2.*gxy0*kx_center*ky+gyy0*ky**2)
+        kperp0 = np.sqrt(gxx0*kx_center**2+2.*gxy0*kx_center*ky+gyy0*ky**2)
     if plot:
         plt.plot(kperp,label='kperp')
         plt.title('entire simulation domain')
@@ -297,7 +296,7 @@ def calc_kx_extended(pars,plot, ky =-1):
     lx = float(pars['lx'])
     if ky == -1:
         ky = float(pars['kymin'])
-    print 'ky = ', ky
+    print ('ky = ', ky)
     dkx = 2. * np.pi * float(pars['shat']) * float(ky)
 
     dpdx_tot = float(pars['beta']) * \
@@ -317,9 +316,9 @@ def calc_kx_extended(pars,plot, ky =-1):
     kx_ext = np.zeros(nx*nz,dtype='float128')
 
     for i in ikx_grid:
-	kx = i*dkx+kx_center
+        kx = i*dkx+kx_center
 
-	kx_ext[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=kx
+        kx_ext[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=kx
 
     if plot:
         plt.plot(kx_ext,label='kperp')
@@ -339,7 +338,7 @@ def bounce_averaged_omd(suffix,pars,geom_coeff,omega_d1,omega_d2,z_grid,ky=-1):
     nx = pars['nx0']
     if ky == -1:
         ky = pars['kymin']
-    print 'ky = ', ky
+    print ('ky = ', ky)
     nx = 1
 
     gBfield = geom_coeff['gBfield']
@@ -448,8 +447,8 @@ def bounce_averaged_omd(suffix,pars,geom_coeff,omega_d1,omega_d2,z_grid,ky=-1):
     #plt.legend()
     plt.show()
 
-    print 'bounce averaged omd = ', np.mean(bnc_avg_omd3)*me
-    print 'normalized <omd> = ', np.mean(bnc_avg_omd3)/bnc_avg_omd1[-1]*me
+    print ('bounce averaged omd = ', np.mean(bnc_avg_omd3)*me)
+    print ('normalized <omd> = ', np.mean(bnc_avg_omd3)/bnc_avg_omd1[-1]*me)
 
 def calc_shatloc(geom_coeff, z_grid, plot = False):
 
@@ -519,7 +518,7 @@ def ktheta_factor(geom_pars, geom_coeff, plot = False):
         plt.legend()
         plt.show()
 
-    print 'ktheta factor at z = 0', ktheta[geom_pars['gridpoints']/2]
+    print ('ktheta factor at z = 0', ktheta[geom_pars['gridpoints']/2])
 
 def k2_factor(geom_type, geom_coeff, plot = False):
 
@@ -555,7 +554,7 @@ def k2_factor_global(geom_type, geom_coeff, xInd, plot = False):
         plt.legend()
         plt.show()
 
-    print 'k2 factor min =', np.min(k2)
+    print ('k2 factor min =', np.min(k2))
 
     return np.min(k2)
 def ky(pars, geom_coeff, plot):
