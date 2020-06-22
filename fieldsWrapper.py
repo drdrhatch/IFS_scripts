@@ -50,7 +50,11 @@ def eigenfunctions_from_field_file(pars,suffix,center_only,plot,setTime=-1,smoot
         phi = np.zeros(nz,dtype='complex128')
         apar = np.zeros(nz,dtype='complex128')
     else:
-        ikx_grid = np.arange(-nx/2+1,nx/2+1)
+        print("nx",nx,"nx/2",nx/2,"floor(nx/2)",np.floor(nx/2))
+        ikxmin = int( -np.ceil(nx/2)+1)
+        ikx_grid = np.arange(nx)+ikxmin
+        #ikx_grid = np.arange(-int(np.floor(nx/2)+1),int(np.floor(nx/2)+1))
+        print("ikx_grid",ikx_grid)
         phi = np.zeros(nx*nz,dtype='complex128')
         apar = np.zeros(nx*nz,dtype='complex128')
 
@@ -69,7 +73,11 @@ def eigenfunctions_from_field_file(pars,suffix,center_only,plot,setTime=-1,smoot
                                                                  this_apar
     else:
         for i in ikx_grid:
-            this_phi = field.phi()[:,0,-i]*phase_fac**i
+            print("ikx_grid",ikx_grid)
+            this_phi = field.phi()[:,0,-int(i)]*phase_fac**i
+            print("len(this_phi)",len(this_phi))
+            print("(i-ikx_grid[0])*nz,(i-ikx_grid[0]+1)*nz",(i-ikx_grid[0])*nz,(i-ikx_grid[0]+1)*nz)
+            print("len(phi)",len(phi))
             phi[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_phi
             if pars['n_fields'] > 1 and pars['beta'] !=0:
                 this_apar = field.apar()[:,0,-i]*phase_fac**i
