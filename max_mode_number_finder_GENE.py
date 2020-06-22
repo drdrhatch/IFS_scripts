@@ -1,3 +1,5 @@
+#import sys as sys
+#sys.path.insert(1, '/global/u1/m/maxcurie/max/scripts')
 from finite_differences import *
 import matplotlib.pyplot as plt
 from interp import *
@@ -6,34 +8,27 @@ import csv
 from read_EFIT import *
 from read_EFIT_file import *
 from read_iterdb_file import *
-from max_pedestal_finder import find_pedestal
-#Last edited by Max Curie 06/10/2020
+from genetools import *
+#from max_profile_reader import *
+from parIOWrapper import init_read_parameters_file
+from read_write_geometry import read_geometry_local
+from read_write_geometry import read_geometry_global
+from fieldlib import *
+#Last edited by Max Curie 03/21/2020
 #Supported by David R Hatch's script mtmDopplerFreqs.py
 
 
 #**************Block for user******************************************
 #**************Setting up*********************************************
-#iterdb_file_name = 'DIIID154406.iterdb' #name of the iterdb file
-#geomfile = 'g174864.03325'                     #name of the magnetic geometry file
-#iterdb_file_name = 'DIIID162940.iterdb' #name of the iterdb file
-#geomfile = 'g162940.02944_670'                     #name of the magnetic geometry file
-#iterdb_file_name = 'JET2_1.iterdb' #name of the iterdb file
-#geomfile = 'g_new_512_512_512'                     #name of the magnetic geometry file
-#iterdb_file_name = 'jet78697.51005_hager_Z6.0Zeff2.35__negom_alpha1.2_TiTe.iterdb' #name of the iterdb file
-#geomfile = 'jet78697.51005_hager.eqdsk'                     #name of the magnetic geometry file
-#iterdb_file_name = 'AUG_30701negom_new.iterdb' #name of the iterdb file
-#geomfile = 'g030701.01187'                     #name of the magnetic geometry file
-#iterdb_file_name = 'DIIID175823.iterdb' #name of the iterdb file
-#geomfile = 'g175823.04108_257x257'                     #name of the magnetic geometry file
-iterdb_file_name = 'NSTX132588.iterdb' #name of the iterdb file
-geomfile = 'g132588.00650'                     #name of the magnetic geometry file
-#iterdb_file_name = 'NSTX132543.iterdb' #name of the iterdb file
-#geomfile = 'g132543.00700'                     #name of the magnetic geometry file
-f_max=70      #upper bound of the frequency experimentally observed 
+iterdb_file_name = 'DIIID162940.iterdb' #name of the iterdb file
+geomfile = 'g162940.02944_670'             #name of the magnetic geometry file
+suffix="_1"
+#suffix=".dat"
+f_max=500      #upper bound of the frequency experimentally observed 
 f_min=0        #lower bound of the frequency experimentally observed 
 plot = 1         #set to 1 if you want to plot the result
 report=1         #set to 1 if you want to export a csv report
-omega_percent=6.  #choose the omega within the top that percent defined in(0,100)
+omega_percent=2  #choose the omega within the top that percent defined in(0,100)
 n0_min=1         #minmum mode number (include) that finder will cover
 n0_max=100       #maximum mode number (include) that finder will cover
 q_scale=1        #set the q to q*q_scale
@@ -41,47 +36,92 @@ mref = 2.        # mass of ion in proton mass
 #**************End of Setting up*********************************************
 #**************End of Block for user******************************************
 
-
-
 #*************Loading the data******************************************
+#x_a,x_rho_ref,T,n0,omt,omn  = profile_e_info(suffix)
+#momdata=read_mom("mom_e",specs='e',timeslot=-1)
+#dens=momdata[imomf]['dens']
+rhot0, te0, ti0, ne0, ni0, nz0, vrot0 = read_iterdb_file(iterdb_file_name)
+pars = init_read_parameters_file(suffix)
+
+if 'x_local' in pars:
+    if pars['x_local']:
+        x_local = True
+    else:
+        x_local = False 
+else:
+    x_local = True
+
+if x_local:
+    gpars,geometry = read_geometry_local(pars['magn_geometry'][1:-1]+suffix)
+elif not x_local:
+    gpars,geometry = read_geometry_global(pars['magn_geometry'][1:-1]+suffix)
+
+field = fieldfile('field'+suffix,pars)
+
+x0_center=pars['x0']   #radial location where ky will be calculated.
+
+#Setup the field file
+#************************Setting up the time*****************
+
+
+time0=-1
+time = np.array(field.tfld)
+if time0 == -1:
+    itime = -1
+    itime0 = len(time)-1
+else: 
+    itime = np.argmin(abs(time - time0))
+    itime0 = itime
+
+#field.set_time(time[itime],itime0)
+field.set_time(time[itime])
+
+
+if 'lx_a' in pars:
+    xgrid = np.arange(field.nx)/float(field.nx-1)*pars['lx_a']+pars['x0']-pars['lx_a']/2.0
+else:
+    xgrid = np.arange(field.nx)/float(field.nx-1)*pars['lx'] - pars['lx']/2.0
+
+q = geometry['q']*q_scale
+q_orginal = q
+q_GENE = q
+
 rhot0, te0, ti0, ne0, ni0, nz0, vrot0 = read_iterdb_file(iterdb_file_name)
 EFITdict = read_EFIT(geomfile)
-xgrid = EFITdict['psipn']
-q = EFITdict['qpsi']*q_scale
+Lref, Bref, R_major, q0, shat0=get_geom_pars(geomfile,x0_center)
 
-uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10.)
+xgrid_EFIT = EFITdict['psipn']
+q_EFIT = EFITdict['qpsi']*q_scale
 
-te_u = interp(rhot0,te0,uni_rhot)
-ne_u = interp(rhot0,ne0,uni_rhot)
-vrot_u = interp(rhot0,vrot0,uni_rhot)
+rhot0_range_min=np.argmin(abs(rhot0-xgrid[0]))
+rhot0_range_max=np.argmin(abs(rhot0-xgrid[-1]))
+
+print(rhot0_range_min)
+print(rhot0_range_max)
+
+rhot0_2=rhot0[rhot0_range_min:rhot0_range_max]
+print(np.shape(rhot0))
+uni_rhot = np.linspace(min(rhot0_2),max(rhot0_2),len(rhot0_2)*10.)
+
+te_u = interp(rhot0_2,te0[rhot0_range_min:rhot0_range_max],uni_rhot)
+ne_u = interp(rhot0_2,ne0[rhot0_range_min:rhot0_range_max],uni_rhot)
+vrot_u = interp(rhot0_2,vrot0[rhot0_range_min:rhot0_range_max],uni_rhot)
 q      = interp(xgrid,q,uni_rhot)
 tprime_e = -fd_d1_o4(te_u,uni_rhot)/te_u
 nprime_e = -fd_d1_o4(ne_u,uni_rhot)/ne_u
 
+plt.clf()
+plt.title('Safety factor')
+plt.plot(uni_rhot, q,label='GENE',color='green',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
+plt.plot(xgrid_EFIT, q_EFIT,label='Interpolated from EFIT',color='red',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
+plt.legend()
+plt.show()
 
-midped, topped=find_pedestal(file_name=geomfile, path_name='', plot=False)
-x0_center = midped
-
-print('mid pedestal is at r/a = '+str(x0_center))
-
-Lref, Bref, R_major, q0, shat0=get_geom_pars(geomfile,x0_center)
-
-index_begin=np.argmin(abs(uni_rhot-x0_center+2*(1-x0_center)))
-
-te_u = te_u[index_begin:len(uni_rhot)-1]
-ne_u = ne_u[index_begin:len(uni_rhot)-1]
-vrot_u = vrot_u[index_begin:len(uni_rhot)-1]
-q      = q[index_begin:len(uni_rhot)-1]
-tprime_e = tprime_e[index_begin:len(uni_rhot)-1]
-nprime_e = nprime_e[index_begin:len(uni_rhot)-1]
-uni_rhot = uni_rhot[index_begin:len(uni_rhot)-1]
-
-center_index = np.argmin(abs(uni_rhot-x0_center))
 
 #*************End of loading the data******************************************
 
 #****************Start setting up ******************
-
+center_index = np.argmin(abs(x0_center-uni_rhot)) 
 q0      = q[center_index]
 ne = ne_u[center_index]
 te = te_u[center_index] #it is in eV
@@ -91,13 +131,13 @@ c  = 1
 qref = 1.6*10**(-19)
 nref = ne
 Tref = te * qref
+Cy0 = x0_center/q0
 cref = np.sqrt(Tref / m_SI)
 Omegaref = qref * Bref / m_SI / c
 rhoref = cref / Omegaref 
 #******************End setting up ****************
 
 #****************Start scanning mode number*************
-kymin_range=[]
 ky_range=[]
 n0_range=[]
 m0_range=[]
@@ -116,7 +156,7 @@ for n0 in range(n0_min,n0_max+1):
     kymin = ky
     n0_global = n0
     te_mid = te_u[center_index]
-    kyGENE =kymin * (q/q0) * np.sqrt(te_u/te_mid) * (x0_center/uni_rhot) #Add the effect of the q varying
+    kyGENE =kymin * (q/q0) * np.sqrt(te_u/te_mid) #Add the effect of the q varying
 #***Calculate omeage star********************************
 #from mtm_doppler
     omMTM = kyGENE*(tprime_e+nprime_e)
@@ -135,9 +175,7 @@ for n0 in range(n0_min,n0_max+1):
     omega_range=[]
     range_ind=[]
     omega_max=np.max(omega)
-    if n0 == 1: 
-        print('n=1, max omega is' + str(omega_max) +'kHz')
-    omega_min=omega_max*(100.-omega_percent)/100.
+    omega_min=omega_max*(100-omega_percent)/100
     for i in range(len(uni_rhot)):
         if omega[i] >= omega_min:
             omega_range.append(uni_rhot[i])
@@ -146,6 +184,8 @@ for n0 in range(n0_min,n0_max+1):
     ind_min  =min(range_ind)
     range_max=max(omega_range)
     ind_max  =max(range_ind)
+    xgrid_ind_min  =np.argmin(abs(range_min-xgrid))
+    xgrid_ind_max  =np.argmin(abs(range_max-xgrid))
 
 #***End of Find the range where the omega is within the top omega_percent%
 
@@ -159,8 +199,8 @@ for n0 in range(n0_min,n0_max+1):
 #find the rational surfaces
 
 #From the plot_mode_structures.py
-    qmin = np.min(q[ind_min:ind_max])
-    qmax = np.max(q[ind_min:ind_max])
+    qmin = np.min(q_orginal[xgrid_ind_min:xgrid_ind_max])
+    qmax = np.max(q_orginal[xgrid_ind_min:xgrid_ind_max])
     mmin = math.ceil(qmin*n0)
     mmax = math.floor(qmax*n0)
     mnums = np.arange(mmin,mmax+1)
@@ -180,8 +220,7 @@ for n0 in range(n0_min,n0_max+1):
                     if plot==1:
                         plt.axvline(uni_rhot[ix],color='red', label= temp_str)
                     n0_TEMP=n0_TEMP+1
-                    kymin_range.append(ky)
-                    ky_range.append(kyGENE[ix])
+                    ky_range.append(ky)
                     n0_range.append(n)
                     m0_range.append(m)
                     f_range.append(omega[ix])
@@ -221,9 +260,9 @@ print('***************End of report******************')
 if report==1:
     with open('mode_number_finder_report.csv','w') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['n ','m ','ky(' + str(x0_center)+')','ky(r)   ','frequency(kHz)           ','location(r/a)            ','omega(cs/a)    ','Drive(omega*/omega*_max)'])
+        data.writerow(['n ','m ','kymin          ','frequency(kHz)           ','location(r/a)            ','omega_GENE    ','Drive'])
         for i in range(len(n0_range)):
-            data.writerow([n0_range[i],m0_range[i],kymin_range[i],ky_range[i],f_range[i],x_range[i],f_GENE_range[i],drive_range[i]])
+            data.writerow([n0_range[i],m0_range[i],ky_range[i],f_range[i],x_range[i],f_GENE_range[i],drive_range[i]])
     csvfile.close()
 
 ky_range2=ky_range
@@ -252,11 +291,8 @@ plt.show()
 x_zoom=[]
 q_zoom=[]
 f_zoom=[]
-#x_min=np.min(x_range)*0.7
-#x_max=np.max(x_range)*1.3
-x_min=0
-x_max=1
-
+x_min=np.min(x_range)*0.95
+x_max=np.max(x_range)*1.3
 for i in range(len(uni_rhot)):
     if uni_rhot[i]<=x_max and uni_rhot[i]>=x_min:
         x_zoom.append(uni_rhot[i])
@@ -272,6 +308,8 @@ plt.plot(x_zoom,f_zoom/np.max(f_zoom),label='Diamagnetic plus Doppler frequency(
 plt.plot(x_zoom,q_zoom/np.max(q_zoom),label='Safety factor')
 for i in range(len(n0_range)):
    plt.axvline(x_range[i],color='red',alpha=0.2)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
+
+plt.ylim(0,1.1)
 plt.legend()
 plt.show()
 plt.savefig('Summary.png')
