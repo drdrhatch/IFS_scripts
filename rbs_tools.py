@@ -6,7 +6,7 @@ def get_psi0(filename):
    f.close()
    rbs = rbs.split('\n')  
    psi0 = float(rbs[1].split()[2])
-   print "psi0",psi0
+   print( "psi0",psi0)
    return psi0 
 
 def calc_a(filename):
