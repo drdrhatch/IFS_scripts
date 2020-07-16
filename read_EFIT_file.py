@@ -14,12 +14,12 @@ def read_EFIT_file(efit_file_name):
     line1=eqdsk[0].split()
     nw=int(eqdsk[0].split()[-2])
     nh=int(eqdsk[0].split()[-1])
-    print 'EFIT file Resolution: %d x %d' %(nw,nh)
+    print ('EFIT file Resolution: %d x %d' %(nw,nh))
 
     entrylength=16
     #note: here rmin is rleft from EFIT
     try:
-        rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])/entrylength)]
+        rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[1])/entrylength))]
     except:
         entrylength=15
         try:
@@ -27,9 +27,9 @@ def read_EFIT_file(efit_file_name):
         except:
             exit('Error reading EQDSK file, please check format!')
 
-    rmag,zmag,psiax,psisep,Bctr=[float(eqdsk[2][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[2])/entrylength)]
-    dum,psiax2,dum,rmag2,dum=[float(eqdsk[3][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[3])/entrylength)]
-    zmag2,dum,psisep2,dum,dum=[float(eqdsk[4][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[4])/entrylength)]
+    rmag,zmag,psiax,psisep,Bctr=[float(eqdsk[2][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[2])/entrylength))]
+    dum,psiax2,dum,rmag2,dum=[float(eqdsk[3][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[3])/entrylength))]
+    zmag2,dum,psisep2,dum,dum=[float(eqdsk[4][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[4])/entrylength))]
     if rmag!=rmag2: sys.exit('Inconsistent rmag: %7.4g, %7.4g' %(rmag,rmag2))
     if psiax2!=psiax: sys.exit('Inconsistent psiax: %7.4g, %7.4g' %(psiax,psiax2))
     if zmag!=zmag2: sys.exit('Inconsistent zmag: %7.4g, %7.4g' %(zmag,zmag2) )
@@ -63,38 +63,38 @@ def read_EFIT_file(efit_file_name):
     psirz_1d=empty(nw*nh,dtype=float)
     
     start_line=5
-    lines=range(nw/5)
-    if nw%5!=0: lines=range(nw/5+1)
+    lines=range(int(nw/5))
+    if nw%5!=0: lines=range(int(nw/5)+1)
     for i in lines:
-        n_entries=len(eqdsk[i+start_line])/entrylength
+        n_entries=int(len(eqdsk[i+start_line])/entrylength)
         F[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
 
     for i in lines:
-        n_entries=len(eqdsk[i+start_line])/entrylength
+        n_entries=int(len(eqdsk[i+start_line])/entrylength)
         p[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
 
     for i in lines:
-        n_entries=len(eqdsk[i+start_line])/entrylength
+        n_entries=int(len(eqdsk[i+start_line])/entrylength)
         ffprime[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
 
     for i in lines:
-        n_entries=len(eqdsk[i+start_line])/entrylength
+        n_entries=int(len(eqdsk[i+start_line])/entrylength)
         pprime[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
 
-    lines_twod=range(nw*nh/5)
-    if nw*nh%5!=0: lines_twod=range(nw*nh/5+1)
+    lines_twod=range(int(nw*nh/5))
+    if nw*nh%5!=0: lines_twod=range(int(nw*nh/5)+1)
     for i in lines_twod:
-        n_entries=len(eqdsk[i+start_line])/entrylength
+        n_entries=int(len(eqdsk[i+start_line])/entrylength)
         psirz_1d[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
     psirz=psirz_1d.reshape(nh,nw)
 
     for i in lines:
-        n_entries=len(eqdsk[i+start_line])/entrylength
+        n_entries=int(len(eqdsk[i+start_line])/entrylength)
         qpsi[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
     start_line=i+start_line+1
 
@@ -196,17 +196,17 @@ def read_EFIT_parameters(efit_file_name):
     entrylength=16
     #note: here rmin is rleft from EFIT
     try:
-        rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])/entrylength)]
+        rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[1])/entrylength))]
     except:
         entrylength=15
         try:
-            rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])/entrylength)]
+            rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[1])/entrylength))]
         except:
             exit('Error reading EQDSK file, please check format!')
 
-    rmag,zmag,psiax,psisep,Bctr=[float(eqdsk[2][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[2])/entrylength)]
-    curr,psiax2,dum,rmag2,dum=[float(eqdsk[3][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[3])/entrylength)]
-    zmag2,dum,psisep2,dum,dum=[float(eqdsk[4][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[4])/entrylength)] 
+    rmag,zmag,psiax,psisep,Bctr=[float(eqdsk[2][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[2])/entrylength))]
+    curr,psiax2,dum,rmag2,dum=[float(eqdsk[3][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[3])/entrylength))]
+    zmag2,dum,psisep2,dum,dum=[float(eqdsk[4][j*entrylength:(j+1)*entrylength]) for j in range(int(len(eqdsk[4])/entrylength))] 
     if rmag!=rmag2: sys.exit('Inconsistent rmag: %7.4g, %7.4g' %(rmag,rmag2))
     if psiax2!=psiax: sys.exit('Inconsistent psiax: %7.4g, %7.4g' %(psiax,psiax2))
     if zmag!=zmag2: sys.exit('Inconsistent zmag: %7.4g, %7.4g' %(zmag,zmag2) )

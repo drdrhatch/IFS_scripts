@@ -18,7 +18,7 @@ from read_iterdb import *
 
 parser=op.OptionParser(description='Plots mode structures and calculates various interesting quantities.')
 parser.add_option('--plot_theta','-g',action='store_const',const=False,help = 'Plot global mode structures decomposed in poloidal m number.',default=True)
-parser.add_option('--calc_epar','-e',action='store_const',const=False,help = 'Calculate E_parallel.',default=False)
+parser.add_option('--calc_epar','-e',action='store_true',help = 'Calculate E_parallel.',default=False)
 parser.add_option('--plot_ballooning','-b',action='store_const',const=False,help = 'Plot global mode structures in z, r.',default=True)
 #parser.add_option('--plot_all','-a',action='store_const',const=1,help = 'Plot all plots.',default=False)
 parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
@@ -45,6 +45,7 @@ print("options.plot_ballooning", options.plot_ballooning)
 plot_ballooning=options.plot_ballooning
 plot_theta=options.plot_theta
 calc_epar=options.calc_epar
+print("calc_epar",calc_epar)
 idb_file = options.idb_file
 prof_file = options.prof_file
 time0=float(options.time0)
@@ -217,6 +218,7 @@ if x_local:
     #gradphiR = fd_d1_o4(phiR,zgrid)
     #gradphiI = fd_d1_o4(phiI,zgrid)
     if calc_epar:
+       print("Hello")
        if os.path.isfile('omega'+suffix):
            om = np.genfromtxt('omega'+suffix)
        else:
@@ -368,9 +370,9 @@ else:  #x_local = False
     if plot_ballooning:
         plt.xlabel(r'$z/\pi$',fontsize=13)
         plt.ylabel(r'$|\phi|$')
-        plt.plot(zgrid_ext,np.abs(phi_bnd[:,0,pars['nx0']/4]),label='nx0/4')
-        plt.plot(zgrid_ext,np.abs(phi_bnd[:,0,pars['nx0']/2]),label='nx0/2')
-        plt.plot(zgrid_ext,np.abs(phi_bnd[:,0,3*pars['nx0']/4]),label='3/4*nx0')
+        plt.plot(zgrid_ext,np.abs(phi_bnd[:,0,int(pars['nx0']/4)]),label='nx0/4')
+        plt.plot(zgrid_ext,np.abs(phi_bnd[:,0,int(pars['nx0']/2)]),label='nx0/2')
+        plt.plot(zgrid_ext,np.abs(phi_bnd[:,0,3*int(pars['nx0']/4)]),label='3/4*nx0')
         plt.legend()
         plt.show()
 

@@ -38,7 +38,7 @@ def iterdb_write_quant(fileid,quant_arr):
             fileid.write(' ')
     fileid.write('\n')
 
-def output_iterdb(rhot,rhop,ne,te,ni,ti,file_base,shot_num,time_string,vrot=np.array(0),nimp=np.array(0)):
+def output_iterdb(rhot,rhop,ne,te,ni,ti,file_base,shot_num,time_string,vrot=[-999],nimp=[-999]):
     transition=';----END-OF-DATA-----------------COMMENTS:-----------\n'
     transition=transition+'********************************************************************************\n'
     transition=transition+'********************************************************************************\n'
@@ -77,7 +77,7 @@ def output_iterdb(rhot,rhop,ne,te,ni,ti,file_base,shot_num,time_string,vrot=np.a
     idbf.write(transition)
 
     #Include impurity density
-    if nimp.any():
+    if nimp[0] != -999:
         header=iterdb_header('NM2','m^-3',len(rhot),shot_num)
         idbf.write(header)
         iterdb_write_quant(idbf,rhot)
@@ -85,7 +85,7 @@ def output_iterdb(rhot,rhop,ne,te,ni,ti,file_base,shot_num,time_string,vrot=np.a
         iterdb_write_quant(idbf,1.0e19*nimp)
         idbf.write(transition)
 
-    if vrot.any():
+    if vrot[0] != -999:
         header=iterdb_header('VROT','rad/s',len(rhot),shot_num)
         idbf.write(header)
         iterdb_write_quant(idbf,rhot)

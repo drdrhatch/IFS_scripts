@@ -18,7 +18,7 @@ def read_from_nrg_files(pars,suffix,plot,ncols=10):
         time, nrgi, nrge, nrgz = get_nrg0(suffix,nspec=3)
         #return time, nrgi, nrge, nrgz
     else:
-        print "n_spec =", pars['n_spec']
+        print( "n_spec =", pars['n_spec'])
         sys.exit("n_spec must be 1, 2 or 3.")
 
     if plot:
@@ -40,11 +40,11 @@ def read_Gamma_Q(time,nrgs,print_val,setTime=-1):
      
     if (setTime == -1):
         this_nrg = nrgs[setTime,:]
-        print 'Reading nrg file are at t = ', time[setTime]
+        print( 'Reading nrg file are at t = ', time[setTime])
     else:
         isetTime = np.argmin(abs(time-setTime))
         this_nrg = nrgs[isetTime]
-        print 'Reading nrg file are at t = ', time[isetTime]
+        print( 'Reading nrg file are at t = ', time[isetTime])
 
 
     Gamma_es = this_nrg[4]

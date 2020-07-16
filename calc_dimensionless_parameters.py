@@ -34,15 +34,15 @@ Ti = profi[irhot0i,2]
 ne = profe[irhot0e,3]
 ni = profi[irhot0i,3]
 
-print "Tref:",Te
-print "nref:",ne
-print "Bref:",Bref
-print "Lref:",Lref
+print ("Tref:",Te)
+print ("nref:",ne)
+print ("Bref:",Bref)
+print ("Lref:",Lref)
 minor_r = 1.0
 
 trpeps = rhot0*Lref/R_major
 
-dummy = raw_input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
+dummy = input("Assuming ion charge is 1 and reference mass is deuterium (press any key to continue).\n")
 Z = 1.0
 
 beta = 403.0e-5*ne*Te/Bref**2  #From GENE documentation
@@ -57,21 +57,21 @@ nustar_i=8.0/3.0/pi**0.5*q0/trpeps**1.5*(R_major/Lref)*(ni/ne)*Z**4/(Te/Ti)**2*c
 
 nustar_e=16.0/3.0/pi**0.5*q0/trpeps**1.5*(R_major/Lref)*Z**2*coll
 
-print "Sound speed (m/s):", crefSI
-print "Sound gyroradius (m):", crefSI/OmrefSI
-print "Transit frequency (1/s):", crefSI/Lref
-print "QGBref = nref Tref vtref rhoref*^2 translated to (W/m^2):", ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2
-print "GammaGBref = nref vtref rhoref*^2 translated to (particles / m^2 / s):", ne*1.0e19*crefSI*rhostar**2
-print "ChiGBref = Lref vtref rhoref*^2 translated to (m^2/s):", Lref*crefSI*rhostar**2
-print "QGBe = nref Tref vte rhoe*^2 translated to (W/m^2):", (ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2)*(me/mref)**0.5
-print "coll (from GENE)",coll
+print ("Sound speed (m/s):", crefSI)
+print ("Sound gyroradius (m):", crefSI/OmrefSI)
+print ("Transit frequency (1/s):", crefSI/Lref)
+print ("QGBref = nref Tref vtref rhoref*^2 translated to (W/m^2):", ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2)
+print ("GammaGBref = nref vtref rhoref*^2 translated to (particles / m^2 / s):", ne*1.0e19*crefSI*rhostar**2)
+print ("ChiGBref = Lref vtref rhoref*^2 translated to (m^2/s):", Lref*crefSI*rhostar**2)
+print ("QGBe = nref Tref vte rhoe*^2 translated to (W/m^2):", (ne*1.0e19*Te*1000.0*ee*crefSI*rhostar**2)*(me/mref)**0.5)
+print ("coll (from GENE)",coll)
 
-print "*************************"
-print "Dimensionless parameters:"
-print "*************************"
-print "rhostar = ",rhostar
-print "nustar_i",nustar_i
-print "nustar_e",nustar_e
-print "q0",q0
-print "beta = ",beta
+print ("*************************")
+print ("Dimensionless parameters:")
+print ("*************************")
+print ("rhostar = ",rhostar)
+print ("nustar_i",nustar_i)
+print ("nustar_e",nustar_e)
+print ("q0",q0)
+print ("beta = ",beta)
 
