@@ -44,7 +44,7 @@ Parameter_demo_plot=True
 BES_demo_plot=False
 RIP_demo_plot=True
 
-scan_along_z=False  #Change to True if one to scan the RIP result across different height
+scan_along_z=True  #Change to True if one to scan the RIP result across different height
 bin_smooth=10
 #
 #del_x= 0.135 #13.5cm for DIIID RIP
@@ -392,15 +392,27 @@ def run_RIP_BES_Z_scan(suffix,RIP_Z_location,beam_width,z_BES,r_BES,BES_radius,\
     n0_BES,n1_BES,B0_BES=run_BES(z_BES,r_BES,BES_radius,xgrid,zgrid,real_R,real_Z,gxx,gxy,gyy,gyz,gzz,B0,B1,n0,n1,plot=BES_demo_plot)
     
     Z_grid=np.arange(np.min(real_Z), np.max(real_Z), beam_width/2.)
+    #Z_grid=np.arange(-0.1, 0.1, beam_width/2.)
     integrate_B1_n0_dR_list=[]
     integrate_n0_dR_list=[]
-    for RIP_location in Z_grid:
-        integrate_B1_n0_dR,integrate_n0_dR=g_RIP_single_location(RIP_location,beam_width,real_R,real_Z,gxx,gxy,gyy,gyz,gzz,B0,B1,n0,n1,plot=RIP_demo_plot)
-        integrate_B1_n0_dR_list.append(integrate_B1_n0_dR)
-        integrate_n0_dR_list.append(integrate_n0_dR)
+    ratio_list=[]
+    with open('RIP_ratio.csv', 'w') as csvfile:
+        RIP_data = csv.writer(csvfile, delimiter=',')
+        RIP_data.writerow(['Z(m)','Ratio','integrate_B1_n0_dR','integrate_n0_dR','n0_BES','n1_BES','B0_BES'])
+
+        for RIP_location in Z_grid:
+            integrate_B1_n0_dR,integrate_n0_dR=g_RIP_single_location(RIP_location,beam_width,real_R,real_Z,gxx,gxy,gyy,gyz,gzz,B0,B1,n0,n1,plot=RIP_demo_plot)
+            integrate_B1_n0_dR_list.append(integrate_B1_n0_dR)
+            integrate_n0_dR_list.append(integrate_n0_dR)
+            ratio=integrate_B1_n0_dR/(integrate_n0_dR*B0_BES)  *  (n0_BES/n1_BES)
+            ratio_list.append(ratio)
+            RIP_data.writerow([RIP_location,ratio,integrate_B1_n0_dR,integrate_n0_dR,n0_BES,n1_BES,B0_BES])
+
+    csvfile.close()
+
 
     print(n0_BES,n1_BES,B0_BES,integrate_B1_n0_dR,integrate_n0_dR)
-    ratio_list=integrate_B1_n0_dR_list/(integrate_n0_dR_list*B0_BES)  *  (n0_BES/n1_BES)
+    
     print("***********************")
     print("***********************")
     print("***********************")
