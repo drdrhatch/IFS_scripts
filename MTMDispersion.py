@@ -43,7 +43,7 @@ csv_n_scan=False                        #Set to True is user want to have the cs
 plot_spectrogram=False
 
 #******For scaning********
-scan_n0=23
+scan_n0=19
 plot_peak_scan=True
 csv_peak_scan=True
 
@@ -52,9 +52,9 @@ csv_peak_scan=True
 
 def Dispersion(nu,eta,shat,beta,ky):
   #Fit Parameters
-  alpha1=3.32+1.17j
+  alpha1=-10.-1.17j
   alpha2=1.
-  alpha3=0
+  alpha3=0.
   factor=-alpha1*((ky*shat)/( alpha2*beta-eta*(eta+1.)/1836.))*(1/np.sqrt(1836))+alpha3
   a=complex(0,-15753.1)-32045.*factor
   b=complex(0,15753.1)+complex(0,16426.6)*eta+11951.2*nu-complex(0,40594.8)*factor*nu
@@ -199,7 +199,7 @@ def Parameter_reader(iterdb_file_name,geomfile,plot,output_csv):
                 data.writerow([uni_rhot[i],nu[i],coll_ei[i],eta[i],shat[i],beta[i],ky[i]])
         csvfile.close()
     
-    return uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n
+    return uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE
 
 #scan the Dispersion for the given location(default to be pedestal)
 def Dispersion_list(uni_rhot,nu,eta,shat,beta,ky,plot):
@@ -426,22 +426,7 @@ def Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,bins,p
         plt.show()
     return f_lab,gamma_f_lab,f_plasma,gamma_f_plasma
 
-def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan): 
-    #return nu,ky for the case n_tor=1 for the given location(default to be pedestal)
-    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
-    x_peak_range, x_range_ind=Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent)
-    #scan toroidial mode number
-    x_list,n_list,m_list,gamma_list,\
-    omega_list,factor_list,gamma_list_kHz,\
-    omega_list_kHz,omega_list_Lab_kHz\
-    =Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,\
-    omega_n,omegaDoppler,x_peak_range,x_range_ind,\
-    n_min,n_max,plot=plot_n_scan,output_csv=csv_n_scan)
-
-    f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,bins,plot=plot_spectrogram)
-    return x_list,n_list,m_list,gamma_list,omega_list,factor_list
-
-def peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDoppler,n0,plot_peak_scan,csv_peak_scan):
+def peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omega_n_GENE,mtmFreq,omegaDoppler,n0,plot_peak_scan,csv_peak_scan):
     x0=0.98
     center_index=np.argmin(abs(uni_rhot-x0))
     #print(x0)
@@ -452,6 +437,7 @@ def peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDoppler,n0,plo
     ky0=ky[center_index]*float(n0)
 
     omega_n_0=omega_n[center_index]*float(n0)
+    omega_n_GENE_0=omega_n_GENE[center_index]*float(n0)
     mtmFreq0=mtmFreq[center_index]*float(n0)
     omegaDoppler0=omegaDoppler[center_index]*float(n0)
     
@@ -480,10 +466,11 @@ def peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDoppler,n0,plo
         nu_list_omega_star.append((nu_min+float(i)*d_nu)*omega_n_0/(mtmFreq0+omegaDoppler0))
     
     gamma,omega,factor=Dispersion_list(uni_rhot_list,nu_list,eta_list,shat_list,beta_list,ky_list,plot=False)
-
+    gamma_cs_a=gamma*omega_n_GENE_0
+    
     if csv_peak_scan==True:
-        d = {'nu/omegan':nu_list,'eta':eta_list,'shat':shat_list,'beta':beta_list,'ky':ky_list,'nu/omega*':nu_list_omega_star,'gamma':gamma}
-        df=pd.DataFrame(d, columns=['nu/omegan','eta','shat','beta','ky','nu/omega*','gamma'])
+        d = {'nu_omegan':nu_list,'eta':eta_list,'shat':shat_list,'beta':beta_list,'ky':ky_list,'nu_ei_omega':nu_list_omega_star,'gamma_cs_a':gamma_cs_a}
+        df=pd.DataFrame(d, columns=['nu_omegan','eta','shat','beta','ky','nu_ei_omega','gamma_cs_a'])
         df.to_csv('nu_scan.csv',index=False)
     #print(nu_list)
     #nu_list_omega_star=nu_list*omega_n_0/(mtmFreq0+omegaDoppler0)
@@ -492,15 +479,29 @@ def peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDoppler,n0,plo
         plt.clf()
         plt.title('Nu scan')
         plt.xlabel('nu/omega*')
-        plt.ylabel('gamma(a.u.)') 
-        plt.plot(nu_list_omega_star,gamma)
+        plt.ylabel('gamma(cs/a))') 
+        plt.plot(nu_list_omega_star,gamma_cs_a)
         plt.show()
 
+def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan): 
+    #return nu,ky for the case n_tor=1 for the given location(default to be pedestal)
+    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
+    x_peak_range, x_range_ind=Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent)
+    #scan toroidial mode number
+    x_list,n_list,m_list,gamma_list,\
+    omega_list,factor_list,gamma_list_kHz,\
+    omega_list_kHz,omega_list_Lab_kHz\
+    =Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,\
+    omega_n,omegaDoppler,x_peak_range,x_range_ind,\
+    n_min,n_max,plot=plot_n_scan,output_csv=csv_n_scan)
+
+    f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,bins,plot=plot_spectrogram)
+    return x_list,n_list,m_list,gamma_list,omega_list,factor_list
 
 
 def coll_scan(iterdb_file_name,geomfile,n0,plot_profile,plot_peak_scan,csv_profile,csv_peak_scan): 
-    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
-    peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDoppler,n0,plot_peak_scan,csv_peak_scan)
+    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
+    peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omega_n_GENE,mtmFreq,omegaDoppler,n0,plot_peak_scan,csv_peak_scan)
 
 #x_list,n_list,m_list,gamma_list,omega_list,factor_list=MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan)
 
