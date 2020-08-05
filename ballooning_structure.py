@@ -55,12 +55,9 @@ else:
     time0 = float(args.time0)
 
 time = np.array(field.tfld)
-print(time)
-print(type(field.tfld))
-print(type(time))
-print(type(time0))
 itime = np.argmin(abs(time - time0))
 field.set_time(time[itime])
+print("Reading mode at time = ",time[itime])
 
 nx = field.nx
 ny = field.ny
