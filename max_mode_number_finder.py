@@ -4,31 +4,43 @@ from interp import *
 import math
 import csv
 from read_EFIT import *
+from read_EFIT_file import *
 from read_iterdb_file import *
-#Last edited by Max Curie 02/27/2020
+from max_pedestal_finder import find_pedestal
+#Last edited by Max Curie 06/10/2020
 #Supported by David R Hatch's script mtmDopplerFreqs.py
 
 
 #**************Block for user******************************************
 #**************Setting up*********************************************
-n0_min=1         #minmum mode number (include) that finder will cover
-n0_max=100       #maximum mode number (include) that finder will cover
-omega_percent=2 #choose the omega within the top that percent defined in(0,100)
-f_max=500        #upper bound of the frequency experimentally observed 
-f_min=100        #lower bound of the frequency experimentally observed 
+#iterdb_file_name = 'DIIID154406.iterdb' #name of the iterdb file
+#geomfile = 'g174864.03325'                     #name of the magnetic geometry file
+#iterdb_file_name = 'DIIID162940.iterdb' #name of the iterdb file
+#geomfile = 'g162940.02944_670'                     #name of the magnetic geometry file
+#iterdb_file_name = 'JET2_1.iterdb' #name of the iterdb file
+#geomfile = 'g_new_512_512_512'                     #name of the magnetic geometry file
+#iterdb_file_name = 'jet78697.51005_hager_Z6.0Zeff2.35__negom_alpha1.2_TiTe.iterdb' #name of the iterdb file
+#geomfile = 'jet78697.51005_hager.eqdsk'                     #name of the magnetic geometry file
+#iterdb_file_name = 'AUG_30701negom_new.iterdb' #name of the iterdb file
+#geomfile = 'g030701.01187'                     #name of the magnetic geometry file
+#iterdb_file_name = 'DIIID175823.iterdb' #name of the iterdb file
+#geomfile = 'g175823.04108_257x257'                     #name of the magnetic geometry file
+iterdb_file_name = 'NSTX132588.iterdb' #name of the iterdb file
+geomfile = 'g132588.00650'                     #name of the magnetic geometry file
+#iterdb_file_name = 'NSTX132543.iterdb' #name of the iterdb file
+#geomfile = 'g132543.00700'                     #name of the magnetic geometry file
+f_max=70      #upper bound of the frequency experimentally observed 
+f_min=0        #lower bound of the frequency experimentally observed 
 plot = 1         #set to 1 if you want to plot the result
 report=1         #set to 1 if you want to export a csv report
-q_scale=0.994        #set the q to q*q_scale
-#iterdb_file_name = 'DIIID175823.iterdb' #name of the iterdb file
-#geomfile = 'g175823.04108_257x257'      #name of the magnetic geometry file
-iterdb_file_name = 'DIIID174082.iterdb' #name of the iterdb file
-geomfile = 'g174082.3000'      #name of the magnetic geometry file
-x0_center=0.96                          #radial location where ky will be calculated.
-Lref = 7.3893888417726761E-01           #minor radius of the device in meter
-Bref_Gauss = 19774.                     #Magnetic field in Gauss at the center of the simulation
-mref = 2.                               # mass of ion in proton mass
+omega_percent=6.  #choose the omega within the top that percent defined in(0,100)
+n0_min=1         #minmum mode number (include) that finder will cover
+n0_max=100       #maximum mode number (include) that finder will cover
+q_scale=1        #set the q to q*q_scale
+mref = 2.        # mass of ion in proton mass
 #**************End of Setting up*********************************************
 #**************End of Block for user******************************************
+
 
 
 #*************Loading the data******************************************
@@ -46,28 +58,46 @@ q      = interp(xgrid,q,uni_rhot)
 tprime_e = -fd_d1_o4(te_u,uni_rhot)/te_u
 nprime_e = -fd_d1_o4(ne_u,uni_rhot)/ne_u
 
+
+midped, topped=find_pedestal(file_name=geomfile, path_name='', plot=False)
+x0_center = midped
+
+print('mid pedestal is at r/a = '+str(x0_center))
+
+Lref, Bref, R_major, q0, shat0=get_geom_pars(geomfile,x0_center)
+
+index_begin=np.argmin(abs(uni_rhot-x0_center+2*(1-x0_center)))
+
+te_u = te_u[index_begin:len(uni_rhot)-1]
+ne_u = ne_u[index_begin:len(uni_rhot)-1]
+vrot_u = vrot_u[index_begin:len(uni_rhot)-1]
+q      = q[index_begin:len(uni_rhot)-1]
+tprime_e = tprime_e[index_begin:len(uni_rhot)-1]
+nprime_e = nprime_e[index_begin:len(uni_rhot)-1]
+uni_rhot = uni_rhot[index_begin:len(uni_rhot)-1]
+
+center_index = np.argmin(abs(uni_rhot-x0_center))
+
 #*************End of loading the data******************************************
 
-
 #****************Start setting up ******************
-center_index = np.argmin(abs(x0_center-uni_rhot)) 
+
 q0      = q[center_index]
 ne = ne_u[center_index]
 te = te_u[center_index] #it is in eV
-Bref=float(Bref_Gauss)/10000
+#Bref=float(Bref_Gauss)/10000
 m_SI = mref *1.6726*10**(-27)
 c  = 1
 qref = 1.6*10**(-19)
-nref = ne * 1.E19
+nref = ne
 Tref = te * qref
-Cy0 = x0_center/q0
 cref = np.sqrt(Tref / m_SI)
 Omegaref = qref * Bref / m_SI / c
 rhoref = cref / Omegaref 
-
 #******************End setting up ****************
 
 #****************Start scanning mode number*************
+kymin_range=[]
 ky_range=[]
 n0_range=[]
 m0_range=[]
@@ -86,7 +116,7 @@ for n0 in range(n0_min,n0_max+1):
     kymin = ky
     n0_global = n0
     te_mid = te_u[center_index]
-    kyGENE =kymin * (q/q0) * np.sqrt(te_u/te_mid) #Add the effect of the q varying
+    kyGENE =kymin * (q/q0) * np.sqrt(te_u/te_mid) * (x0_center/uni_rhot) #Add the effect of the q varying
 #***Calculate omeage star********************************
 #from mtm_doppler
     omMTM = kyGENE*(tprime_e+nprime_e)
@@ -105,7 +135,9 @@ for n0 in range(n0_min,n0_max+1):
     omega_range=[]
     range_ind=[]
     omega_max=np.max(omega)
-    omega_min=omega_max*(100-omega_percent)/100
+    if n0 == 1: 
+        print('n=1, max omega is' + str(omega_max) +'kHz')
+    omega_min=omega_max*(100.-omega_percent)/100.
     for i in range(len(uni_rhot)):
         if omega[i] >= omega_min:
             omega_range.append(uni_rhot[i])
@@ -148,7 +180,8 @@ for n0 in range(n0_min,n0_max+1):
                     if plot==1:
                         plt.axvline(uni_rhot[ix],color='red', label= temp_str)
                     n0_TEMP=n0_TEMP+1
-                    ky_range.append(ky)
+                    kymin_range.append(ky)
+                    ky_range.append(kyGENE[ix])
                     n0_range.append(n)
                     m0_range.append(m)
                     f_range.append(omega[ix])
@@ -188,9 +221,9 @@ print('***************End of report******************')
 if report==1:
     with open('mode_number_finder_report.csv','w') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['n ','m ','kymin          ','frequency(kHz)           ','location(r/a)            ','omega_GENE    ','Drive'])
+        data.writerow(['n ','m ','ky(' + str(x0_center)+')','ky(r)   ','frequency(kHz)           ','location(r/a)            ','omega(cs/a)    ','Drive(omega*/omega*_max)'])
         for i in range(len(n0_range)):
-            data.writerow([n0_range[i],m0_range[i],ky_range[i],f_range[i],x_range[i],f_GENE_range[i],drive_range[i]])
+            data.writerow([n0_range[i],m0_range[i],kymin_range[i],ky_range[i],f_range[i],x_range[i],f_GENE_range[i],drive_range[i]])
     csvfile.close()
 
 ky_range2=ky_range
@@ -212,6 +245,35 @@ plt.ylabel('frequency (kHz)')
 for i in range(len(n0_range)):
    plt.axhline(f_range[i],color='red',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
 plt.xlim(0,1)
-plt.ylim(0,500)
+plt.ylim(f_min,f_max)
 plt.show()
 
+
+x_zoom=[]
+q_zoom=[]
+f_zoom=[]
+#x_min=np.min(x_range)*0.7
+#x_max=np.max(x_range)*1.3
+x_min=0
+x_max=1
+
+for i in range(len(uni_rhot)):
+    if uni_rhot[i]<=x_max and uni_rhot[i]>=x_min:
+        x_zoom.append(uni_rhot[i])
+        q_zoom.append(q[i])
+        f_zoom.append(mtmFreq[i] + omegaDoppler[i])
+
+
+plt.clf()
+plt.title('Summary plot')
+plt.xlabel('r/a')
+plt.ylabel('a.u.') 
+plt.plot(x_zoom,f_zoom/np.max(f_zoom),label='Diamagnetic plus Doppler frequency(MTM in lab frame)')
+plt.plot(x_zoom,q_zoom/np.max(q_zoom),label='Safety factor')
+for i in range(len(n0_range)):
+   plt.axvline(x_range[i],color='red',alpha=0.2)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
+plt.legend()
+plt.show()
+plt.savefig('Summary.png')
+
+#midped, topped = find_pedestal(geomfile, path_name='', plot=0)

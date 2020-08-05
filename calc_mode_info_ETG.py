@@ -7,7 +7,7 @@ import os
 for i in range(100):
     num = '0000'+str(i)
     num = num[-4:]
-    print num
+    print (num)
     if os.path.exists('./parameters_'+num):
         call(['calc_kpar_kperp_omd.py',num])
 
@@ -21,10 +21,10 @@ for i in range(100):
         suffix = suffix[-4:]
         efile = base+str(j)+'_'+suffix
         if os.path.exists('./'+efile):
-            print efile
+            print (efile)
             files.append(efile)
             cat_string += efile+' '
-            print efile
+            print (efile)
 
 cat_string += '> '+'mode_info_all'
 

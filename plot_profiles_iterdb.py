@@ -8,10 +8,10 @@ import re
 #file_name='profiles_nshift0.02_t3.25.iterdb'
 #file_name='profiles_3.25.iterdb'
 #file_name = 'profiles_t3.035_nshift0.02.iterdb'
-file_name = 'DIIID174092.iterdb'
+file_name = 'JET92174.iterdb'
 #file_name = 'efit_Dial_Nmod1_Zp2_48_new.iterdb'
-gene_e = 'profiles_e'
-gene_i = 'profiles_i'
+gene_e = 'gene_profiles_92174_e.dat'
+gene_i = 'gene_profiles_92174_i.dat'
 #file_name='profiles_3.5.iterdb'
 #file_name='iterdb.NSTX_129016A03_460'
 #If you want to compare with gene profile files:
@@ -45,7 +45,7 @@ while keep_going:
         num=data_linesplit[i].split()[0]
         num=float(num)
         num=int(num)
-        print "number of points:",num
+        print ("number of points:",num)
         keep_going=(1==2)
     if i == len(data_linesplit):
         keep_going=(1==2)
@@ -53,7 +53,7 @@ while keep_going:
 
 
 def plot_next(data_linesplit,lnum,num):
-    sec_num_lines = num/6
+    sec_num_lines = int(num/6)
     if num % 6 != 0:
         sec_num_lines += 1
     keep_going=1
@@ -63,7 +63,7 @@ def plot_next(data_linesplit,lnum,num):
         if test :
             quantity=data_linesplit[lnum].split()[0]
             units=data_linesplit[lnum].split()[1]
-            print "Plotting :",quantity
+            print ("Plotting :",quantity)
         test=re.search('DATA FOLLOW',data_linesplit[lnum])
         if test:
             keep_going=(1==2)
@@ -79,7 +79,7 @@ def plot_next(data_linesplit,lnum,num):
                 rhot=np.append(rhot,temp)
         lnum=lnum+1
     #print rhot
-    print "time=",data_linesplit[lnum]
+    print ("time=",data_linesplit[lnum])
     #print "var=",quantity
     lnum=lnum+1
     

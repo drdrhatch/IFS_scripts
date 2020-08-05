@@ -4,7 +4,7 @@ from os.path import getsize, join
 import numpy as np
 
 class momfile():
-	def __init__(self,file,pars):
+        def __init__(self,file,pars):
             self.pars=pars
             self.file=file
             self.set_gridcounts()
@@ -12,9 +12,9 @@ class momfile():
             self.set_datatypes()
             self.define_arrays()
             self.redirect(self.file)
-
+        #def redirect(self,file):
         def redirect(self,file):
-	    self.file=file	 
+            self.file=file 
             try: 
                 close(self.m)
             except:
@@ -53,13 +53,13 @@ class momfile():
                 self.npct=np.dtype(np.complex128)
 
         def define_arrays(self):
-		self.dens3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
-		self.tpar3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
-		self.tperp3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
-		self.qpar3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
-		self.qperp3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
-		self.upar3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
-            
+                self.dens3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
+                self.tpar3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
+                self.tperp3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
+                self.qpar3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
+                self.qperp3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
+                self.upar3d=np.empty((self.nz,self.ny,self.nx),dtype=self.npct)
+       
            
         def get_timearray(self):
 #get time arrays for field file
@@ -73,21 +73,21 @@ class momfile():
             return self.tmom[0],self.tmom[-1]
 
 #defines the struct for a time entry in field
-	def TimeEntry(self):
-		if self.bigendian:
-			timeentry=struct.Struct('>idi')
-		else:
-			timeentry=struct.Struct('=idi')
-		return timeentry,timeentry.size
+        def TimeEntry(self):
+                if self.bigendian:
+                        timeentry=struct.Struct('>idi')
+                else:
+                        timeentry=struct.Struct('=idi')
+                return timeentry,timeentry.size
 
 
-	def offset(self,var):
-		if var in [i for i in range(self.nmoms)]:
-			leap=self.leapmom
-			return self.tesize+self.tind*(self.tesize+leap)+var*(self.entrysize+2*self.intsize)+self.intsize
+        def offset(self,var):
+                if var in [i for i in range(self.nmoms)]:
+                        leap=self.leapmom
+                        return self.tesize+self.tind*(self.tesize+leap)+var*(self.entrysize+2*self.intsize)+self.intsize
 
 #returns field for given timestep
-	def readvar(self,var):
+        def readvar(self,var):
             self.m.seek(self.offset(var))	
             var3d=np.fromfile(self.m,count=self.nx*self.ny*self.nz,dtype=self.npct).reshape(self.nz,self.ny,self.nx)
             return var3d
@@ -98,59 +98,59 @@ class momfile():
 
         def get_tind(self):
             if not self.tmom:
-		    self.get_timearray()
+                self.get_timearray()
             return self.tmom.index(self.time)
 
         def set_time(self,time):
             self.time=time
             self.tind=self.get_tind()
 
-	def dens(self):
-		if self.mtind[0]==self.tind:
-			pass
-		else:
-			self.mtind[0]=self.tind
-			self.dens3d=self.readvar(0)
-		return self.dens3d
+        def dens(self):
+                if self.mtind[0]==self.tind:
+                    pass
+                else:
+                        self.mtind[0]=self.tind
+                        self.dens3d=self.readvar(0)
+                return self.dens3d
 
 
-	def tpar(self):
-		if self.mtind[1]==self.tind:
-			pass
-		else:
-			self.mtind[1]=self.tind
-			self.tpar3d=self.readvar(1)
-		return self.tpar3d
+        def tpar(self):
+                if self.mtind[1]==self.tind:
+                        pass
+                else:
+                        self.mtind[1]=self.tind
+                        self.tpar3d=self.readvar(1)
+                return self.tpar3d
 
-	def tperp(self):
-		if self.mtind[2]==self.tind:
-			pass
-		else:
-			self.mtind[2]=self.tind
-			self.tperp3d=self.readvar(2)
-		return self.tperp3d
+        def tperp(self):
+                if self.mtind[2]==self.tind:
+                        pass
+                else:
+                        self.mtind[2]=self.tind
+                        self.tperp3d=self.readvar(2)
+                return self.tperp3d
 
-	def qpar(self):
-		if self.mtind[3]==self.tind:
-			pass
-		else:
-			self.mtind[3]=self.tind
-			self.qpar3d=self.readvar(3)
-		return self.qpar3d
+        def qpar(self):
+                if self.mtind[3]==self.tind:
+                        pass
+                else:
+                        self.mtind[3]=self.tind
+                        self.qpar3d=self.readvar(3)
+                return self.qpar3d
 
-	def qperp(self):
-		if self.mtind[4]==self.tind:
-			pass
-		else:
-			self.mtind[4]=self.tind
-			self.qperp3d=self.readvar(4)
-		return self.qperp3d
+        def qperp(self):
+                if self.mtind[4]==self.tind:
+                        pass
+                else:
+                        self.mtind[4]=self.tind
+                        self.qperp3d=self.readvar(4)
+                return self.qperp3d
 
-	def upar(self):
-		if self.mtind[5]==self.tind:
-			pass
-		else:
-			self.mtind[5]=self.tind
-			self.upar3d=self.readvar(5)
-		return self.upar3d
+        def upar(self):
+                if self.mtind[5]==self.tind:
+                        pass
+                else:
+                        self.mtind[5]=self.tind
+                        self.upar3d=self.readvar(5)
+                return self.upar3d
 

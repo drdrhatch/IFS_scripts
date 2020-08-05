@@ -74,7 +74,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print( "WARNING: neg_loc < corr_time")
         corr_time = neg_loc
 
     if show_plot:
@@ -85,15 +85,15 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
     return cfunc,tau,corr_time
 
 dz = float(2*field.nx)/ntot
-print 'dz',dz
+print( 'dz',dz)
 dz = float(2.0)/float(field.nz)
-print 'dz',dz
+print( 'dz',dz)
 zgrid = np.arange(ntot)/float(ntot-1)*(2*field.nx-dz)-field.nx
 #print 'zgrid',zgrid
 
 phi = np.zeros(ntot,dtype='complex128')
 apar = np.zeros(ntot,dtype='complex128')
-print "ntot",field.nz*field.nx
+print( "ntot",field.nz*field.nx)
 
 if 'x_local' in pars:
     if pars['x_local']:
@@ -109,7 +109,7 @@ if x_local:
         phase_fac = -np.e**(-2.0*np.pi*(0.0+1.0J)*pars['n0_global']*pars['q0'])
     else:
         phase_fac = -1.0
-    print "phase_fac",phase_fac
+    print( "phase_fac",phase_fac)
 
     if pars['shat'] < 0.0:
         for i in range(field.nx/2+1):
@@ -121,19 +121,19 @@ if x_local:
                 if i < field.nx/2:
                     apar[(field.nx/2-i-1)*field.nz : (field.nx/2-i)*field.nz ]=field.apar()[:,0,i+1]*phase_fac**(-(i+1))
     else:
-        for i in range(field.nx/2+1):
-            phi[(i+field.nx/2)*field.nz:(i+field.nx/2+1)*field.nz]=field.phi()[:,0,i]*phase_fac**i
-            if i < field.nx/2:
-                phi[(field.nx/2-i-1)*field.nz : (field.nx/2-i)*field.nz ]=field.phi()[:,0,-1-i]*phase_fac**(-(i+1))
+        for i in range(int(field.nx/2.0+1)):
+            phi[int(i+field.nx/2.0)*field.nz:int(i+field.nx/2.0+1)*field.nz]=field.phi()[:,0,i]*phase_fac**i
+            if i < field.nx/2.0:
+                phi[int(field.nx/2.0-i-1)*field.nz : int(field.nx/2.0-i)*field.nz ]=field.phi()[:,0,-1-i]*phase_fac**(-(i+1))
             if pars['n_fields']>1:
-                apar[(i+field.nx/2)*field.nz:(i+field.nx/2+1)*field.nz]=field.apar()[:,0,i]*phase_fac**i
-                if i < field.nx/2:
-                    apar[(field.nx/2-i-1)*field.nz : (field.nx/2-i)*field.nz ]=field.apar()[:,0,-1-i]*phase_fac**(-(i+1))
+                apar[int(i+field.nx/2.0)*field.nz:int(i+field.nx/2.0+1)*field.nz]=field.apar()[:,0,i]*phase_fac**i
+                if i < field.nx/2.0:
+                    apar[int(field.nx/2.0-i-1)*field.nz : int(field.nx/2.0-i)*field.nz ]=field.apar()[:,0,-1-i]*phase_fac**(-(i+1))
 
 
     
     zavg=np.sum(np.abs(phi)*np.abs(zgrid))/np.sum(np.abs(phi))
-    print "zavg (for phi)",zavg
+    print( "zavg (for phi)",zavg)
     phi = phi/field.phi()[field.nz/2,0,0]
     apar = apar/field.phi()[field.nz/2,0,0]
     
@@ -162,13 +162,13 @@ if x_local:
     np.savetxt('apar'+suffix,np.column_stack((zgrid,np.real(apar),np.imag(apar))))
     
     cfunc,zed,corr_len=my_corr_func_complex(phi,phi,zgrid,show_plot=False)
-    print "correlation length (for phi): ", corr_len
+    print( "correlation length (for phi): ", corr_len)
     parity_factor_apar = np.abs(np.sum(apar))/np.sum(np.abs(apar))
-    print "parity factor (for apar):",parity_factor_apar
+    print( "parity factor (for apar):",parity_factor_apar)
     parity_factor_phi = np.abs(np.sum(phi))/np.sum(np.abs(phi))
-    print "parity factor (for phi):",parity_factor_phi
+    print( "parity factor (for phi):",parity_factor_phi)
     apar_phase = np.sum(abs(np.real(apar)+np.imag(apar)))/np.sum(abs(np.real(apar))+abs(np.imag(apar)))
-    print "Phase factor (apar):",apar_phase
+    print( "Phase factor (apar):",apar_phase)
     
     #Estimate E_parallel
     #phiR = np.real(phi)
@@ -201,7 +201,7 @@ if x_local:
     #plt.show()
     
     #Note:  the complex frequency is (gamma + i*omega)
-    print "Here"
+    print( "Here")
     gpars,geometry = read_geometry_local(pars['magn_geometry'][1:-1]+suffix)
     jacxB = geometry['gjacobian']*geometry['gBfield']
     #plt.plot(geometry['gjacobian']*geometry['gBfield'])
@@ -209,8 +209,8 @@ if x_local:
     #plt.show()
     omega_complex = (om[2]*(0.0+1.0J) + om[1])
     omega_phase = np.log(omega_complex/np.abs(omega_complex))/(0.0+1.0J)
-    print "omega_complex",omega_complex
-    print "omega_phase",omega_phase
+    print( "omega_complex",omega_complex)
+    print( "omega_phase",omega_phase)
     phase_array = np.empty(len(zgrid))
     phase_array[:] = np.real(omega_phase)
     
@@ -235,10 +235,10 @@ if x_local:
     diff = np.sum(np.abs(gradphi + omega_complex*apar))
     phi_cont = np.sum(np.abs(gradphi))
     apar_cont = np.sum(np.abs(omega_complex*apar))
-    print "diff",diff
-    print "phi_cont",phi_cont
-    print "apar_cont",apar_cont
-    print "diff/abs",diff/(phi_cont+apar_cont)
+    print( "diff",diff)
+    print( "phi_cont",phi_cont)
+    print( "apar_cont",apar_cont)
+    print( "diff/abs",diff/(phi_cont+apar_cont))
     
 else:  #x_local = False
 
@@ -256,9 +256,9 @@ else:  #x_local = False
     mmin = math.ceil(qmin*pars['n0_global'])
     mmax = math.floor(qmax*pars['n0_global'])
     mnums = np.arange(mmin,mmax+1)
-    print "mnums",mnums
+    print( "mnums",mnums)
     qrats = mnums/float(pars['n0_global'])
-    print "qrats",qrats
+    print( "qrats",qrats)
     zgridm = np.arange(mmax*20)/float(mmax*20)*2.0-1.0
     nm = mmax*20
 
@@ -283,7 +283,7 @@ else:  #x_local = False
 
     field.set_time(field.tfld[-1])
     imax = np.unravel_index(np.argmax(abs(field.phi()[:,0,:])),(field.nz,field.nx))
-    print "imax",imax
+    print( "imax",imax)
 
     if plot_ballooning:
         plt.figure(figsize=(8.0,9.5))
@@ -440,20 +440,20 @@ else:  #x_local = False
         fig.subplots_adjust(left=0.16)
         fig.subplots_adjust(hspace=0.35)
         plt.subplot(3,1,1)
-        plt.plot(zgrid,(np.real(gradphi[2:-2,0,field.nx/4])),color = 'black')
-        plt.plot(zgrid,(np.real(-omega_complex*field.apar()[:,0,field.nx/4])),color = 'red')
-        plt.plot(zgrid,(np.imag(gradphi[2:-2,0,field.nx/4])),'-.',color = 'black')
-        plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,field.nx/4])),'-.',color = 'red')
+        plt.plot(zgrid,(np.real(gradphi[2:-2,0,int(field.nx/4)])),color = 'black')
+        plt.plot(zgrid,(np.real(-omega_complex*field.apar()[:,0,int(field.nx/4)])),color = 'red')
+        plt.plot(zgrid,(np.imag(gradphi[2:-2,0,int(field.nx/4)])),'-.',color = 'black')
+        plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,int(field.nx/4)])),'-.',color = 'red')
         plt.subplot(3,1,2)
-        plt.plot(zgrid,(np.real(gradphi[2:-2,0,field.nx/2])),color = 'black')
-        plt.plot(zgrid,(np.real(-omega_complex*field.apar()[:,0,field.nx/2])),color = 'red')
-        plt.plot(zgrid,(np.imag(gradphi[2:-2,0,field.nx/2])),'-.',color = 'black')
-        plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,field.nx/2])),'-.',color = 'red')
+        plt.plot(zgrid,(np.real(gradphi[2:-2,0,int(field.nx/2)])),color = 'black')
+        plt.plot(zgrid,(np.real(-omega_complex*field.apar()[:,0,int(field.nx/2)])),color = 'red')
+        plt.plot(zgrid,(np.imag(gradphi[2:-2,0,int(field.nx/2)])),'-.',color = 'black')
+        plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,int(field.nx/2)])),'-.',color = 'red')
         plt.subplot(3,1,3)
-        plt.plot(zgrid,(np.real(gradphi[2:-2,0,3*field.nx/4])),color = 'black')
-        plt.plot(zgrid,(np.real(-omega_complex*field.apar()[:,0,3*field.nx/4])),color = 'red')
-        plt.plot(zgrid,(np.imag(gradphi[2:-2,0,3*field.nx/4])),'-.',color = 'black')
-        plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,3*field.nx/4])),'-.',color = 'red')
+        plt.plot(zgrid,(np.real(gradphi[2:-2,0,3*int(field.nx/4)])),color = 'black')
+        plt.plot(zgrid,(np.real(-omega_complex*field.apar()[:,0,3*int(field.nx/4)])),color = 'red')
+        plt.plot(zgrid,(np.imag(gradphi[2:-2,0,3*int(field.nx/4)])),'-.',color = 'black')
+        plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,3*int(field.nx/4)])),'-.',color = 'red')
         plt.show()
     
         plt.contourf(np.abs(gradphi)[:,0,:],50)
@@ -469,13 +469,13 @@ else:  #x_local = False
         plt.colorbar()
         plt.show()
     
-    print "omega_complex",omega_complex
+    print( "omega_complex",omega_complex)
     diff = np.sum(np.abs(gradphi[2:-2,:,:] + omega_complex*field.apar()[:,:,:]))
     phi_cont = np.sum(np.abs(gradphi[2:-2,:,:]))
     apar_cont = np.sum(np.abs(omega_complex*field.apar()[:,:,:]))
-    print "diff",diff
-    print "phi_cont",phi_cont
-    print "apar_cont",apar_cont
-    print "diff/abs",diff/(phi_cont+apar_cont)
+    print( "diff",diff)
+    print( "phi_cont",phi_cont)
+    print( "apar_cont",apar_cont)
+    print( "diff/abs",diff/(phi_cont+apar_cont))
 
 

@@ -48,8 +48,8 @@ else:
    plt.xlabel('time')
    plt.show()
 
-tstart = float(raw_input("Enter start time: "))
-tend = float(raw_input("Enter end time: "))
+tstart = float(input("Enter start time: "))
+tend = float(input("Enter end time: "))
 
 field = fieldfile('field'+suffix,pars)
 istart = np.argmin(abs(np.array(field.tfld)-tstart))
@@ -121,14 +121,14 @@ else:
     plt.legend(loc='upper left')
     plt.show()
 
-    selection = int(float(raw_input('How to proceed:\n1. Accept calculation \n2. Manually enter gamma and omega \n3. Don\'t output anything\n')))
+    selection = int(float(input('How to proceed:\n1. Accept calculation \n2. Manually enter gamma and omega \n3. Don\'t output anything\n')))
     if selection == 1:
         f=open('omega'+suffix,'w')
         f.write(str(pars['kymin'])+'    '+str(gam_avg)+'    '+str(om_avg)+'\n')
         f.close()
     elif selection == 2:
-        gam_avg = float(raw_input('Enter gamma: '))
-        om_avg = float(raw_input('Enter omega: '))
+        gam_avg = float(input('Enter gamma: '))
+        om_avg = float(input('Enter omega: '))
         f=open('omega'+suffix,'w')
         f.write(str(pars['kymin'])+'    '+str(gam_avg)+'    '+str(om_avg)+'\n')
         f.close()

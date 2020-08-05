@@ -49,7 +49,7 @@ imass = mref*mi
 if 'q0' in pars:
    q0 = pars['q0']
 else:
-   q0 = float(raw_input("Enter q0:"))
+   q0 = float(input("Enter q0:"))
 
 print( "Tref:",Tref)
 print( "nref:",nref)
