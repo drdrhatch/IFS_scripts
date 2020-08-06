@@ -57,21 +57,13 @@ else:
 time = np.array(field.tfld)
 itime = np.argmin(abs(time - time0))
 field.set_time(time[itime])
-print("Reading mode at time = ",time[itime])
+print("Reading mode at time = ", time[itime])
 
 nx = field.nx
 ny = field.ny
 nz = field.nz
 nexc = pars["nexc"]
-
-print('(nx, ny, nz)  = ',nx,ny,nz)
-
-ntot = nx * nz
-
-phase_fac = (-1) ** nexc
-
-ndz = 2.0 / float(nz)
-# zgrid = np.linspace(-nx, nx-dz, ntot)
+print("(nx, ny, nz)  = ", nx, ny, nz)
 
 # for j in ky_list:
 j = 1
@@ -91,30 +83,17 @@ def phase(ky, N):
 
 def zrange(kx, nz):
     ncon = (kx.size - 1) // 2
-    ncon1 = ncon+1
-    zgrid = np.pi * np.linspace(-(ncon+1), ncon+1, (ncon+1) * nz, endpoint=False)
+    ncon1 = ncon + 1
+    zgrid = np.pi * np.linspace(-(ncon + 1), ncon + 1, (ncon + 1) * nz, endpoint=False)
     return zgrid
 
 
 kx = kxrange(j, nx, nexc)
 for i in kxrange(j, nx, nexc):
-    phi = np.zeros(kx.size*nz, dtype="complex128")
-    # istart1 = (i+nx//2)*nz
-    # iend1   = (i+nx//2+1)*nz
-    # phi[istart1:iend1] = field.phi()[:,j,i]*phase_fac**(j)
-
-    # istart2 = (nx//2-i-1)*nz
-    # iend2   = (nx//2-i)*nz
-    # phi[istart2:iend2] = field.phi()[:,j,-(i+1)]*phase_fac**(j)
-    # print(type(field.phi()))
-    print(i)
-    print(field.phi()[:, j, i].size,field.phi3d.size)
+    phi = np.zeros(kx.size * nz, dtype="complex128")
     phi[i * nz : (i + 1) * nz] = field.phi()[:, j, i] * phase(j, nexc)
-    print(i * nz, (i + 1) * nz, phi.size,phi,)
 
-print(kx)
 zgrid = zrange(kx, nz)
-print(zgrid.size,phi.size,kx.size)
 plt.title(r"$\phi$")
 plt.plot(zgrid, np.real(phi), color="red", label=r"$Re[\phi]$")
 plt.plot(zgrid, np.imag(phi), color="blue", label=r"$Im[\phi]$")
