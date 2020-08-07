@@ -17,6 +17,16 @@ parser.add_argument("--etime", "-e", action="store", help="end time for POD")
 parser.add_argument(
     "--time", "-t", dest="time0", action="store", help="end time for POD"
 )
+parser.add_argument(
+    "--kylist",
+    "-k",
+    dest="ky_list",
+    action="store",
+    default=0,
+    nargs="+",
+    type=int,
+    help="list of ky modes",
+)
 args = parser.parse_args()
 
 if re.search("dat$", args.suffix):
