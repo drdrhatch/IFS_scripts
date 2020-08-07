@@ -7,11 +7,11 @@ import numpy as np
 class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
 
-    def __init__(self, ky, nx, nz, N):
+    def __init__(self, ky, field, pars):
         self.ky = ky
-        self.nx = nx
-        self.nz = nz
-        self.N = N
+        self.nx = field.nx
+        self.nz = field.nz
+        self.N = pars["nexc"]
         self.construct_ranges()
         self.define_phase()
 

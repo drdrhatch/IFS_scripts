@@ -73,13 +73,12 @@ print("Reading mode at time = ", time[itime])
 nx = field.nx
 ny = field.ny
 nz = field.nz
-nexc = pars["nexc"]
 
 ky_list = args.ky_list
 print("Analyzing ky modes: ", ky_list)
 
 # Instantiate ky class
-ky_modes = [bl.ky_mode(ky, nx, nz, nexc) for ky in ky_list]
+ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
 
 for mode in ky_modes:
     for kx in mode.kx_modes:
