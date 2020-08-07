@@ -7,6 +7,7 @@ import re
 import ParIO as pario
 import fieldlib
 import matplotlib.pyplot as plt
+import balloon_lib as bl
 
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
@@ -73,42 +74,23 @@ nx = field.nx
 ny = field.ny
 nz = field.nz
 nexc = pars["nexc"]
-print("(nx, ny, nz)  = ", nx, ny, nz)
 
-# for j in ky_list:
-j = 1
+ky_list = args.ky_list
+print("Analyzing ky modes: ", ky_list)
 
+# Instantiate ky class
+ky_modes = [bl.ky_mode(ky, nx, nz, nexc) for ky in ky_list]
 
-def kxrange(ky, nx, N):
-    hmodes = np.arange(0, nx / 2, N * ky, dtype=np.intc)
-    lmodes = np.arange(0, -nx / 2, -N * ky, dtype=np.intc)
-    modes = np.union1d(lmodes, hmodes)
-    return modes
+for mode in ky_modes:
+    for kx in mode.kx_modes:
+        phi = np.zeros(mode.kx_modes.size * nz, dtype="complex128")
+        phi[kx * nz : (kx + 1) * nz] = field.phi()[:, mode.ky, kx] * mode.phase
 
-
-def phase(ky, N):
-    phase = (-1) ** (ky * N)
-    return phase
-
-
-def zrange(kx, nz):
-    ncon = (kx.size - 1) // 2
-    ncon1 = ncon + 1
-    zgrid = np.pi * np.linspace(-(ncon + 1), ncon + 1, (ncon + 1) * nz, endpoint=False)
-    return zgrid
-
-
-kx = kxrange(j, nx, nexc)
-for i in kxrange(j, nx, nexc):
-    phi = np.zeros(kx.size * nz, dtype="complex128")
-    phi[i * nz : (i + 1) * nz] = field.phi()[:, j, i] * phase(j, nexc)
-
-zgrid = zrange(kx, nz)
-plt.title(r"$\phi$")
-plt.plot(zgrid, np.real(phi), color="red", label=r"$Re[\phi]$")
-plt.plot(zgrid, np.imag(phi), color="blue", label=r"$Im[\phi]$")
-plt.plot(zgrid, np.abs(phi), color="black", label=r"$|\phi|$")
-ax = plt.axis()
-plt.legend()
-plt.xlabel(r"$z/\pi$", size=18)
-plt.show()
+    plt.title(r"$\phi$, $k_y=$" + str(mode.ky))
+    plt.plot(mode.zgrid, np.real(phi), color="red", label=r"$Re[\phi]$")
+    plt.plot(mode.zgrid, np.imag(phi), color="blue", label=r"$Im[\phi]$")
+    plt.plot(mode.zgrid, np.abs(phi), color="black", label=r"$|\phi|$")
+    ax = plt.axis()
+    plt.legend()
+    plt.xlabel(r"$z/\pi$", size=18)
+    plt.show()
