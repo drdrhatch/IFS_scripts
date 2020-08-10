@@ -70,10 +70,6 @@ itime = np.argmin(abs(time - time0))
 field.set_time(time[itime])
 print("Reading mode at time = ", time[itime])
 
-nx = field.nx
-ny = field.ny
-nz = field.nz
-
 ky_list = args.ky_list
 print("Analyzing ky modes: ", ky_list)
 
@@ -81,14 +77,17 @@ print("Analyzing ky modes: ", ky_list)
 ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
 
 for mode in ky_modes:
-    for kx in mode.kx_modes:
-        phi = np.zeros(mode.kx_modes.size * nz, dtype="complex128")
-        phi[kx * nz : (kx + 1) * nz] = field.phi()[:, mode.ky, kx] * mode.phase
-
+    mode.read_phi()
+    # print("kx modes: ", mode.kx_modes)
+    # print("phases: ", mode.phase)
+    # print("nx = ", mode.nx)
+    # print("nz = ", mode.nz)
+    # print("zgrid = ", mode.zgrid)
+    # print("size(zgrid) = ", mode.zgrid.shape)
     plt.title(r"$\phi$, $k_y=$" + str(mode.ky))
-    plt.plot(mode.zgrid, np.real(phi), color="red", label=r"$Re[\phi]$")
-    plt.plot(mode.zgrid, np.imag(phi), color="blue", label=r"$Im[\phi]$")
-    plt.plot(mode.zgrid, np.abs(phi), color="black", label=r"$|\phi|$")
+    plt.plot(mode.zgrid, np.real(mode.phi), color="red", label=r"$Re[\phi]$")
+    plt.plot(mode.zgrid, np.imag(mode.phi), color="blue", label=r"$Im[\phi]$")
+    plt.plot(mode.zgrid, np.abs(mode.phi), color="black", label=r"$|\phi|$")
     ax = plt.axis()
     plt.legend()
     plt.xlabel(r"$z/\pi$", size=18)

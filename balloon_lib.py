@@ -9,6 +9,7 @@ class ky_mode(object):
 
     def __init__(self, ky, field, pars):
         self.ky = ky
+        self.field = field
         self.nx = field.nx
         self.nz = field.nz
         self.N = pars["nexc"]
@@ -25,11 +26,18 @@ class ky_mode(object):
         self.kx_modes = np.union1d(lmodes, hmodes)
 
     def zrange(self):
-        ncon = (self.kx_modes.size - 1) // 2
-        ncon1 = ncon + 1
+        nxmodes = self.kx_modes.size
         self.zgrid = np.pi * np.linspace(
-            -(ncon + 1), ncon + 1, (ncon + 1) * self.nz, endpoint=False
+            -nxmodes, nxmodes, nxmodes * self.nz, endpoint=False
         )
+        self.zero_ind = self.zgrid.size // 2
 
     def define_phase(self):
-        self.phase = (-1) ** (self.ky * self.N)
+        self.phase = (-1) ** abs(self.kx_modes)
+
+    def read_phi(self):
+        self.phi = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(
+            order="F"
+        )
+        complex_phase = abs(self.phi[self.zero_ind]) / self.phi[self.zero_ind]
+        self.phi *= complex_phase
