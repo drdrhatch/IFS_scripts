@@ -65,30 +65,33 @@ if args.time0 == None:
 else:
     time0 = float(args.time0)
 
-time = np.array(field.tfld)
-itime = np.argmin(abs(time - time0))
-field.set_time(time[itime])
-print("Reading mode at time = ", time[itime])
+# time = np.array(field.tfld)
+# itime = np.argmin(abs(time - time0))
+# field.set_time(time[itime])
+# print("Reading mode at time = ", time[itime])
+# print(field.tfld.index(
 
 ky_list = args.ky_list
-print("Analyzing ky modes: ", ky_list)
 
 # Instantiate ky class
 ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
 
 for mode in ky_modes:
-    mode.read_phi()
+    mode.read_phi(stime, etime)
     # print("kx modes: ", mode.kx_modes)
     # print("phases: ", mode.phase)
     # print("nx = ", mode.nx)
     # print("nz = ", mode.nz)
     # print("zgrid = ", mode.zgrid)
     # print("size(zgrid) = ", mode.zgrid.shape)
-    plt.title(r"$\phi$, $k_y=$" + str(mode.ky))
-    plt.plot(mode.zgrid, np.real(mode.phi), color="red", label=r"$Re[\phi]$")
-    plt.plot(mode.zgrid, np.imag(mode.phi), color="blue", label=r"$Im[\phi]$")
-    plt.plot(mode.zgrid, np.abs(mode.phi), color="black", label=r"$|\phi|$")
-    ax = plt.axis()
-    plt.legend()
-    plt.xlabel(r"$z/\pi$", size=18)
-    plt.show()
+
+    zgrid = mode.zgrid / np.pi
+    for time in range(mode.phi.shape[0]):
+        plt.title(r"$\phi$, $k_y=$" + str(mode.ky))
+        plt.plot(zgrid, np.real(mode.phi[time]), color="red", label=r"$Re[\phi]$")
+        plt.plot(zgrid, np.imag(mode.phi[time]), color="blue", label=r"$Im[\phi]$")
+        plt.plot(zgrid, np.abs(mode.phi[time]), color="black", label=r"$|\phi|$")
+        ax = plt.axis()
+        plt.legend()
+        plt.xlabel(r"$z/\pi$", size=18)
+        plt.show()
