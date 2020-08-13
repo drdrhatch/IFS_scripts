@@ -14,7 +14,7 @@ class ky_mode(object):
         self.nz = field.nz
         self.N = pars["nexc"]
         self.construct_ranges()
-        self.define_phase()
+        self.define_phase(pars)
 
     def construct_ranges(self):
         self.kxrange()
@@ -32,8 +32,12 @@ class ky_mode(object):
         )
         self.zero_ind = self.zgrid.size // 2
 
-    def define_phase(self):
-        self.phase = (-1) ** abs(self.kx_modes)
+    def define_phase(self, pars):
+        if "n0_global" in pars:
+            phase = np.e ** (-2 * np.pi * 1j * pars["n0_global"] * pars["q0"])
+        else:
+            phase = -1
+        self.phase = phase ** (self.kx_modes / max(self.kx_modes))
 
     def read_phi(self):
         self.phi = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(
