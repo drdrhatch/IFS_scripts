@@ -45,3 +45,7 @@ class ky_mode(object):
         )
         complex_phase = abs(self.phi[self.zero_ind]) / self.phi[self.zero_ind]
         self.phi *= complex_phase
+    def get_times(self, stime, etime):
+        tarray = np.array(self.field.tfld)
+        tind = (stime < tarray) * (tarray < etime)
+        return tarray[tind]
