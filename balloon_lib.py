@@ -4,7 +4,6 @@
 import numpy as np
 import numpy.linalg as la
 
-
 class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
 
@@ -54,6 +53,15 @@ class ky_mode(object):
 
     def pod(self):
         self.u, self.s, self.vh = la.svd(self.phi)
+
+    def plot_modes(self):
+        pass
+
+    def plot_pod(self,npod):
+        pass
+
+    def plot(self,phi):
+        pass
 
 def get_times(field, stime, etime):
     tarray = np.array(field.tfld)
