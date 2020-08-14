@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import numpy.linalg as la
 
 
 class ky_mode(object):
@@ -50,6 +51,9 @@ class ky_mode(object):
             self.phi = np.vstack([self.phi,tmp])
         else:
             self.phi = [tmp]
+
+    def pod(self):
+        self.u, self.s, self.vh = la.svd(self.phi)
 
 def get_times(field, stime, etime):
     tarray = np.array(field.tfld)
