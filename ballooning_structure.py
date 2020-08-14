@@ -70,6 +70,8 @@ if args.plot:
         zgrid = mode.zgrid / np.pi
         times = bl.get_times(field, stime, etime)
         for phi, time in zip(mode.phi, bl.get_times(field, stime, etime)):
+            norm = phi[mode.zero_ind]
+            phi /= norm
             plt.title(
                 r"$\phi$, $k_y=$" + str(mode.ky) + " t = " + str("{:6.3f}").format(time)
             )
