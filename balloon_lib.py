@@ -39,26 +39,19 @@ class ky_mode(object):
             phase = -1
         self.phase = phase ** (self.kx_modes / max(self.kx_modes))
 
-    def read_phi(self, stime, etime):
+    def read_phi(self):
         """ Read phi for a given time window, returning array
         """
+        tmp = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(order="F")
+        complex_phase = (abs(tmp[self.zero_ind]) / tmp[self.zero_ind])
+        tmp *= complex_phase
         if hasattr(self, "phi"):
-            pass
+            self.phi = np.vstack([self.phi,tmp])
         else:
-            times = self.get_times(stime, etime)
-            print(times)
-            self.phi = np.empty([times.size, self.zgrid.size], dtype=np.complex128)
-            for i in range(times.size):
-                self.field.set_time(times[i])
-                self.phi[i, :] = (
-                    self.field.phi()[:, self.ky, self.kx_modes] * self.phase
-                ).ravel(order="F")
-                complex_phase = (
-                    abs(self.phi[i, self.zero_ind]) / self.phi[i, self.zero_ind]
-                )
-                self.phi[i, :] *= complex_phase
+            self.phi = tmp
 
-    def get_times(self, stime, etime):
-        tarray = np.array(self.field.tfld)
-        tind = (stime < tarray) * (tarray < etime)
-        return tarray[tind]
+def get_times(field, stime, etime):
+    tarray = np.array(field.tfld)
+    tind = (stime < tarray) * (tarray < etime)
+    return tarray[tind]
+
