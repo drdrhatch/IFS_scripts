@@ -37,7 +37,8 @@ class ky_mode(object):
             phase = np.e ** (-2 * np.pi * 1j * pars["n0_global"] * pars["q0"])
         else:
             phase = -1
-        self.phase = phase ** (self.kx_modes / max(self.kx_modes))
+        step = max(1, max(self.kx_modes))
+        self.phase = phase ** (self.kx_modes / step)
 
     def read_phi(self):
         """ Read phi for a given time window, returning array
