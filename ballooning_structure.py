@@ -11,8 +11,12 @@ import balloon_lib as bl
 
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
-parser.add_argument("--stime", "-s", action="store", help="start time window")
-parser.add_argument("--etime", "-e", action="store", help="end time window")
+parser.add_argument(
+    "--stime", "-s", action="store", type=float, default=0, help="start time window"
+)
+parser.add_argument(
+    "--etime", "-e", action="store", type=float, default=999, help="end time window"
+)
 parser.add_argument("--plot", "-p", action="store_true", help="plot individual modes")
 parser.add_argument(
     "--pod",
@@ -48,18 +52,10 @@ par.Read_Pars("parameters" + suffix)
 pars = par.pardict
 
 field = fieldlib.fieldfile("field" + suffix, pars)
+
 min_time, max_time = field.get_minmaxtime()
-stime = args.stime
-
-if args.stime == None:
-    stime = min_time
-else:
-    stime = float(args.stime)
-
-if args.etime == None:
-    etime = max_time
-else:
-    etime = float(args.etime)
+stime = max(args.stime, min_time)
+etime = min(args.etime, max_time)
 
 ky_list = args.ky_list
 ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
