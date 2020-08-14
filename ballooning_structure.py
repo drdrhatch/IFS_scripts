@@ -16,9 +16,6 @@ parser.add_argument(
 )
 parser.add_argument("--etime", "-e", action="store", help="end time for POD")
 parser.add_argument(
-    "--time", "-t", dest="time0", action="store", help="end time for POD"
-)
-parser.add_argument(
     "--kylist",
     "-k",
     dest="ky_list",
