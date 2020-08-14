@@ -45,7 +45,7 @@ min_time, max_time = field.get_minmaxtime()
 stime = args.stime
 
 if args.stime == None:
-    stime = max_time
+    stime = min_time
 else:
     stime = float(args.stime)
 
@@ -54,15 +54,10 @@ if args.etime == None:
 else:
     etime = float(args.etime)
 
-if args.time0 == None:
-    time0 = max_time
-else:
-    time0 = float(args.time0)
-
 ky_list = args.ky_list
 ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
 
-for time in bl.get_times(field,stime,etime):
+for time in bl.get_times(field, stime, etime):
     field.set_time(time)
     for mode in ky_modes:
         mode.read_phi()
