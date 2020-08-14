@@ -57,35 +57,18 @@ if args.etime == None:
 else:
     etime = float(args.etime)
 
-print("start time = ", stime)
-print("end time = ", etime)
-
 if args.time0 == None:
     time0 = max_time
 else:
     time0 = float(args.time0)
 
-# time = np.array(field.tfld)
-# itime = np.argmin(abs(time - time0))
-# field.set_time(time[itime])
-# print("Reading mode at time = ", time[itime])
-# print(field.tfld.index(
-
 ky_list = args.ky_list
-
-# Instantiate ky class
 ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
 
 for time in bl.get_times(field,stime,etime):
     field.set_time(time)
     for mode in ky_modes:
         mode.read_phi()
-    # print("kx modes: ", mode.kx_modes)
-    # print("phases: ", mode.phase)
-    # print("nx = ", mode.nx)
-    # print("nz = ", mode.nz)
-    # print("zgrid = ", mode.zgrid)
-    # print("size(zgrid) = ", mode.zgrid.shape)
 
 for mode in ky_modes:
     zgrid = mode.zgrid / np.pi
