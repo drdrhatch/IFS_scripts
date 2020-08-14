@@ -15,6 +15,8 @@ parser.add_argument(
     "--stime", "-s", action="store", default=0, type=float, help="start time for POD"
 )
 parser.add_argument("--etime", "-e", action="store", help="end time for POD")
+parser.add_argument("--plot", "-p", action="store_true", help="plot modes")
+parser.add_argument("--pod", "-P", action="store_true", help="perform POD analysis")
 parser.add_argument(
     "--kylist",
     "-k",
