@@ -13,8 +13,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
 parser.add_argument("--stime", "-s", action="store", help="start time window")
 parser.add_argument("--etime", "-e", action="store", help="end time window")
-parser.add_argument("--plot", "-p", action="store_true", help="plot modes")
-parser.add_argument("--pod", "-P", action="store_true", help="perform POD analysis")
+parser.add_argument("--plot", "-p", action="store_true", help="plot individual modes")
+parser.add_argument(
+    "--pod",
+    "-P",
+    action="store",
+    type=int,
+    metavar="N",
+    help="POD analysis, plotting N modes",
+)
 parser.add_argument(
     "--kylist",
     "-k",
