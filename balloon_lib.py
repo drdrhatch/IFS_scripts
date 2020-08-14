@@ -49,7 +49,7 @@ class ky_mode(object):
         if hasattr(self, "phi"):
             self.phi = np.vstack([self.phi,tmp])
         else:
-            self.phi = tmp
+            self.phi = [tmp]
 
 def get_times(field, stime, etime):
     tarray = np.array(field.tfld)
