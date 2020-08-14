@@ -80,3 +80,24 @@ if args.plot:
             plt.legend()
             plt.xlabel(r"$z/\pi$", size=18)
             plt.show()
+
+if args.pod:
+    for mode in ky_modes:
+        mode.pod()
+        print("singular values = ", mode.s)
+        # print("shape of phi = ", mode.phi.shape)
+        # print("shape of vh = ", mode.vh.shape)
+        for i in range(args.pod):
+            zgrid = mode.zgrid / np.pi
+            phi = np.conjugate(mode.vh[i])
+            norm = phi[mode.zero_ind]
+            print(norm.shape, phi.shape)
+            phi /= norm
+            plt.title(r"$\phi$, $k_y=$" + str(mode.ky))
+            plt.plot(zgrid, np.real(phi), color="red", label=r"$Re[\phi]$")
+            plt.plot(zgrid, np.imag(phi), color="blue", label=r"$Im[\phi]$")
+            plt.plot(zgrid, np.abs(phi), color="black", label=r"$|\phi|$")
+            ax = plt.axis()
+            plt.legend()
+            plt.xlabel(r"$z/\pi$", size=18)
+            plt.show()
