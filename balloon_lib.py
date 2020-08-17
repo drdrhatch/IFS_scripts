@@ -63,10 +63,12 @@ class ky_mode(object):
             phi /= norm
             self.plot(phi)
 
-    def plot_pod(self, npod):
-        for i in range(npod):
-            plt.title(r"$\phi$, $k_y=$" + str(self.ky) + ", POD mode # = " + str(i))
-            phi = np.conjugate(self.vh[i])
+    def plot_pod(self, pods):
+        for pod in pods:
+            plt.title(
+                r"$\phi$, $k_y=$" + str(self.ky) + ", POD mode # = " + str(pod + 1)
+            )
+            phi = np.conjugate(self.vh[pod])
             norm = phi[self.zero_ind]
             phi /= norm
             self.plot(phi)

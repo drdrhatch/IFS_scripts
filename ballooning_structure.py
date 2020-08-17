@@ -103,4 +103,4 @@ if args.pod:
         #     plt.legend()
         #     plt.xlabel(r"$z/\pi$", size=18)
         #     plt.show()
-        mode.plot_pod(args.pod)
+        mode.plot_pod(range(args.pod))
