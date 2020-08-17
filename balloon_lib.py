@@ -74,11 +74,29 @@ class ky_mode(object):
             self.plot(phi)
 
     def plot_singular_values(self):
+        pods = range(1, self.s.size + 1)
+
+        fig, ax1 = plt.subplots()
+
+        color = "red"
+        ax1.set_ylabel("value", color=color)
+        ax1.tick_params(axis="y", labelcolor=color)
+        ax1.plot(pods, self.s, marker="o", color=color)
+
+        ax2 = ax1.twinx()
+
+        cs = np.cumsum(self.s) / self.s.sum()
+        color = "blue"
+        ax2.plot(pods, cs, color=color)
+        ax2.set_ylim(0, 1.0)
+        ax2.set_ylabel("cumulative", color=color)
+        ax2.tick_params(axis="y", labelcolor=color)
+        ax2.grid()
+
         plt.title(r"Singular values for mode $k_y = $" + str(self.ky))
-        plt.plot(self.s, marker="o")
         plt.xlabel("POD #", size=18)
-        plt.xticks(range(1, self.s.size + 1))
-        plt.grid()
+        plt.xticks(pods)
+        plt.grid(True)
         plt.show()
 
     def plot(self, var):
