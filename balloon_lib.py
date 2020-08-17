@@ -43,11 +43,13 @@ class ky_mode(object):
     def read_phi(self):
         """ Read phi for a given time window, returning array
         """
-        tmp = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(order="F")
+        tmp = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(
+            order="F"
+        )
         # complex_phase = (abs(tmp[self.zero_ind]) / tmp[self.zero_ind])
         # tmp *= complex_phase
         if hasattr(self, "phi"):
-            self.phi = np.vstack([self.phi,tmp])
+            self.phi = np.vstack([self.phi, tmp])
         else:
             self.phi = [tmp]
 
