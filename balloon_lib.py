@@ -3,6 +3,8 @@
 
 import numpy as np
 import numpy.linalg as la
+import matplotlib.pyplot as plt
+
 
 class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
@@ -56,14 +58,27 @@ class ky_mode(object):
     def pod(self):
         self.u, self.s, self.vh = la.svd(self.phi)
 
-    def plot_modes(self):
+    def plot_modes(self, times):
+        for phi, time in zip(self.phi, times):
+            plt.title(
+                r"$\phi$, $k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time)
+            )
+            norm = phi[self.zero_ind]
+            phi /= norm
+            self.plot(phi)
         pass
 
     def plot_pod(self,npod):
         pass
 
-    def plot(self,phi):
-        pass
+    def plot(self, var):
+        plt.plot(self.zgrid, np.real(var), color="red", label=r"$Re[\phi]$")
+        plt.plot(self.zgrid, np.imag(var), color="blue", label=r"$Im[\phi]$")
+        plt.plot(self.zgrid, np.abs(var), color="black", label=r"$|\phi|$")
+        plt.legend()
+        plt.xlabel(r"$z/\pi$", size=18)
+        plt.show()
+
 
 def get_times(field, stime, etime):
     tarray = np.array(field.tfld)
