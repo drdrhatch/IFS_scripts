@@ -29,9 +29,7 @@ class ky_mode(object):
 
     def zrange(self):
         nxmodes = self.kx_modes.size
-        self.zgrid = np.pi * np.linspace(
-            -nxmodes, nxmodes, nxmodes * self.nz, endpoint=False
-        )
+        self.zgrid = np.linspace(-nxmodes, nxmodes, nxmodes * self.nz, endpoint=False)
         self.zero_ind = self.zgrid.size // 2
 
     def define_phase(self, pars):
