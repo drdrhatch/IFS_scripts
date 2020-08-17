@@ -73,6 +73,14 @@ class ky_mode(object):
             phi /= norm
             self.plot(phi)
 
+    def plot_singular_values(self):
+        plt.title(r"Singular values for mode $k_y = $" + str(self.ky))
+        plt.plot(self.s, marker="o")
+        plt.xlabel("POD #", size=18)
+        plt.xticks(range(1, self.s.size + 1))
+        plt.grid()
+        plt.show()
+
     def plot(self, var):
         plt.plot(self.zgrid, np.real(var), color="red", label=r"$Re[\phi]$")
         plt.plot(self.zgrid, np.imag(var), color="blue", label=r"$Im[\phi]$")
