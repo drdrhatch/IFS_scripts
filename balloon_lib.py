@@ -64,10 +64,14 @@ class ky_mode(object):
             norm = phi[self.zero_ind]
             phi /= norm
             self.plot(phi)
-        pass
 
-    def plot_pod(self,npod):
-        pass
+    def plot_pod(self, npod):
+        for i in range(npod):
+            plt.title(r"$\phi$, $k_y=$" + str(self.ky) + ", POD mode # = " + str(i))
+            phi = np.conjugate(self.vh[i])
+            norm = phi[self.zero_ind]
+            phi /= norm
+            self.plot(phi)
 
     def plot(self, var):
         plt.plot(self.zgrid, np.real(var), color="red", label=r"$Re[\phi]$")
