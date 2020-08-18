@@ -99,6 +99,18 @@ class ky_mode(object):
         plt.grid(True)
         plt.show()
 
+    def plot_time_dependence(self, times, pods):
+        plt.title(r"Time dependece of POD modes")
+        plt.xlabel("Time")
+        plt.ylabel(r"$|\Phi_s|$")
+        # plt.xticks(pods)
+
+        for pod in pods:
+            plt.plot(times, np.abs(self.u[:, pod]), label=r"$s_" + str(pod + 1) + "$")
+        plt.grid(True)
+        plt.legend()
+        plt.show()
+
     def plot(self, var):
         plt.plot(self.zgrid, np.real(var), color="red", label=r"$Re[\phi]$")
         plt.plot(self.zgrid, np.imag(var), color="blue", label=r"$Im[\phi]$")
