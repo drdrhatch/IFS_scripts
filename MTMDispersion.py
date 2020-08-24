@@ -31,28 +31,28 @@ from max_stat_tool import *
 #**************Block for user******************************************
 #**************Setting up*********************************************
 
-#iterdb_file_name='DIIID174864_03325.iterdb'  #name of the iterdb file
-#geomfile='g174864.03325'           #name of the magnetic geometry file
-iterdb_file_name='efit_Dial_N_Zp2_48_new.iterdb'  #name of the iterdb file
-geomfile='efit_temp'           #name of the magnetic geometry file
+iterdb_file_name='DIIID175823.iterdb'  #name of the iterdb file
+geomfile='g175823.04108_257x257'           #name of the magnetic geometry file
+#iterdb_file_name='efit_Dial_N_Zp2_48_new.iterdb'  #name of the iterdb file
+#geomfile='efit_temp'           #name of the magnetic geometry file
 omega_percent=5.                       #choose the omega within the top that percent defined in(0,100)
 n_min=1                                #minmum mode number (include) that finder will cover
-n_max=22                               #maximum mode number (include) that finder will cover
+n_max=25                               #maximum mode number (include) that finder will cover
 bins=400                               #sizes of bins to smooth the function
 plot_profile=False                     #Set to True is user want to have the plot of the profile
 plot_n_scan=False                      #Set to True is user want to have the plot of the gamma over n
 csv_profile=True                    #Set to True is user want to have the csv file "profile_output.csv" of the profile
 csv_n_scan=True                       #Set to True is user want to have the csv file "MTM_dispersion_n_scan.csv" of the gamma over n
-plot_spectrogram=False
+plot_spectrogram=True
 peak_of_plasma_frame=True             #Set to True if one want to look around the peak of omega*e in plasam frame
 
 #Fit Parameters
-alpha1=-10.-1.17j
-alpha2=1.
-alpha3=0.
+alpha1=-10.-10.j
+alpha2=-10.+ 4.j
+alpha3= 8. - 6.j
 #******For scaning********
 scan_n0=20
-plot_peak_scan=False
+plot_peak_scan=True
 csv_peak_scan=True
 
 #**************End of Setting up*********************************************
@@ -199,9 +199,9 @@ def Parameter_reader(iterdb_file_name,geomfile,plot,output_csv):
     if output_csv==True:
         with open('profile_output.csv','w') as csvfile:
             data = csv.writer(csvfile, delimiter=',')
-            data.writerow(['x/a','nu/omega*n','nu_ei(kHz)','eta','shat','beta','ky rhoi(for n=1)'])
+            data.writerow(['x/a','nu_ei(kHz)','omega*n(kHz)','omega* plasma(kHz)','Doppler shift(kHz)','nu/omega*n','eta','shat','beta','ky rhoi(for n=1)'])
             for i in range(len(uni_rhot)):
-                data.writerow([uni_rhot[i],nu[i],coll_ei[i],eta[i],shat[i],beta[i],ky[i]])
+                data.writerow([uni_rhot[i],coll_ei[i],omega_n[i],mtmFreq[i],omegaDoppler[i],nu[i],eta[i],shat[i],beta[i],ky[i]])
         csvfile.close()
     
     return uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE
@@ -387,7 +387,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
                 data.writerow([x_list[i],n_list[i],m_list[i],gamma_list_kHz[i],omega_list_kHz[i],omega_list_Lab_kHz[i],omega_star_list_kHz[i],omega_star_list_Lab_kHz[i],factor_list[i]])
         csvfile.close()
 
-    return x_list,n_list,m_list,gamma_list,omega_list,factor_list,gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz
+    return x_list,n_list,m_list,gamma_list,omega_list,factor_list,gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,omega_star_list_kHz,omega_star_list_Lab_kHz
 
 #define a normal distribusion, input the x axis as x_list, output norm(x_list)
 def normal(x_list,x0,mu,sigma):
@@ -518,12 +518,13 @@ def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profi
     #scan toroidial mode number
     x_list,n_list,m_list,gamma_list,\
     omega_list,factor_list,gamma_list_kHz,\
-    omega_list_kHz,omega_list_Lab_kHz\
+    omega_list_kHz,omega_list_Lab_kHz,\
+    omega_star_list_kHz,omega_star_list_Lab_kHz\
     =Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,\
     omega_n,mtmFreq,omegaDoppler,x_peak_range,x_range_ind,\
     n_min,n_max,plot=plot_n_scan,output_csv=csv_n_scan)
 
-    f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,bins,plot=plot_spectrogram)
+    f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_star_list_kHz,omega_star_list_Lab_kHz,bins,plot=plot_spectrogram)
     return x_list,n_list,m_list,gamma_list,omega_list,factor_list
 
 
@@ -532,30 +533,6 @@ def coll_scan(iterdb_file_name,geomfile,n0,plot_profile,plot_peak_scan,csv_profi
     peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omega_n_GENE,mtmFreq,omegaDoppler,n0,plot_peak_scan,csv_peak_scan)
 
 x_list,n_list,m_list,gamma_list,omega_list,factor_list=MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan)
-def Dispersion_change(nu,eta,shat,beta,ky,alpha1,alpha2,alpha3):
-  #Fit Parameters
 
-    
-
-    
-#def dispersion_gauge(iterdb_file_name,geomfile,scan_n0,plot_profile,plot_peak_scan,csv_profile,csv_peak_scan): 
-    Re_1=0.
-    Im_1=0.
-    Re_2=0.
-    Im_2=0.
-    Re_3=0.
-    Im_3=0.
-    alpha1=complex(Re_1,Im_1)
-    alpha2=complex(Re_2,Im_2)
-    alpha3=complex(Re_3,Im_3)
-    
-    factor=-alpha1*((ky*shat)/( alpha2*beta-eta*(eta+1.)/1836.))*(1/np.sqrt(1836))+alpha3
-    a=complex(0,-15753.1)-32045.*factor
-    b=complex(0,15753.1)+complex(0,16426.6)*eta+11951.2*nu-complex(0,40594.8)*factor*nu
-    c=-11951.2*nu-20267.7*nu*eta+9121.48*factor*nu**2
-    gamma=(-b+np.sqrt(b**2-4*a*c))/(2.*a)
-
-    return gamma,factor
-
-#coll_scan(iterdb_file_name,geomfile,scan_n0,plot_profile,plot_peak_scan,csv_profile,csv_peak_scan)
+coll_scan(iterdb_file_name,geomfile,scan_n0,plot_profile,plot_peak_scan,csv_profile,csv_peak_scan)
 #print(gamma)
