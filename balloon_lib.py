@@ -52,7 +52,7 @@ class ky_mode(object):
             self.phi = [tmp]
 
     def pod(self):
-        self.u, self.s, self.vh = la.svd(self.phi)
+        self.u, self.sv, self.vh = la.svd(self.phi)
 
     def plot_modes(self, times):
         for phi, time in zip(self.phi, times):
@@ -74,18 +74,18 @@ class ky_mode(object):
             self.plot(phi)
 
     def plot_singular_values(self):
-        pods = range(1, self.s.size + 1)
+        pods = range(1, self.sv.size + 1)
 
         fig, ax1 = plt.subplots()
 
         color = "red"
         ax1.set_ylabel("value", color=color)
         ax1.tick_params(axis="y", labelcolor=color)
-        ax1.plot(pods, self.s, marker="o", color=color)
+        ax1.plot(pods, self.sv, marker="o", color=color)
 
         ax2 = ax1.twinx()
 
-        cs = np.cumsum(self.s) / self.s.sum()
+        cs = np.cumsum(self.sv) / self.sv.sum()
         color = "blue"
         ax2.plot(pods, cs, color=color)
         ax2.set_ylim(0, 1.0)
