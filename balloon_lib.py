@@ -121,22 +121,22 @@ class ky_mode(object):
 
     def output(self):
         """Output various POD data"""
+        self.output_sv()
+        self.output_pod_modes()
+        self.output_time_modes()
 
-        output_sv()
-        output_pod_modes()
-        output_time_modes()
+    def output_sv(self):
+        """Output singular values"""
         pass
 
-    def output_sv():
-        """output singular values"""
         pass
 
-    def output_pod_modes():
-        """output right pod modes (spatial variation)"""
+    def output_pod_modes(self):
+        """Output right pod modes (spatial variation)"""
         pass
 
-    def output_time_modes():
-        """output left pod modes (time variation)"""
+    def output_time_modes(self):
+        """Output left pod modes (time variation)"""
         pass
 
     def write_data(self, filename, data, indices):
