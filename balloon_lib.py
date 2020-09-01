@@ -119,9 +119,32 @@ class ky_mode(object):
         plt.xlabel(r"$z/\pi$", size=18)
         plt.show()
 
+    def output(self):
+        """Output various POD data"""
+
+        output_sv()
+        output_pod_modes()
+        output_time_modes()
+        pass
+
+    def output_sv():
+        """output singular values"""
+        pass
+
+    def output_pod_modes():
+        """output right pod modes (spatial variation)"""
+        pass
+
+    def output_time_modes():
+        """output left pod modes (time variation)"""
+        pass
+
+    def write_data(self, filename, data, indices):
+        """Write data in text format for later plotting and analysis"""
+        pass
+
 
 def get_times(field, stime, etime):
     tarray = np.array(field.tfld)
     tind = (stime < tarray) * (tarray < etime)
     return tarray[tind]
-
