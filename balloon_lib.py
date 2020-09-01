@@ -127,9 +127,9 @@ class ky_mode(object):
 
     def output_sv(self):
         """Output singular values"""
-        pass
-
-        pass
+        filename = "./sv_ky" + str("{:03d}").format(self.ky) + ".dat"
+        header = "Singular values"
+        np.savetxt(filename, self.sv, fmt="%g", header=header, encoding="UTF-8")
 
     def output_pod_modes(self):
         """Output right pod modes (spatial variation)"""
