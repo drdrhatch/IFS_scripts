@@ -134,12 +134,11 @@ class ky_mode(object):
     def output_pod_modes(self, pods):
         """Output right pod modes (spatial variation)"""
         filename = "./pod_ky" + str("{:03d}").format(self.ky) + ".dat"
-        modes = ["z/pi"]
         fp = open(filename, "w")
-        for mode in range(pods):
-            header = "POD mode " + str(mode + 1)
+        for pod in range(pods):
+            header = "POD mode " + str(pod + 1)
             data = np.vstack(
-                (self.zgrid, np.real(self.vh[mode]), np.imag(self.vh[mode]))
+                (self.zgrid, np.real(self.vh[pod]), np.imag(self.vh[pod]))
             ).T
             np.savetxt(
                 fp, data, fmt="%g", header=header, encoding="UTF-8",
