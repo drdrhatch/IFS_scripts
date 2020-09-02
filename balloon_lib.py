@@ -119,11 +119,11 @@ class ky_mode(object):
         plt.xlabel(r"$z/\pi$", size=18)
         plt.show()
 
-    def output(self):
+    def output(self, pods):
         """Output various POD data"""
         self.output_sv()
-        self.output_pod_modes()
-        self.output_time_modes()
+        self.output_pod_modes(pods)
+        self.output_time_modes(pods)
 
     def output_sv(self):
         """Output singular values"""
