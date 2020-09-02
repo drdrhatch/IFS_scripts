@@ -123,7 +123,7 @@ class ky_mode(object):
         """Output various POD data"""
         self.output_sv()
         self.output_pod_modes(pods)
-        self.output_time_modes(pods,times)
+        self.output_time_modes(pods, times)
 
     def output_sv(self):
         """Output singular values"""
@@ -148,7 +148,15 @@ class ky_mode(object):
 
     def output_time_modes(self, pods, times):
         """Output left pod modes (time variation)"""
-        pass
+        filename = "./pod_time_ky" + str("{:03d}").format(self.ky) + ".dat"
+        head = ["time"]
+        for pod in range(pods):
+            head.append(str(pod + 1))
+        header = " ".join(head)
+        data = np.hstack((times.reshape(-1, 1), np.abs(self.u[:, :pods])))
+        np.savetxt(
+            filename, data, fmt="%g", header=header, encoding="UTF-8",
+        )
 
     def write_data(self, filename, data, indices):
         """Write data in text format for later plotting and analysis"""
