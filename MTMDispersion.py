@@ -40,28 +40,30 @@ geomfile='g175823.04108_257x257'           #name of the magnetic geometry file
 #iterdb_file_name = 'efit_Dial_N_Zp2_48_new.iterdb' #name of the iterdb file
 #geomfile = 'efit_Dial_N_Zp2_48'                     #name of the magnetic geometry file
 #geomfile = 'efit_temp'                     #name of the magnetic geometry file
-run_mode_finder=False        #Change to True if one want to run mode finder 
-run_nu_scan=False           #Change to True if one want to run collisionality scan
+
+run_mode_finder=True        #Change to True if one want to run mode finder 
+run_nu_scan=True           #Change to True if one want to run collisionality scan 
+
 
 omega_percent=10.                       #choose the omega within the top that percent defined in(0,100)
 n_min=1                                #minmum mode number (include) that finder will cover
-n_max=20                               #maximum mode number (include) that finder will cover
+n_max=30                               #maximum mode number (include) that finder will cover
 bins=800                               #sizes of bins to smooth the function
 plot_profile=False                    #Set to True is user want to have the plot of the profile
 plot_n_scan=False                      #Set to True is user want to have the plot of the gamma over n
-csv_profile=True                    #Set to True is user want to have the csv file "profile_output.csv" of the profile
+csv_profile=False                    #Set to True is user want to have the csv file "profile_output.csv" of the profile
 csv_n_scan=True                       #Set to True is user want to have the csv file "MTM_dispersion_n_scan.csv" of the gamma over n
 plot_spectrogram=True
-peak_of_plasma_frame=True             #Set to True if one want to look around the peak of omega*e in plasam frame
+peak_of_plasma_frame=False             #Set to True if one want to look around the peak of omega*e in plasam frame
 
 
 #******For scaning********
-scan_n0=5.
+scan_n0=3.
 choose_location=True    #Change to True if one wants to change the location manually 
-location=0.97
+location=0.984139203080616
 plot_peak_scan=True
 csv_peak_scan=True
-nu_percent=2  #500%
+nu_percent=10  #about the nu0 for x% 1=100%
 #**************End of Setting up*********************************************
 #**************End of Block for user******************************************
 
@@ -203,12 +205,6 @@ def Parameter_reader(iterdb_file_name,geomfile,plot,output_csv):
         plt.plot(uni_rhot,shat,label='shat')
         plt.show()
 
-        plt.clf()
-        plt.xlabel('r/a')
-        plt.ylabel('Lq') 
-        plt.plot(uni_rhot,Lq,label='Lq')
-        plt.show()
-
 
         plt.clf()
         plt.xlabel('r/a')
@@ -307,7 +303,7 @@ def Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent):
     return x_peak_range, x_range_ind
 
 #scan toroidial mode number
-def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDoppler,x_peak_range,x_range_ind,n_min,n_max,plot,output_csv):
+def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omega_n_GENE,mtmFreq,omegaDoppler,x_peak_range,x_range_ind,n_min,n_max,plot,output_csv):
     ind_min  =min(x_range_ind)
     ind_max  =max(x_range_ind)
     uni_rhot_full=uni_rhot
@@ -318,6 +314,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
     ky_full=ky
     q_full=q
     omega_n_full=omega_n
+    omega_n_GENE_full=omega_n_GENE
     omegaDoppler_full=omegaDoppler
     mtmFreq_full=mtmFreq
 
@@ -330,6 +327,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
     ky_top=ky[ind_min:ind_max]
     q_top=q[ind_min:ind_max]
     omega_n_top=omega_n[ind_min:ind_max]
+    omega_n_GENE_top=omega_n_GENE[ind_min:ind_max]
     omegaDoppler_top=omegaDoppler[ind_min:ind_max]
     mtmFreq_top=mtmFreq[ind_min:ind_max]
     omega_star_max=max(mtmFreq_top)
@@ -347,6 +345,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
     omega_star_list_Lab_kHz=[]
     nu_ei_omega_plasma_list=[]
     omega_omega_peak_list=[]
+    kHz_to_cs_a_list=[]
     
     if plot==True:
         plt.clf()
@@ -375,11 +374,11 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
             gamma,factor=Dispersion(nu_top[x_index]/float(n0),eta_top[x_index],shat_top[x_index],beta_top[x_index],ky_top[x_index]*float(n0))
             
             gamma_complex=gamma
-            gamma=gamma_complex.real
-            omega=gamma_complex.imag
+            gamma=gamma_complex.imag
+            omega=gamma_complex.real
 
             
-
+            kHz_to_cs_a=omega_n_GENE_top[x_index]/omega_n_top[x_index]   # kHz * (kHz_to_cs_a)= cs/a unit
             omega_n_temp=omega_n_top[x_index]*float(n0)
             gamma_kHz=gamma*omega_n_temp
             omega_kHz=omega*omega_n_temp
@@ -389,6 +388,7 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
             nu_ei_omega_plasma=nu_top[x_index]/float(n0)*omega_n_top[x_index]*float(n0)/(2.*np.pi*omega_star_kHz)
 
             gamma_list_kHz.append(gamma_kHz)
+            kHz_to_cs_a_list.append(kHz_to_cs_a)
             omega_list_kHz.append(omega_kHz)
             omega_list_Lab_kHz.append(omega_Lab_kHz)
             omega_star_list_kHz.append(omega_star_kHz)
@@ -417,9 +417,9 @@ def Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,mtmFreq,omegaDopple
     if output_csv==True:
         with open('MTM_dispersion_n_scan.csv','w') as csvfile:
             data = csv.writer(csvfile, delimiter=',')
-            data.writerow([   'x/a',     'n',      'm',      'gamma(kHz)',    'nu_ei/omega*(plasma)','omega*/omega*_max' ,'omega_plasma(kHz)','omega_lab(kHz)',   'omega_star_plasma(kHz)','omega_star_lab(kHz)',    'factor'])
+            data.writerow([   'x/a',     'n',      'm',      'gamma(kHz)',      'gamma(cs/a)',    'nu_ei/omega*(plasma)','omega*/omega*_max' ,'omega_plasma(kHz)','omega_lab(kHz)',   'omega_star_plasma(kHz)','omega_star_lab(kHz)',    'factor'])
             for i in range(len(x_list)):
-                data.writerow([x_list[i],n_list[i],m_list[i],gamma_list_kHz[i],nu_ei_omega_plasma_list[i],omega_omega_peak_list[i],omega_list_kHz[i],omega_list_Lab_kHz[i],omega_star_list_kHz[i],omega_star_list_Lab_kHz[i],factor_list[i]])
+                data.writerow([x_list[i],n_list[i],m_list[i],gamma_list_kHz[i],gamma_list_kHz[i]*kHz_to_cs_a_list[i],nu_ei_omega_plasma_list[i],omega_omega_peak_list[i],omega_list_kHz[i],omega_list_Lab_kHz[i],omega_star_list_kHz[i],omega_star_list_Lab_kHz[i],factor_list[i]])
         csvfile.close()
 
     return x_list,n_list,m_list,gamma_list,omega_list,factor_list,gamma_list_kHz,omega_list_kHz,omega_list_Lab_kHz,omega_star_list_kHz,omega_star_list_Lab_kHz
@@ -562,7 +562,7 @@ def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profi
     omega_list_kHz,omega_list_Lab_kHz,\
     omega_star_list_kHz,omega_star_list_Lab_kHz\
     =Dispersion_n_scan(uni_rhot,nu,eta,shat,beta,ky,q,\
-    omega_n,mtmFreq,omegaDoppler,x_peak_range,x_range_ind,\
+    omega_n,omega_n_GENE,mtmFreq,omegaDoppler,x_peak_range,x_range_ind,\
     n_min,n_max,plot=plot_n_scan,output_csv=csv_n_scan)
 
     f_lab,gamma_f_lab,f_plasma,gamma_f_plasma=Spectrogram_2_frames(gamma_list_kHz,omega_star_list_kHz,omega_star_list_Lab_kHz,bins,plot=plot_spectrogram)
