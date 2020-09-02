@@ -131,9 +131,21 @@ class ky_mode(object):
         header = "Singular values"
         np.savetxt(filename, self.sv, fmt="%g", header=header, encoding="UTF-8")
 
-    def output_pod_modes(self):
+    def output_pod_modes(self, pods):
         """Output right pod modes (spatial variation)"""
-        pass
+        filename = "./pod_ky" + str("{:03d}").format(self.ky) + ".dat"
+        modes = ["z/pi"]
+        fp = open(filename, "w")
+        for mode in range(pods):
+            header = "POD mode " + str(mode + 1)
+            data = np.vstack(
+                (self.zgrid, np.real(self.vh[mode]), np.imag(self.vh[mode]))
+            ).T
+            np.savetxt(
+                fp, data, fmt="%g", header=header, encoding="UTF-8",
+            )
+            fp.write("\n")
+        fp.close()
 
     def output_time_modes(self):
         """Output left pod modes (time variation)"""
