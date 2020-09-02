@@ -136,7 +136,7 @@ class ky_mode(object):
         filename = "./pod_ky" + str("{:03d}").format(self.ky) + ".dat"
         fp = open(filename, "w")
         for pod in range(pods):
-            header = "POD mode " + str(pod + 1)
+            header = str(pod + 1)
             data = np.vstack(
                 (self.zgrid, np.real(self.vh[pod]), np.imag(self.vh[pod]))
             ).T
