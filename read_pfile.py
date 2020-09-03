@@ -18,25 +18,32 @@ def read_pfile(p_file_name,Z,add_impurity=False):
 
     name_list=[]
     
-    for i in range(len(sdata)/(nr+1)):   #scan all of the quantitites in the p file
+    for i in range(int(len(sdata)/(nr+1))):   #scan all of the quantitites in the p file
         #print(sdata[i*nr+i].split()[2])
         name_list.append(sdata[i*nr+i].split()[2])
 
     need_list=['ne','ni','te','ti','er','vtor']   #List of quantities that need for to be read
     need_list_number=[]                           #Number of the namelist that matches with the list of quantities that need for to be read
     
-    for i in range(len(name_list)):
-        for j in range(len(need_list)):
+    
+    for j in range(len(need_list)):
+        for i in range(len(name_list)):
             #print(name_list[i])
             if str(need_list[j]) in str(name_list[i]):
+                #print(str(need_list[j])+'   '+str(name_list[i]))
+                #print(str(i))
                 need_list_number.append(i)
+
   # more work on the error check
     if len(need_list) > len(need_list_number): 
         print('Error, missing needed quantities in q file, check line 25 in read_qfile.py')
         #for j in range(len(need_list)):
         #    if need_list_number need_list[j]
         #        print('Error, missing'+str(need_list[j]))
-    
+    print(str(name_list))
+    print(str(need_list))
+    print(str(need_list_number))
+
     psi=[]
     f=[]
     df=[]
