@@ -31,10 +31,10 @@ from max_stat_tool import *
 #**************Block for user******************************************
 #**************Setting up*********************************************
 
-iterdb_file_name='DIIID175823.iterdb'  #name of the iterdb file
-geomfile='g175823.04108_257x257'           #name of the magnetic geometry file
-#iterdb_file_name='DIIID162940.iterdb'  #name of the iterdb file
-#geomfile='g162940.02944_670'           #name of the magnetic geometry file
+#iterdb_file_name='DIIID175823.iterdb'  #name of the iterdb file
+#geomfile='g175823.04108_257x257'           #name of the magnetic geometry file
+iterdb_file_name='DIIID174864.iterdb'  #name of the iterdb file
+geomfile='g174864'           #name of the magnetic geometry file
 
 #iterdb_file_name = 'efit_Dial_Nmod5_Zp2_48_new.iterdb' #name of the iterdb file
 #iterdb_file_name = 'efit_Dial_N_Zp2_48_new.iterdb' #name of the iterdb file
@@ -42,20 +42,21 @@ geomfile='g175823.04108_257x257'           #name of the magnetic geometry file
 #geomfile = 'efit_temp'                     #name of the magnetic geometry file
 
 run_mode_finder=True        #Change to True if one want to run mode finder 
-run_nu_scan=True           #Change to True if one want to run collisionality scan 
+run_nu_scan=False           #Change to True if one want to run collisionality scan 
 
 
 omega_percent=10.                       #choose the omega within the top that percent defined in(0,100)
 n_min=1                                #minmum mode number (include) that finder will cover
 n_max=30                               #maximum mode number (include) that finder will cover
 bins=800                               #sizes of bins to smooth the function
-plot_profile=False                    #Set to True is user want to have the plot of the profile
+plot_profile=True                    #Set to True is user want to have the plot of the profile
 plot_n_scan=False                      #Set to True is user want to have the plot of the gamma over n
 csv_profile=False                    #Set to True is user want to have the csv file "profile_output.csv" of the profile
 csv_n_scan=True                       #Set to True is user want to have the csv file "MTM_dispersion_n_scan.csv" of the gamma over n
 plot_spectrogram=True
 peak_of_plasma_frame=False             #Set to True if one want to look around the peak of omega*e in plasam frame
-
+manual_ped=1
+mid_ped0=0.958
 
 #******For scaning********
 scan_n0=3.
@@ -92,7 +93,7 @@ def Dispersion(nu,eta,shat,beta,ky):
  
 
 #return nu,ky for the case n_tor=1 for the given location(default to be pedestal)
-def Parameter_reader(iterdb_file_name,geomfile,plot,output_csv):
+def Parameter_reader(iterdb_file_name,geomfile,manual_ped,mid_ped0,plot,output_csv):
     n0=1.
     mref = 2.        # mass of ion in proton mass
     rhot0, te0, ti0, ne0, ni0, nz0, vrot0 = read_iterdb_file(iterdb_file_name)
@@ -116,6 +117,8 @@ def Parameter_reader(iterdb_file_name,geomfile,plot,output_csv):
     
     midped, topped=find_pedestal(file_name=geomfile, path_name='', plot=False)
     x0_center = midped
+    if manual_ped==1:
+        x0_center=mid_ped0
 
     print('mid pedestal is at r/a = '+str(x0_center))
     
@@ -293,7 +296,12 @@ def Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent):
         omega=mtmFreq
     else:
         omega=mtmFreq+omegaDoppler
+    #if manual_ped==1:
+    #    mid_ped0
+    #mid_ped0=0.958
     omega_max=np.max(omega)
+    print(mtmFreq)
+    print(omega_max)
     omega_min=omega_max*(100.-omega_percent)/100.
     for i in range(len(uni_rhot)):
         if omega[i] >= omega_min:
@@ -554,8 +562,11 @@ def peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omega_n_GENE,mtmFreq,omegaD
 
 def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profile,plot_n_scan,csv_profile,csv_n_scan): 
     #return nu,ky for the case n_tor=1 for the given location(default to be pedestal)
-    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
+    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE=Parameter_reader(iterdb_file_name,geomfile,manual_ped,mid_ped0,plot=plot_profile,output_csv=csv_profile)
+    print(mtmFreq)
+    print(omegaDoppler)
     x_peak_range, x_range_ind=Peak_of_drive(uni_rhot,mtmFreq,omegaDoppler,omega_percent)
+
     #scan toroidial mode number
     x_list,n_list,m_list,gamma_list,\
     omega_list,factor_list,gamma_list_kHz,\
@@ -570,7 +581,7 @@ def MTM_scan(iterdb_file_name,geomfile,omega_percent,bins,n_min,n_max,plot_profi
 
 
 def coll_scan(iterdb_file_name,geomfile,n0,plot_profile,plot_peak_scan,csv_profile,csv_peak_scan): 
-    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE=Parameter_reader(iterdb_file_name,geomfile,plot=plot_profile,output_csv=csv_profile)
+    uni_rhot,nu,eta,shat,beta,ky,q,mtmFreq,omegaDoppler,omega_n,omega_n_GENE=Parameter_reader(iterdb_file_name,geomfile,manual_ped,mid_ped0,plot=plot_profile,output_csv=csv_profile)
     peak_scan(uni_rhot,nu,eta,shat,beta,ky,q,omega_n,omega_n_GENE,mtmFreq,omegaDoppler,n0,plot_peak_scan,csv_peak_scan)
 
 if run_mode_finder==True:
