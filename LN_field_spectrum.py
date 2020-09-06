@@ -17,7 +17,7 @@ import sys
 
 #from read_write_geometry import *
 
-time_scan=False    #Change to True if one want to scan trough time. 
+time_scan=True    #Change to True if one want to scan trough time. 
 #time_start
 #time_stop
 path='pic'        #path one want to store the picture and video in
@@ -104,7 +104,10 @@ Apar_to_B1=abs((1./rhoref)*Bref*B_gauss*rhorefStar*rhoref)         #B1=Apar*ky_G
 
 if time_scan==True:
     time_list = np.array(field.tfld)
-    if os.path.isfile(path):  #if path does not exist, then create 'pic'
+    if os.path.isdir(path):  #if path does not exist, then create 'pic'
+        pass
+    else:
+        print("*************************")
         os.mkdir(path) 
     #for test 
     #time_list=time_list[int(99*len(time_list)/100):-1]
