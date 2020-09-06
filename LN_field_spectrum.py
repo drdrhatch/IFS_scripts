@@ -122,7 +122,7 @@ for time0 in time_list:
     else: 
         itime = np.argmin(abs(time - time0))
         itime0 = itime
-    print("Looking at the spectra at time:"+str(time[itime])+'ms')
+    print("Looking at the spectra at time:"+str(time[itime]))
     #This sets the time step you want to read in
     field.set_time(time[itime])
     
@@ -150,11 +150,11 @@ for time0 in time_list:
         zgrid = np.linspace(-np.pi,np.pi,pars['nz0'],endpoint=False)
         #print("zgrid"+str(zgrid))
         phi=field.phi()[:,:,:]
-        print('np.shape(phi)'+str(np.shape(phi)))
+        #print('np.shape(phi)'+str(np.shape(phi)))
         phi2 = abs(phi)**2
-        print('zgrid[int(pars[nz0]/2)]'+str(zgrid[int(pars['nz0']/2)]))
+        #print('zgrid[int(pars[nz0]/2)]'+str(zgrid[int(pars['nz0']/2)]))
         phi2_outboard = phi2[int(pars['nz0']/2),:,:]
-        print('np.shape(phi2_outboard)'+str(np.shape(phi2_outboard)))
+        #print('np.shape(phi2_outboard)'+str(np.shape(phi2_outboard)))
         phi2_ob_ky = np.sum(phi2_outboard,axis=1)
         
         apar=field.apar()[:,:,:]
@@ -173,11 +173,11 @@ for time0 in time_list:
 
         plt.clf()
         plt.plot(kygrid,phi2_ob_ky,label=r'$\phi^2$')
-        plt.title(r'$Outboard\ \phi^2$'+' at t= '+str(time[itime])+'ms')
+        plt.title(r'$Outboard\ \phi^2$'+' at t= '+str(time[itime]))
         plt.xlabel(r'$k_y(\rho_s)$')
         plt.legend()
         if time_scan==True:
-            plt.savefig('pic/Phi_t='+str(time[itime])+'ms.png')
+            plt.savefig('pic/Phi_t='+str(time[itime])+'.png')
         else:
             plt.show()
 
@@ -186,22 +186,22 @@ for time0 in time_list:
     
         plt.clf()
         plt.plot(kygrid,apar2_ob_ky,label=r'$A_{||}^2$')
-        plt.title(r'$Outboard\ A_{||}^2$'+' at t= '+str(time[itime])+'ms')
+        plt.title(r'$Outboard\ A_{||}^2$'+' at t= '+str(time[itime]))
         plt.xlabel(r'$k_y(\rho_s)$')       
         plt.legend()
         if time_scan==True:
-            plt.savefig('pic/Apar_t='+str(time[itime])+'ms.png')
+            plt.savefig('pic/Apar_t='+str(time[itime])+'.png')
         else:
             plt.show()
 
         plt.clf()
         plt.plot(kygrid,B1_ob_ky,label=r'$B_{R}$')
-        plt.title(r'$Outboard\ B_{R}$'+' at t= '+str(time[itime])+'ms')
+        plt.title(r'$Outboard\ B_{R}$'+' at t= '+str(time[itime]))
         plt.xlabel(r'$k_y(\rho_s)$')       
         plt.ylabel(r'$B_R(Gauss)$')
         plt.legend()
         if time_scan==True:
-            plt.savefig('pic/B1_t='+str(time[itime])+'ms.png')
+            plt.savefig('pic/B1_t='+str(time[itime])+'.png')
         else:
             plt.show()
 
@@ -224,17 +224,17 @@ for time0 in time_list:
     else: 
         itime = np.argmin(abs(time - time0))
         itime0 = itime
-    print("Looking at the spectra at time:"+str(time[itime])+'ms')
+    print("Looking at the spectra at time:"+str(time[itime]))
 
     
 
-    file_name='pic/Phi_t='+str(time[itime])+'ms.png'
+    file_name='pic/Phi_t='+str(time[itime])+'.png'
     ims_phi.append(imageio.imread(file_name))
 
-    file_name='pic/Apar_t='+str(time[itime])+'ms.png'
+    file_name='pic/Apar_t='+str(time[itime])+'.png'
     ims_apar.append(imageio.imread(file_name))
 
-    file_name='pic/B1_t='+str(time[itime])+'ms.png'
+    file_name='pic/B1_t='+str(time[itime])+'.png'
     ims_B1.append(imageio.imread(file_name))
 
 
