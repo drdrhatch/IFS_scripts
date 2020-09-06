@@ -167,7 +167,7 @@ for time0 in time_list:
         apar2_outboard = apar2[int(pars['nz0']/2),:,:]
         apar2_ob_ky = np.sum(apar2_outboard,axis=1)
 
-        B1_ob_ky=kygrid_ob*apar_ob_ky*Apar_to_B1*B_gauss  #B1 in Gauss
+        B1_ob_ky=kygrid_ob*apar_ob_ky*Apar_to_B1  #B1 in Gauss
 
 
 
