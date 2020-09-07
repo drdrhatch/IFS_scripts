@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+#Created by Max T. Curie 09/07/2020
 import numpy as np
 import os
 import pandas as pd
@@ -170,12 +170,12 @@ for time0 in time_list:
 
         apar=abs(field.apar()[:,:,:])
         #print("apar"+str(np.shape(apar)))
-        apar_ky = np.sum(apar,axis=2)
+        apar_ky = np.sum(apar,axis=2)         #sum over x_axis
         (nz0,nky0)=np.shape(apar_ky)
         B1_ky=np.zeros(np.shape(apar_ky))
         #print("apar_ky"+str(np.shape(apar_ky)))
 
-        B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss
+        B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss  (nz0,nky0)*(nz0,nky0)*scaler
 
 
         RIP_list=np.zeros(len(Z_list))
@@ -242,19 +242,7 @@ for time0 in time_list:
     
     df = pd.read_csv('csv/RIP_t='+str(time[itime])+'.csv')
     RIP_temp_list.append(df['B_R(Gauss)'])
-    '''
-    plt.clf()
-    
-    #print(df_summary)
-    ax2=df_summary.plot(kind='scatter',x='Z(cm)',xerr='Z_err(cm)',y='B_R(Gauss)',yerr='B_R_err(Gauss)',grid=True,label='Average',color='red',lw=3)
-    df.plot.bar(x='Z(cm)',y='B_R(Gauss)',label='t= '+str(time[itime]),color='blue',ax=ax2)
-    ax2.set_xlabel(r'$Height(cm)$',fontsize=15)
-    ax2.set_ylabel(r'$\bar{B}_r(Gauss)$',fontsize=15)
-    plt.title(r'$\bar{B}_r$'+' at t='+str(time[itime]))
-    #plt.legend()
-    #plt.xlim(min_Z0*100.,max_Z0*100.)
-    plt.savefig('pic/RIP_t='+str(time[itime])+'.png')
-'''
+
     plt.clf()
     plt.errorbar(df_summary['Z(cm)'],df_summary['B_R(Gauss)'],xerr=df_summary['Z_err(cm)'],yerr=df_summary['B_R_err(Gauss)'],color='red',label='Average')
     plt.bar(df['Z(cm)'], df['B_R(Gauss)'], color ='blue', width = 4,label='t= '+str(time[itime])) 
