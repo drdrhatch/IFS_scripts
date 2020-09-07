@@ -34,11 +34,11 @@ def start_end_time(suffix,pars):  #suffix in the format of "_1" or ".dat"
         time_end = float(raw_input("End time:\n"))
         time_start_index=np.argmin(abs(time-float(time_start)))
         time_end_index=np.argmin(abs(time-float(time_end)))
-        time_star = time[time_start_index]
+        time_start = time[time_start_index]
         time_end = time[time_end_index]
     elif scan_all=='y' or scan_all=='Y':
-        time_start = min(time)
-        time_end = max(time)
+        time_start = time[0]
+        time_end = time[-1]
         time_start_index=0
         time_end_index=len(time)-1
     else:
@@ -49,7 +49,7 @@ def start_end_time(suffix,pars):  #suffix in the format of "_1" or ".dat"
     plt.plot(time,nrge[:,6],label="Q_es of electron")
     plt.plot(time,nrge[:,7],label="Q_em of electron")
     plt.title('nrg of electron')
-    plt.axvline(time_star,color='red',label="time start",alpha=1)
+    plt.axvline(time_start,color='red',label="time start",alpha=1)
     plt.axvline(time_end,color='blue',label="time end",alpha=1)
     plt.xlabel('time')
     plt.legend()
@@ -57,7 +57,7 @@ def start_end_time(suffix,pars):  #suffix in the format of "_1" or ".dat"
 
 
 
-    return time_star,time_end
+    return time_start,time_end
 
 
     

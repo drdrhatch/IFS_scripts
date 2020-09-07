@@ -99,8 +99,8 @@ Apar_to_B1=abs((1./rhoref)*Bref*B_gauss*rhorefStar*rhoref)         #B1=Apar*ky_G
 
 
 if time_scan==True:
-    time_star,time_end=start_end_time(suffix,pars)
-    time_start_index=np.argmin(abs(time - time_star))
+    time_start,time_end=start_end_time(suffix,pars)
+    time_start_index=np.argmin(abs(time - time_start))
     time_end_index=np.argmin(abs(time - time_end))
     time_list = time[time_start_index:time_end_index+1]
     if os.path.isdir(path):  #if path does not exist, then create 'pic'
