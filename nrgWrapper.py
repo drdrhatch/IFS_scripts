@@ -84,11 +84,11 @@ def read_Gamma_Q(time,nrgs,print_val,setTime=-1):
      
     if (setTime == -1):
         this_nrg = nrgs[setTime,:]
-        print 'Reading nrg file are at t = ', time[setTime]
+        print ('Reading nrg file are at t = '+str(time[setTime]) )
     else:
         isetTime = np.argmin(abs(time-setTime))
         this_nrg = nrgs[isetTime]
-        print 'Reading nrg file are at t = ', time[isetTime]
+        print ('Reading nrg file are at t = '+str(time[setTime]) )
 
 
     Gamma_es = this_nrg[4]
