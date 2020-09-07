@@ -18,9 +18,9 @@ if suffix != '.dat':
 pars = init_read_parameters_file(suffix)
 
 
-def D_over_chi(time,nrg,omn,omt,T,n):
+def D_over_chi(time,nrg,omn,omt,T,n,setTime=-1):
     Gamma_es, Gamma_em, Q_es, Q_em = \
-                        read_Gamma_Q(time,nrg,False)
+                        read_Gamma_Q(time,nrg,False,setTime)
     Gamma = Gamma_es + Gamma_em
     Qtot = Q_es + Q_em
     #Qtot = Qtot - 5./3.*Gamma
