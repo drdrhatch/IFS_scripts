@@ -17,8 +17,8 @@ def start_end_time(suffix,pars):  #suffix in the format of "_1" or ".dat"
     elif pars['n_spec'] == 3:
         time, nrgi, nrge, nrgz = read_from_nrg_files(pars,suffix,False)
 
-    print(str(np.shape(time)))
-    print(str(np.shape(nrge)))
+    #print(str(np.shape(time)))
+    #print(str(np.shape(nrge)))
 
     plt.clf()
     plt.plot(time,nrge[:,6],label="Q_es of electron")

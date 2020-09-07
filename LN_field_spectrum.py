@@ -63,7 +63,7 @@ mref = pars['mref']         #in proton mass(kg)
 q0 = pars['q0']              #unitless, safety factor/q95
 x0 = pars['x0']             #x/a, location
 kymin = pars['kymin']       #in rhoi
-nky0 = pars['nky0']       #in rhoi
+nky0 = pars['nky0']       #in total number of ky
 n_step = pars['n0_global']       #in rhoi
 nref = nref * 1.E19         #in the unit of /m^3
 Tref = Tref * qref * 1.E03  #in the unit of J
@@ -217,12 +217,8 @@ ims_phi=[]
 ims_apar=[]
 ims_B1=[]
 for time0 in time_list:
-    if time0 == -1:
-        itime = -1
-        itime0 = len(time)-1
-    else: 
-        itime = np.argmin(abs(time - time0))
-        itime0 = itime
+    itime = np.argmin(abs(time - time0))
+    itime0 = itime
     print("Creating animation at time:"+str(time[itime]))
 
     
