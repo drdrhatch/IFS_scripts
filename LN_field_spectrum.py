@@ -9,6 +9,7 @@ from fieldlib import fieldfile
 from geomWrapper import ky
 from geomWrapper import init_read_geometry_file
 from read_write_geometry import read_geometry_local
+from LN_tools import start_end_time
 from ParIO import Parameters 
 import optparse as op
 import sys
@@ -18,8 +19,6 @@ import sys
 #from read_write_geometry import *
 
 time_scan=True    #Change to True if one want to scan trough time. 
-#time_start
-#time_stop
 path='pic'        #path one want to store the picture and video in
 
 
@@ -95,19 +94,19 @@ kygrid_ob=ky_GENE_ob_n1*n_list
 print('n0 list length: '+str(len(n_list)))
 print('n0 list: '+str(n_list))
 
-
-
-
 #B1=abs(np.mean(Apar_GENE[z,:])*len(Apar_GENE[z,:])*(ky_GENE_temp[z]/rhoref)*Bref*B_gauss*rhorefStar*rhoref)
 Apar_to_B1=abs((1./rhoref)*Bref*B_gauss*rhorefStar*rhoref)         #B1=Apar*ky_GENE_temp*Apar_to_B1
 
 
 if time_scan==True:
-    time_list = np.array(field.tfld)
+    time_star,time_end=start_end_time(suffix,pars)
+    time_start_index=np.argmin(abs(time - time_star))
+    time_end_index=np.argmin(abs(time - time_end))
+    time_list = time[time_start_index:time_end_index+1]
     if os.path.isdir(path):  #if path does not exist, then create 'pic'
         pass
     else:
-        print("*************************")
+        print("**********Scan starts, output in pic***************")
         os.mkdir(path) 
     #for test 
     #time_list=time_list[int(99*len(time_list)/100):-1]
@@ -224,7 +223,7 @@ for time0 in time_list:
     else: 
         itime = np.argmin(abs(time - time0))
         itime0 = itime
-    print("Looking at the spectra at time:"+str(time[itime]))
+    print("Creating animation at time:"+str(time[itime]))
 
     
 
