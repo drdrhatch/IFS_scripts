@@ -41,8 +41,7 @@ class ky_mode(object):
         self.phase = phase ** (self.kx_modes / step)
 
     def read_phi(self):
-        """ Read phi for a given time window, returning array
-        """
+        """ Read phi for a given time window, returning array"""
         tmp = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(
             order="F"
         )

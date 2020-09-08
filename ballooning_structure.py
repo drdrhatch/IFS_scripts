@@ -77,4 +77,4 @@ if args.pod:
         # mode.plot_singular_values()
         # mode.plot_time_dependence(times, range(args.pod))
         mode.plot_pod(range(args.pod))
-        mode.output(args.pod,times, norm=True)
+        mode.output(args.pod, times, norm=True)
