@@ -143,7 +143,7 @@ class ky_mode(object):
             np.savetxt(
                 fp, data, fmt="%g", header=header, encoding="UTF-8",
             )
-            fp.write("\n")
+            fp.write("\n\n")
         fp.close()
 
     def output_time_modes(self, pods, times):
