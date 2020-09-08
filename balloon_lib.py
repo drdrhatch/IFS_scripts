@@ -119,10 +119,10 @@ class ky_mode(object):
         plt.xlabel(r"$z/\pi$", size=18)
         plt.show()
 
-    def output(self, pods, times):
+    def output(self, pods, times, norm):
         """Output various POD data"""
         self.output_sv()
-        self.output_pod_modes(pods)
+        self.output_pod_modes(pods, norm)
         self.output_time_modes(pods, times)
 
     def output_sv(self):
@@ -131,15 +131,19 @@ class ky_mode(object):
         header = "Singular values"
         np.savetxt(filename, self.sv, fmt="%g", header=header, encoding="UTF-8")
 
-    def output_pod_modes(self, pods):
+    def output_pod_modes(self, pods, norm):
         """Output right pod modes (spatial variation)"""
-        filename = "./pod_ky" + str("{:03d}").format(self.ky) + ".dat"
+        if norm:
+            filename = "./pod_ky" + str("{:03d}").format(self.ky) + "_norm.dat"
+        else:
+            filename = "./pod_ky" + str("{:03d}").format(self.ky) + ".dat"
         fp = open(filename, "w")
         for pod in range(pods):
             header = str(pod + 1)
-            data = np.vstack(
-                (self.zgrid, np.real(self.vh[pod]), np.imag(self.vh[pod]))
-            ).T
+            phi = self.vh[pod]
+            if norm:
+                phi /= phi[self.zero_ind]
+            data = np.vstack((self.zgrid, np.real(phi), np.imag(phi))).T
             np.savetxt(
                 fp, data, fmt="%g", header=header, encoding="UTF-8",
             )
