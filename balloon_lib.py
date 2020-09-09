@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
 
-    def __init__(self, ky, field, pars):
+    def __init__(self, ky, pars, field, mom):
         self.ky = ky
         self.field = field
         self.nx = field.nx

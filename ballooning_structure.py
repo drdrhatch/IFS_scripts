@@ -58,7 +58,7 @@ stime = max(args.stime, min_time)
 etime = min(args.etime, max_time)
 
 ky_list = args.ky_list
-ky_modes = [bl.ky_mode(ky, field, pars) for ky in ky_list]
+ky_modes = [bl.ky_mode(ky, pars, field, mom) for ky in ky_list]
 times = bl.get_times(field, stime, etime)
 for time in times:
     field.set_time(time)
