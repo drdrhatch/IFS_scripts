@@ -17,6 +17,7 @@ class ky_mode(object):
         self.N = pars["nexc"]
         self.construct_ranges()
         self.define_phase(pars)
+        self.define_dictionary()
 
     def construct_ranges(self):
         self.kxrange()
@@ -39,6 +40,20 @@ class ky_mode(object):
             phase = -1
         step = max(1, max(self.kx_modes))
         self.phase = phase ** (self.kx_modes / step)
+
+    def define_dictionary(self):
+        self.field_vars = {
+            "phi": self.field.phi(),
+            "apar": self.field.apar(),
+            "bpar": self.field.bpar(),
+        }
+        if self.mom:
+            self.field_vars.update(
+                {
+                    "tpar": self.mom.tpar(),
+                    "tperp": self.mom.tperp(),
+                }
+            )
 
     def read_phi(self):
         """ Read phi for a given time window, returning array"""
