@@ -40,12 +40,12 @@ BES_radius=0.02  #BES measurement radius in m
 RIP_Z_location=0. #mid-plan
 beam_width=0.02 #2cm for the laser beam width
 
-Parameter_demo_plot=True
-BES_demo_plot=False
-RIP_demo_plot=True
+Parameter_demo_plot=False  #Change to True if one wants to see the plot of equilibrium
+BES_demo_plot=False  #Change to True if one wants to see the plot of the location where the BES data is collected
+RIP_demo_plot=True   #Change to True if one wants to see the plot of the RIP and the location where the RIP data is collected
 
-scan_along_z=True  #Change to True if one to scan the RIP result across different height
-bin_smooth=10
+scan_along_z=False  #Change to True if one to scan the RIP result across different height
+bin_smooth=10       #size of the bin for rolling average to smooth the data
 #
 #del_x= 0.135 #13.5cm for DIIID RIP
 #real_grid= 0.02 # unit: meter, resolution of the the line integral on height
@@ -62,6 +62,7 @@ def Read_parameter(suffix,plot):
     moms = momfile('mom_e'+suffix,pars)
     #getting B field using read_write_geometry.py
     gpars,geometry = read_geometry_global(pars['magn_geometry'][1:-1]+suffix)
+    #Get geom_coeff from geomWrapper.py
     geom_type, geom_pars, geom_coeff = init_global_geometry(suffix, pars)
     
     real_R=geometry['geo_R'] #it is major radius in meter
@@ -150,7 +151,7 @@ def Read_parameter(suffix,plot):
     n1=np.zeros((nz,nx))
     #ky_GENE=np.zeros(np.shape(deln_global))
 
-    B_gauss=10**4               #1T=10^4Gauss
+    B_gauss=10.**4               #1T=10^4Gauss
     qref = 1.6E-19              #in C
     c  = 1.                     #in 3*10^8m/s
     m_kg = 1.673E-27            #in kg

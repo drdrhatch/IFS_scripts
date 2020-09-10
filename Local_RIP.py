@@ -50,7 +50,7 @@ def l_RIP(suffix):
     moms = momfile('mom_e'+suffix,pars)
     #getting B field using read_write_geometry.py
     gpars,geometry = read_geometry_local(pars['magn_geometry'][1:-1]+suffix)
-    #Get geom_coeff from ParIO Wrapper
+    #Get geom_coeff from geomWrapper.py
     geom_type, geom_pars, geom_coeff = init_read_geometry_file(suffix, pars)
 
     #From plot mode structures
@@ -105,7 +105,7 @@ def l_RIP(suffix):
     n1=np.zeros(nz)
     #ky_GENE=np.zeros(np.shape(deln_global))
 
-
+    B_gauss=10.**4               #1T=10^4Gauss
     qref = 1.6E-19              #in C
     c  = 1.                     #in 3*10^8m/s
     m_kg = 1.673E-27            #in kg
