@@ -55,16 +55,35 @@ class ky_mode(object):
                     "tperp": self.mom.tperp,
                 }
             )
+        fields = ["phi", "apar", "bpar", "tpar", "tperp"]
+        self.fields = dict.fromkeys(fields, None)
 
-    def read_phi(self):
-        """ Read phi for a given time window, returning array"""
-        tmp = (self.field.phi()[:, self.ky, self.kx_modes] * self.phase).ravel(
+    def read_field(self, var):
+        """ Read field for a given time window, returning array"""
+        print("Reading from field ", var)
+        tmp = (self.field_vars[var]()[:, self.ky, self.kx_modes] * self.phase).ravel(
             order="F"
         )
-        if hasattr(self, "phi"):
-            self.phi = np.vstack([self.phi, tmp])
-        else:
-            self.phi = [tmp]
+        return tmp
+
+    def read_fields(self, times, fields):
+        """Read given fields data for the given times"""
+        tmp = np.empty((len(fields), times.size, self.zgrid.size), dtype=np.cdouble)
+        for i, var in enumerate(fields):
+            self.fields[var] = tmp[i, :, :]
+        for i, time in enumerate(times):
+            print("Reading fields at time t = " + str("{:6.3f}").format(time))
+            self.field.set_time(time)
+            for j, var in enumerate(fields):
+                tmp[j, i, :] = self.read_field(var)
+        self.define_variables()
+
+    def define_variables(self):
+        self.phi = self.fields["phi"]
+        self.apar = self.fields["apar"]
+        self.bpar = self.fields["bpar"]
+        self.tpar = self.fields["tpar"]
+        self.tperp = self.fields["tperp"]
 
     def pod(self):
         self.u, self.sv, self.vh = la.svd(self.phi)
