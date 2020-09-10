@@ -246,7 +246,7 @@ for time0 in time_list:
     plt.clf()
     plt.errorbar(df_summary['Z(cm)'],df_summary['B_R(Gauss)'],xerr=df_summary['Z_err(cm)'],yerr=df_summary['B_R_err(Gauss)'],color='red',label='Average')
     plt.bar(df['Z(cm)'], df['B_R(Gauss)'], color ='blue', width = 4,label='t= '+str(time[itime])) 
-    plt.xlabel('Height(m)',fontsize=10)
+    plt.xlabel('Height(cm)',fontsize=10)
     plt.ylabel(r'$\bar{B}_r(Gauss)$',fontsize=10)
     plt.title(r'$\bar{B}_r$'+' at t='+str(time[itime]))
     plt.legend()
