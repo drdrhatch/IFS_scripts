@@ -43,15 +43,15 @@ class ky_mode(object):
 
     def define_dictionary(self):
         self.field_vars = {
-            "phi": self.field.phi(),
-            "apar": self.field.apar(),
-            "bpar": self.field.bpar(),
+            "phi": self.field.phi,
+            "apar": self.field.apar,
+            "bpar": self.field.bpar,
         }
         if self.mom:
             self.field_vars.update(
                 {
-                    "tpar": self.mom.tpar(),
-                    "tperp": self.mom.tperp(),
+                    "tpar": self.mom.tpar,
+                    "tperp": self.mom.tperp,
                 }
             )
 
