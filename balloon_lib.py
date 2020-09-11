@@ -16,6 +16,7 @@ class ky_mode(object):
         "tperp": "$T_\perp$",
         "tpar": "T_\parallel$",
         "dens": "$n$",
+        "q": "$Q$",
     }
 
     def __init__(self, ky, pars, field, mom=None):
