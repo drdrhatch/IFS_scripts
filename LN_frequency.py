@@ -174,6 +174,7 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
     amplitude_frequency_sum=0
     amplitude_growth_sum=0
     #print(str(B1_ky_t_ob))
+    ims_B1=[]
     for iky in range(nky):
         B1_ob_t=B1_ky_t_ob[iky,:]
         frequency,amplitude_frequency,amplitude_growth=FFT_function_time(B1_ob_t,time_list,plot=False)
@@ -188,6 +189,12 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
         plt.legend()
         plt.savefig('pic/B_r_ky_out_board='+str(ky_GENE_ob[iky])+'.png')
         #plt.show()
+
+
+        ims_B1.append(imageio.imread('pic/B_r_ky_out_board='+str(ky_GENE_ob[iky])+'.png'))
+
+
+
         amplitude_frequency_sum=amplitude_frequency_sum+abs(amplitude_frequency)
         amplitude_growth_sum=amplitude_growth_sum+amplitude_growth
         
@@ -195,7 +202,7 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
         df_k=pd.DataFrame(d, columns=['ky_out_board','frequency(kHZ)','B_R(Gauss)amplitude_frequency','B_R(Gauss)amplitude_growth'])
         df_k.to_csv('csv/B_r_ky_out_board='+str(ky_GENE_ob[iky])+'.csv',index=False)
 
-    
+    imageio.mimwrite('pic/0_B_r_ky_out_board_dynamic_images.gif', ims_B1)
 
     plt.clf()
     plt.plot(frequency_kHZ,amplitude_frequency_sum,label='frequency')
