@@ -50,11 +50,11 @@ def eigenfunctions_from_field_file(pars,suffix,center_only,plot,setTime=-1,smoot
         phi = np.zeros(nz,dtype='complex128')
         apar = np.zeros(nz,dtype='complex128')
     else:
-        print("nx",nx,"nx/2",nx/2,"floor(nx/2)",np.floor(nx/2))
+        #print("nx",nx,"nx/2",nx/2,"floor(nx/2)",np.floor(nx/2))
         ikxmin = int( -np.ceil(nx/2)+1)
         ikx_grid = np.arange(nx)+ikxmin
         #ikx_grid = np.arange(-int(np.floor(nx/2)+1),int(np.floor(nx/2)+1))
-        print("ikx_grid",ikx_grid)
+        #print("ikx_grid",ikx_grid)
         phi = np.zeros(nx*nz,dtype='complex128')
         apar = np.zeros(nx*nz,dtype='complex128')
 
@@ -73,11 +73,11 @@ def eigenfunctions_from_field_file(pars,suffix,center_only,plot,setTime=-1,smoot
                                                                  this_apar
     else:
         for i in ikx_grid:
-            print("ikx_grid",ikx_grid)
+            #print("ikx_grid",ikx_grid)
             this_phi = field.phi()[:,0,-int(i)]*phase_fac**i
-            print("len(this_phi)",len(this_phi))
-            print("(i-ikx_grid[0])*nz,(i-ikx_grid[0]+1)*nz",(i-ikx_grid[0])*nz,(i-ikx_grid[0]+1)*nz)
-            print("len(phi)",len(phi))
+            #print("len(this_phi)",len(this_phi))
+            #print("(i-ikx_grid[0])*nz,(i-ikx_grid[0]+1)*nz",(i-ikx_grid[0])*nz,(i-ikx_grid[0]+1)*nz)
+            #print("len(phi)",len(phi))
             phi[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=this_phi
             if pars['n_fields'] > 1 and pars['beta'] !=0:
                 this_apar = field.apar()[:,0,-i]*phase_fac**i
@@ -129,10 +129,10 @@ def eigenfunction_average(z_grid,jacobian,kperp,omega_d,field,name):
     ave_kperp2 = ave_kperp2/denom
     ave_kperp = np.sqrt(ave_kperp2)
     #print name + ' weighted k_perp^2 =', ave_kperp2
-    print( name + ' weighted k_perp =', ave_kperp)
+    #print( name + ' weighted k_perp =', ave_kperp)
 
     ave_omegad = ave_omegad/denom
-    print( name + ' weighted omega_d =', ave_omegad)
+    #print( name + ' weighted omega_d =', ave_omegad)
 
     return ave_kperp, ave_omegad
 
@@ -148,9 +148,9 @@ def eigenfunction_squared(z_grid,jacobian,field):
             (z_grid[i+1]-z_grid[i])/jacobian[i]
 
     ave_sq_int = abs(ave_sq_int)
-    print( 'int phi**2 =', ave_sq_int)
+    #print( 'int phi**2 =', ave_sq_int)
     ave_int_sq= abs(ave_int_sq)**2
-    print( ' (int phi)**2 =', ave_int_sq)
+    #print( ' (int phi)**2 =', ave_int_sq)
 
     return ave_sq_int, ave_int_sq
 
@@ -171,8 +171,8 @@ def kz_from_dfielddz(zgrid, jacobian, field, plot, name, zstart = 0., zend = 0.)
     
     ##if not (zstart == 0. and zend == 0.):
     if zstart == zend:
-        zstart = float(raw_input("Enter start z: "))
-        zend = float(raw_input("Enter end z: "))
+        zstart = float(input("Enter start z: "))
+        zend = float(input("Enter end z: "))
     startInd = np.argmin(abs(zgrid - zstart))
     endInd = np.argmin(abs(zgrid - zend))
     for i in range(startInd, endInd + 1):
@@ -182,8 +182,8 @@ def kz_from_dfielddz(zgrid, jacobian, field, plot, name, zstart = 0., zend = 0.)
         denom = denom + 0.5*(abs(field[i])**2 + abs(field[i+1])**2)*\
                   (zgrid[i+1]-zgrid[i])/jacobian[i]
     ave_kz = np.sqrt(sum_ddz/denom)
-    print( name + ' averaged kz = ', ave_kz)
-    print( 'Input to SKiM kz = ', ave_kz)
+    #print( name + ' averaged kz = ', ave_kz)
+    #print( 'Input to SKiM kz = ', ave_kz)
     return ave_kz, zstart, zend
 
 def fourierTrans(pars,zgrid,jacobian,field,plot,name):
@@ -209,8 +209,8 @@ def fourierTrans(pars,zgrid,jacobian,field,plot,name):
         plt.legend()
         plt.show()
 
-    kzstart = float(raw_input("Enter start kz: "))
-    kzend = float(raw_input("Enter end kz: "))
+    kzstart = float(input("Enter start kz: "))
+    kzend = float(input("Enter end kz: "))
     startInd = np.argmin(abs(kz_grid - kzstart))
     endInd = np.argmin(abs(kz_grid - kzend))
     sum_kz2 = 0.
@@ -222,7 +222,7 @@ def fourierTrans(pars,zgrid,jacobian,field,plot,name):
         denom = denom + 0.5*(abs(field_kz[i])**2 + \
                 abs(field_kz[i+1])**2)*(kz_grid[i+1]-kz_grid[i])
     ave_kz = np.sqrt(sum_kz2/denom)
-    print( name + ' averaged kz = ', ave_kz)
+    #print( name + ' averaged kz = ', ave_kz)
     #print 'input to SKiM averaged kz = ', ave_kz/np.pi/pars['q0']/pars['major_R']
 
     return field_kz, kz_grid
