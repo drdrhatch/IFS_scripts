@@ -133,7 +133,7 @@ def reconstruct_zgrid(geom_coeff, pars, center_only, plot = True, edge_opt = -1)
         else :
             zgrid_even = np.linspace(- (nx - 1), (nx + 1), nx * nz, \
                                                         endpoint = False)
-
+    
     if 'edge_opt' in pars:
       if edge_opt == -1:
         edge_opt = pars['edge_opt']
@@ -152,9 +152,9 @@ def reconstruct_zgrid(geom_coeff, pars, center_only, plot = True, edge_opt = -1)
         zgrid_edge_center = 1./edge_opt*np.sinh(N*zgrid_even_center*np.pi)/np.pi
 
         dz = np.zeros(nz, dtype = 'float128')
-        for i in np.arange(nz / 2 + 1, nz):
+        for i in np.arange(int(nz / 2 + 1), nz):
             dz[i] = zgrid_edge_center[i]-zgrid_edge_center[i - 1]
-        for i in np.arange(nz / 2 - 1, - 1, - 1):
+        for i in np.arange(int(nz / 2 - 1), - 1, - 1):
             dz[i] = zgrid_edge_center[i + 1]-zgrid_edge_center[i]
 
         for i in ikx_grid:
