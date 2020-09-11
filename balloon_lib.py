@@ -60,7 +60,6 @@ class ky_mode(object):
 
     def read_field(self, var):
         """ Read field for a given time window, returning array"""
-        print("Reading from field ", var)
         tmp = (self.field_vars[var]()[:, self.ky, self.kx_modes] * self.phase).ravel(
             order="F"
         )
