@@ -73,11 +73,10 @@ times = np.intersect1d(ftimes, mtimes)
 #         mode.read_phi()
 for mode in ky_modes:
     mode.read_fields(times, ("phi", "apar"))
-    mode.plot(mode.apar[0, :])
 
 if args.plot:
     for mode in ky_modes:
-        mode.plot_modes(times)
+        mode.plot_modes("phi", times)
 
 if args.pod:
     for mode in ky_modes:
@@ -85,5 +84,5 @@ if args.pod:
         # print("singular values = ", mode.sv)
         # mode.plot_singular_values()
         # mode.plot_time_dependence(times, range(args.pod))
-        mode.plot_pod(mode.vh, range(args.pod))
+        mode.plot_pod(mode.vh, range(args.pod), "phi")
         mode.output(args.pod, times, norm=True)

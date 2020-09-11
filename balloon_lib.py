@@ -9,6 +9,15 @@ import matplotlib.pyplot as plt
 class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
 
+    varnames = {
+        "phi": "$\Phi$",
+        "apar": "$A_\parallel$",
+        "bpar": "$B_\parallel$",
+        "tperp": "$T_\perp$",
+        "tpar": "T_\parallel$",
+        "n": "$n$",
+    }
+
     def __init__(self, ky, pars, field, mom=None):
         self.ky = ky
         self.field = field
@@ -88,24 +97,22 @@ class ky_mode(object):
         u, sv, vh = la.svd(var)
         return u, sv, vh
 
-    def plot_modes(self, times):
-        for phi, time in zip(self.phi, times):
-            plt.title(
-                r"$\phi$, $k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time)
-            )
-            norm = phi[self.zero_ind]
-            phi /= norm
-            self.plot(phi)
+    def plot_modes(self, var, times):
+        varname = ky_mode.get_varname(var)
+        for pvar, time in zip(self.fields[var], times):
+            plt.title(r"$k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time))
+            norm = pvar[self.zero_ind]
+            pvar /= norm
+            self.plot(pvar, varname)
 
-    def plot_pod(self, var, pods):
+    def plot_pod(self, var, pods, varn):
+        varname = ky_mode.get_varname(varn)
         for pod in pods:
-            plt.title(
-                r"$\phi$, $k_y=$" + str(self.ky) + ", POD mode # = " + str(pod + 1)
-            )
+            plt.title("$k_y=$" + str(self.ky) + ", POD mode # = " + str(pod + 1))
             pvar = np.conjugate(var[pod])
             norm = pvar[self.zero_ind]
             pvar /= norm
-            self.plot(pvar)
+            self.plot(pvar, varname)
 
     def plot_singular_values(self):
         pods = range(1, self.sv.size + 1)
@@ -145,10 +152,14 @@ class ky_mode(object):
         plt.legend()
         plt.show()
 
-    def plot(self, var):
-        plt.plot(self.zgrid, np.real(var), color="red", label=r"$Re[\phi]$")
-        plt.plot(self.zgrid, np.imag(var), color="blue", label=r"$Im[\phi]$")
-        plt.plot(self.zgrid, np.abs(var), color="black", label=r"$|\phi|$")
+    def plot(self, var, varname):
+        plt.plot(
+            self.zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$"
+        )
+        plt.plot(
+            self.zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$"
+        )
+        plt.plot(self.zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
         plt.legend()
         plt.xlabel(r"$z/\pi$", size=18)
         plt.show()
@@ -207,6 +218,14 @@ class ky_mode(object):
     def write_data(self, filename, data, indices):
         """Write data in text format for later plotting and analysis"""
         pass
+
+    @classmethod
+    def get_varname(cls, var):
+        try:
+            varname = ky_mode.varnames[var]
+        except:
+            varname = ""
+        return varname
 
 
 def get_times(f, stime, etime):
