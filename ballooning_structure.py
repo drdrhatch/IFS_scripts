@@ -61,7 +61,11 @@ etime = min(args.etime, max_time)
 
 ky_list = args.ky_list
 ky_modes = [bl.ky_mode(ky, pars, field) for ky in ky_list]
-times = bl.get_times(field, stime, etime)
+
+ftimes = bl.get_times(field, stime, etime)
+mtimes = bl.get_times(mom_e, stime, etime)
+times = np.intersect1d(ftimes, mtimes)
+
 # for time in times:
 #     field.set_time(time)
 #     print("Reading fields at time t = " + str("{:6.3f}").format(time))
