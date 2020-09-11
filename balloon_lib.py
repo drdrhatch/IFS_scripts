@@ -178,7 +178,11 @@ class ky_mode(object):
                 phi /= phi[self.zero_ind]
             data = np.vstack((self.zgrid, np.real(phi), np.imag(phi))).T
             np.savetxt(
-                fp, data, fmt="%g", header=header, encoding="UTF-8",
+                fp,
+                data,
+                fmt="%g",
+                header=header,
+                encoding="UTF-8",
             )
             fp.write("\n\n")
         fp.close()
@@ -192,7 +196,11 @@ class ky_mode(object):
         header = " ".join(head)
         data = np.hstack((times.reshape(-1, 1), np.abs(self.u[:, :pods])))
         np.savetxt(
-            filename, data, fmt="%g", header=header, encoding="UTF-8",
+            filename,
+            data,
+            fmt="%g",
+            header=header,
+            encoding="UTF-8",
         )
 
     def write_data(self, filename, data, indices):
