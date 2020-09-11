@@ -200,7 +200,7 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
     plt.clf()
     plt.plot(frequency_kHZ,amplitude_frequency_sum,label='frequency')
     plt.plot(frequency_kHZ,amplitude_growth_sum,label='growth')
-    plt.title(r'$B_r(Gauss)$')
+    plt.title(r'$B_r(Gauss)$'+' sum over all mode numbers')
     plt.xlabel(r'$f(kHz)$')       
     plt.ylabel(r'$B_r(Gauss)$')
     plt.legend()
@@ -209,5 +209,7 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
     d = {'frequency(kHZ)':frequency_kHZ,'B_R(Gauss)amplitude_frequency':amplitude_frequency_sum,'B_R(Gauss)amplitude_growth':amplitude_growth_sum}
     df_sum=pd.DataFrame(d, columns=['frequency(kHZ)','B_R(Gauss)amplitude_frequency','B_R(Gauss)amplitude_growth'])
     df_sum.to_csv('csv/0Sum_B_r_ky_out_board=.csv',index=False)
+
+    return frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum
 
 frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency(suffix,pic_path,csv_path)
