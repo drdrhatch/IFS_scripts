@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from D_chi_ratio import D_over_chi
 from nrgWrapper import read_from_nrg_files
 from parIOWrapper import read_species_gradients
 from parIOWrapper import read_species_tempdens
@@ -28,10 +27,10 @@ def start_end_time(suffix,pars):  #suffix in the format of "_1" or ".dat"
     plt.legend()
     plt.show()
     
-    scan_all = str(raw_input("Scan all(Y/N):\n"))
+    scan_all = str(input("Scan all(Y/N):\n"))
     if scan_all=='n' or scan_all=='N':
-        time_start = float(raw_input("Start time:\n"))
-        time_end = float(raw_input("End time:\n"))
+        time_start = float(input("Start time:\n"))
+        time_end = float(input("End time:\n"))
         time_start_index=np.argmin(abs(time-float(time_start)))
         time_end_index=np.argmin(abs(time-float(time_end)))
         time_start = time[time_start_index]

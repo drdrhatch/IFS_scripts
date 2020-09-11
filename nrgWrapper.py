@@ -62,7 +62,7 @@ def read_from_nrg_files(pars,suffix,plot,ncols=10):
         
         #return time, nrgi, nrge, nrgz
     else:
-        print "n_spec =", pars['n_spec']
+        print ("n_spec ="+str( pars['n_spec']))
         sys.exit("n_spec must be 1, 2 or 3.")
 
     if plot:
