@@ -4,6 +4,7 @@ from finite_differences_x import *
 import matplotlib.pyplot as plt
 from write_iterdb import *
 import sys
+import math
 
 def comparePlot(x1, y1, x2, y2, label1, label2, xl, yl, lc = 1):
     plt.plot(x1, y1, label = label1)
@@ -21,18 +22,33 @@ p_file_name = sys.argv[2]
 
 ###########################################################################################
 
-psi0, ne0, te0, ni0, ti0, nz0, er0 = read_pfile(p_file_name,impurityCharge,add_impurity=True)
+psi0, ne0, te0, ni0, ti0, nz0, er0, vtor_out = read_pfile(p_file_name,impurityCharge,add_impurity=True)
+
+case=0
+if sum(er0)==0:
+    print('Er is empty, using vtor to calculate Shear')
+    case=1
+elif sum(vtor_out)==0:
+    print('vtor is empty, using Er to calculate Shear')
+    case=2
+elif sum(er0)!=0 and sum(er0)!=0:
+    print('Neither Er nor vtor is empty, using both to calculate')
+    case=3
+elif sum(er0)==0 and sum(er0)==0:
+    print('Both Er and vtor are empty, cannot calculate Shear')
+    case=4
+
 
 zeff = (ni0 + nz0 * impurityCharge**2) / ne0 
 
 EFITdict = read_EFIT(efit_file_name)
-print(list(EFITdict.keys()))
+print(str(list(EFITdict.keys())))
 
 sepInd = np.argmin(abs(EFITdict['psipn'] - 1.))
-print('index at psipn = 1 is ', sepInd)
+print('index at psipn = 1 is '+str(sepInd) )
 Rsep = EFITdict['R'][sepInd]
-print('major R(m) at psipn = 1 is ', Rsep)
-print('major R(m) at index = 1 is ', EFITdict['R'][0])
+print('major R(m) at psipn = 1 is '+str(Rsep))
+print('major R(m) at index = 1 is '+str(EFITdict['R'][0]))
 
 # construct R grid with uniform spacing 
 # uniform spacing because first_derivative requires so
@@ -117,16 +133,38 @@ if 1 == 1:
 
 R_u = interp(EFITdict['rhotn'],EFITdict['R'],uni_rhot)
 Bpol_u = interp(EFITdict['rhotn'],EFITdict['Bpol'],uni_rhot)
+vtor_out_u = interp(psi0,vtor_out,uni_rhot)
 
 # add minus sign for consistency
-omega_tor = - Er_Vm / (R_u * Bpol_u)
+omega_tor_Er = - Er_Vm / (R_u * Bpol_u)
+#print(R_u[0])
+omega_tor_Vor = vtor_out_u*1000. / (R_u)
+
+if case==1:
+    omega_tor=omega_tor_Vor
+if case==2:
+    omega_tor=omega_tor_Er
+if case==3:
+    if sum(abs((omega_tor_Er-omega_tor_Vor)/omega_tor_Vor))>0.05*float(len(omega_tor_Vor)):
+        print("Too much difference between omega_tor calculated from Er and vtor")
+        plt.clf()
+        plt.plot(uni_rhot,omega_tor_Er,label='omega_tor_Er')
+        plt.plot(uni_rhot,omega_tor_Vor,label='omega_tor_Vor')
+        plt.xlabel('rhot')
+        plt.legend()
+        plt.show()
+    else:
+        omega_tor=omega_tor_Vor
+if case==4:
+    print('Both Er and vtor are empty, cannot calculate Shear')
+    omega_tor=omega_tor_Er
 
 ####################################### outputs ###########################################
 
 # 'profiles_e/i/z' files are profile files GENE could run with
 if 1 == 1:
     psi_u = interp(rhot0,psi0,uni_rhot)
-    rhop_u = np.sqrt(psi_u)
+    rhop_u = np.sqrt(array(psi_u))
     f = open('profiles_e','w')
     f.write('# 1.rho_tor 2.rho_pol 3.Te(kev) 4.ne(10^19m^-3)\n#\n')
     np.savetxt(f,np.column_stack((uni_rhot,rhop_u,te_u,ne_u*10.)))
@@ -145,9 +183,9 @@ if 1 == 1:
 # ITERDB file has profiles and vrot for ExB angular velocity
 if 1 == 1:
     ############################ modify ############################
-    file_out_base = 'DIIID_' 
-    base_number = 'WPQH_'
-    time_str = '2800'
+    file_out_base = 'DIIID' 
+    base_number = '174864'
+    time_str = '05170'
     ################################################################
     rhop=np.sqrt(psi0)
     psi_u = interp(rhot0,psi0,uni_rhot)
