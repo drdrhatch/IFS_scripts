@@ -65,7 +65,7 @@ class ky_mode(object):
                     "tperp": self.mom.tperp,
                 }
             )
-        fields = ["phi", "apar", "bpar", "tpar", "tperp"]
+        fields = ["phi", "apar", "bpar", "dens", "tpar", "tperp", "q"]
         self.fields = dict.fromkeys(fields, None)
 
     def read_field(self, var):
@@ -94,6 +94,7 @@ class ky_mode(object):
         self.dens = self.fields["dens"]
         self.tpar = self.fields["tpar"]
         self.tperp = self.fields["tperp"]
+        self.q = self.fields["q"]
 
     def pod(self, var):
         u, sv, vh = la.svd(var)
