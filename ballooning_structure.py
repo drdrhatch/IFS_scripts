@@ -62,11 +62,14 @@ etime = min(args.etime, max_time)
 ky_list = args.ky_list
 ky_modes = [bl.ky_mode(ky, pars, field) for ky in ky_list]
 times = bl.get_times(field, stime, etime)
-for time in times:
-    field.set_time(time)
-    print("Reading fields at time t = " + str("{:6.3f}").format(time))
-    for mode in ky_modes:
-        mode.read_phi()
+# for time in times:
+#     field.set_time(time)
+#     print("Reading fields at time t = " + str("{:6.3f}").format(time))
+#     for mode in ky_modes:
+#         mode.read_phi()
+for mode in ky_modes:
+    mode.read_fields(times, ("phi", "apar"))
+    mode.plot(mode.apar[0, :])
 
 if args.plot:
     for mode in ky_modes:
