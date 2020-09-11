@@ -84,8 +84,9 @@ class ky_mode(object):
         self.tpar = self.fields["tpar"]
         self.tperp = self.fields["tperp"]
 
-    def pod(self):
-        self.u, self.sv, self.vh = la.svd(self.phi)
+    def pod(self, var):
+        u, sv, vh = la.svd(var)
+        return u, sv, vh
 
     def plot_modes(self, times):
         for phi, time in zip(self.phi, times):
