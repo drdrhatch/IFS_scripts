@@ -15,7 +15,7 @@ class ky_mode(object):
         "bpar": "$B_\parallel$",
         "tperp": "$T_\perp$",
         "tpar": "T_\parallel$",
-        "n": "$n$",
+        "dens": "$n$",
     }
 
     def __init__(self, ky, pars, field, mom=None):
@@ -60,6 +60,7 @@ class ky_mode(object):
         if self.mom:
             self.field_vars.update(
                 {
+                    "dens": self.mom.dens,
                     "tpar": self.mom.tpar,
                     "tperp": self.mom.tperp,
                 }
