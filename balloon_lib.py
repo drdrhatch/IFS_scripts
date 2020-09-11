@@ -95,11 +95,16 @@ class ky_mode(object):
         self.dens = self.fields["dens"]
         self.tpar = self.fields["tpar"]
         self.tperp = self.fields["tperp"]
-        self.q = self.fields["q"]
 
     def pod(self, var):
         u, sv, vh = la.svd(var)
         return u, sv, vh
+
+    def construct_q(self):
+        self.q = (
+            -1j * self.ky * self.phi * (0.5 * self.tpar + self.tperp + 1.5 * self.dens)
+        )
+        self.fields["q"] = self.q
 
     def plot_modes(self, var, times):
         varname = ky_mode.get_varname(var)
