@@ -91,6 +91,7 @@ class ky_mode(object):
         self.phi = self.fields["phi"]
         self.apar = self.fields["apar"]
         self.bpar = self.fields["bpar"]
+        self.dens = self.fields["dens"]
         self.tpar = self.fields["tpar"]
         self.tperp = self.fields["tperp"]
 
