@@ -77,9 +77,9 @@ if args.plot:
 
 if args.pod:
     for mode in ky_modes:
-        mode.pod()
+        mode.u, mode.sv, mode.vh = mode.pod(mode.phi)
         # print("singular values = ", mode.sv)
         # mode.plot_singular_values()
         # mode.plot_time_dependence(times, range(args.pod))
-        mode.plot_pod(range(args.pod))
+        mode.plot_pod(mode.vh, range(args.pod))
         mode.output(args.pod, times, norm=True)
