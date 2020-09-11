@@ -6,6 +6,7 @@ import argparse
 import re
 import ParIO as pario
 import fieldlib
+import momlib
 import matplotlib.pyplot as plt
 import balloon_lib as bl
 
@@ -52,13 +53,14 @@ par.Read_Pars("parameters" + suffix)
 pars = par.pardict
 
 field = fieldlib.fieldfile("field" + suffix, pars)
+mom_e = momlib.momfile("mom_e" + suffix, pars)
 
 min_time, max_time = field.get_minmaxtime()
 stime = max(args.stime, min_time)
 etime = min(args.etime, max_time)
 
 ky_list = args.ky_list
-ky_modes = [bl.ky_mode(ky, pars, field, mom) for ky in ky_list]
+ky_modes = [bl.ky_mode(ky, pars, field) for ky in ky_list]
 times = bl.get_times(field, stime, etime)
 for time in times:
     field.set_time(time)
