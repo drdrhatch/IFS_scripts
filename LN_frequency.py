@@ -188,7 +188,7 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
         plt.legend()
         plt.savefig('pic/B_r_ky_out_board='+str(ky_GENE_ob[iky])+'.png')
         #plt.show()
-        amplitude_frequency_sum=amplitude_frequency_sum+amplitude_frequency
+        amplitude_frequency_sum=amplitude_frequency_sum+abs(amplitude_frequency)
         amplitude_growth_sum=amplitude_growth_sum+amplitude_growth
         
         d = {'ky_out_board':[ky_GENE_ob[iky]]*len(frequency_kHZ),'frequency(kHZ)':frequency_kHZ,'B_R(Gauss)amplitude_frequency':amplitude_frequency,'B_R(Gauss)amplitude_growth':amplitude_growth}
@@ -205,6 +205,7 @@ def LN_apar_frequency(suffix,pic_path='pic',csv_path='csv'):
     plt.ylabel(r'$B_r(Gauss)$')
     plt.legend()
     plt.savefig('pic/0Sum_B_r_ky_out_board.png') 
+    plt.show()
 
     d = {'frequency(kHZ)':frequency_kHZ,'B_R(Gauss)amplitude_frequency':amplitude_frequency_sum,'B_R(Gauss)amplitude_growth':amplitude_growth_sum}
     df_sum=pd.DataFrame(d, columns=['frequency(kHZ)','B_R(Gauss)amplitude_frequency','B_R(Gauss)amplitude_growth'])
