@@ -14,10 +14,10 @@ import csv
 import matplotlib.pyplot as plt
 
 #####Setup
-ky_scan_string = "10, 20, 30, 40, 50, 60, 80, 120, 160, 240"
-num_kxcenter = 3
-template_dir = '/global/u2/d/drhatch/gene-dev/prob_ETG_template'
-GENE_dir = '/global/u2/d/drhatch/gene-dev/'
+ky_scan_string = "10, 20, 30, 40, 50, 60, 80, 100, 120, 160, 240"
+num_kxcenter = 4
+template_dir = '/global/u2/d/drhatch/gene/prob_ETG_template'
+GENE_dir = '/global/u2/d/drhatch/gene2/'
 
 parser=op.OptionParser(description='Synthesizes data from nonlinear ETG simulation and sets up corresponding linear ETG run.  Run this script in the ouput directory of the NL simulation.')
 #parser.add_option('--time','-t',type = 'float',action='store',dest="time0",help = 'Time to plot mode structure.',default=-1)
@@ -37,29 +37,92 @@ par = Parameters()
 par.Read_Pars('parameters'+suffix)
 pars = par.pardict
 
-print pars
+#print(pars)
 if pars['n_spec'] == 1:
    time,nrg = get_nrg0(suffix,nspec=1)
 elif pars['n_spec'] == 2:
-   time,nrg_ion,nrg = get_nrg0(suffix,nspec=2)
-   dummy = raw_input("Assuming electrons are second species (press any key to continue).")
+   time,nrg1,nrg2 = get_nrg0(suffix,nspec=2)
+   if pars['charge1'] == -1:
+       nrg = nrg1
+       nrg_ion = nrg2
+       enum = 1
+       inum = 2
+   elif pars['charge2'] == -1:
+       nrg = nrg2
+       nrg_ion = nrg1
+       enum = 2
+       inum = 1
+   else:
+       print("Error!")
+       exit()
+elif pars['n_spec'] == 3:
+   time,nrg1,nrg2,nrg3 = get_nrg0(suffix,nspec=3)
+   if pars['charge1'] == -1 and pars['charge2'] == 1:
+       nrg = nrg1
+       nrg_ion = nrg2
+       nrgz = nrg3
+       enum = 1
+       inum = 2
+       znum = 3
+   elif pars['charge1'] == -1 and pars['charge3'] == 1:
+       nrg = nrg1
+       nrg_ion = nrg3
+       nrgz = nrg2
+       enum = 1
+       inum = 3
+       znum = 2
+   elif pars['charge2'] == -1 and pars['charge1'] == 1:
+       nrg = nrg2
+       nrg_ion = nrg1
+       nrgz = nrg3
+       enum = 2
+       inum = 1
+       znum = 3
+   elif pars['charge2'] == -1 and pars['charge3'] == 1:
+       nrg = nrg2
+       nrg_ion = nrg3
+       nrgz = nrg1
+       enum = 2
+       inum = 3
+       znum = 1
+   elif pars['charge3'] == -1 and pars['charge1'] == 1:
+       nrg = nrg3
+       nrg_ion = nrg1
+       nrgz = nrg3
+       enum = 3
+       inum = 1
+       znum = 2
+   elif pars['charge3'] == -1 and pars['charge2'] == 1:
+       nrg = nrg3
+       nrg_ion = nrg2
+       nrgz = nrg1
+       enum = 3
+       inum = 2
+       znum = 1
+   else:
+       print("Error!")
+       exit()
 else:
-   print "Can only handle 1 or 2 species right now."
+   print("Can only handle 1, 2, or 3 species right now.")
    exit()
-   
 
 plt.plot(time,nrg[:,6])
+if pars['n_spec'] == 2:
+    plt.plot(time,nrg_ion[:,6])
+if pars['n_spec'] == 3:
+    plt.plot(time,nrg_ion[:,6])
+    plt.plot(time,nrgz[:,6])
 plt.xlabel('t(cs/a)')
 plt.ylabel('Q/QGB')
 plt.show()
 
-start_time = float(raw_input('Enter start time for average:'))
+start_time = float(input('Enter start time for average:'))
 start_index = np.argmin(abs(time-start_time))
 
 Qavg = np.sum(nrg[start_index:,6])/(len(time)-start_index-1)
 Q_CV = np.std(nrg[start_index:,6])/Qavg
-print "Qavg",Qavg
-print "Q_CV",Q_CV
+print("Qavg",Qavg)
+print("Q_CV",Q_CV)
 
 summary = {}
 summary['Qavg'] = Qavg
@@ -108,7 +171,7 @@ kx_center_scan_string = '  !scanlist: 0.0 '
 for i in range(num_kxcenter-1):
     kx_center_scan_string += ', '+str(0.5*(i+1)/float(num_kxcenter-1)*2*np.pi)+'*'+str(pars['shat'])+'*kymin(1)'
 
-print "kx_center_scan_string",kx_center_scan_string
+print("kx_center_scan_string",kx_center_scan_string)
 
 f=open('parameters'+suffix,'r')
 parfile=f.read()
@@ -120,7 +183,7 @@ for i in range(len(parfile_split)):
     if 'kymin' in parfile_split[i]: 
         parfile_split[i] = 'kymin = 0.05  !scanlist: '+ky_scan_string \
           +'\nkx_center = 0.0 '+kx_center_scan_string
-        print "parfile_split[i]",parfile_split[i]
+        print("parfile_split[i]",parfile_split[i])
     #if 'kx_center' in parfile_split[i]: 
     #    parfile_split[i] = ''
     if 'n_procs_v' in parfile_split[i]:
@@ -154,7 +217,7 @@ for i in range(len(parfile_split)):
     if 'nexc' in parfile_split[i]:
         parfile_split[i] = ''
     if 'magn_geometry' in parfile_split[i]:
-        print 'magn_geometry',pars['magn_geometry']
+        print('magn_geometry',pars['magn_geometry'])
         if pars['magn_geometry'] == '\'tracer_efit\'':
             parfile_split[i] = 'magn_geometry = \'gene\''
     if 'geomfile' in parfile_split[i]:
@@ -166,7 +229,7 @@ for i in range(len(parfile_split)):
             geomfile = 'gene'+suffix
         
 parfile_out='\n'.join(parfile_split)
-#print 'parfile_out',parfile_out
+#print('parfile_out',parfile_out)
 f=open('parameters'+suffix+'_linear','w')
 f.write(parfile_out)
 f.close()
