@@ -71,8 +71,11 @@ def start_end_time(suffix,pars):  #suffix in the format of "_1" or ".dat"
 
 #input the suffix and nz index, time_start and end, return the Br as function of frequency(frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum)
 #from LN_tools import LN_apar_frequency_nz
-#frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False)
-def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False):
+#For report == False
+#frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False,show=False)
+#For report == True
+#frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=True,pic_path='pic/nz_',csv_path='csv/nz_'+str(inz),output_csv=True,show=False)
+def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False,show=False):
     #Where inz is the number of the element in nz
 
     #Import the parameters from parameter file using ParIO
@@ -245,7 +248,9 @@ def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic
         plt.ylabel(r'$B_r(Gauss)$')
         plt.legend()
         plt.savefig('pic/0Sum_inz='+str(inz)+'B_r_ky_out_board.png') 
-        plt.show()
+        if show==True:
+            plt.show()
+        
 
     if output_csv==True:
         d = {'frequency(kHZ)':frequency_kHZ,'B_R(Gauss)amplitude_frequency':amplitude_frequency_sum,'B_R(Gauss)amplitude_growth':amplitude_growth_sum}

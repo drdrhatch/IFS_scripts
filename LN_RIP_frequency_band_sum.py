@@ -27,6 +27,8 @@ scan_all_Z=False #Change to True if one want to scan across the whole height
 max_Z0=0.21    #Add a small number so it is even
 min_Z0=-0.21
 
+Detailed_report=False    #Swtich to true if one wants to add a detailed report
+
 frequency_all=False      #Switch to True if one wants to sum over all fequency 
 #!!!!!!!!!!If simulation has EXB shear on,  use lab frame.
 #!!!!!!!!!!If simulation has EXB shear off, use plasma frame. 
@@ -45,8 +47,8 @@ csv_path='csv'        #path one want to store the picture and video in
 max_Z=max_Z0*1.00001    #Add a small number so it is even
 min_Z=min_Z0
 
-if EXB_on==False:
-    Doppler_shift=0
+if EXB_on==True:
+    Doppler_shift=0.
 
 frequency_max=frequency_max0-Doppler_shift  #maximum frequency(Plasma Frame) to sum over in kHz
 frequency_min=frequency_min0-Doppler_shift  #minimum frequency(Plasma Frame) in sum over in kHz
@@ -109,7 +111,12 @@ for nZ_list in range(len(Z_list)):
             print('Looking at Z='+str(Z)+'m')
             #one can restrict the ky range corresprons to frequency 
             inz=nZ
-            frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False)
+            if Detailed_report==True:
+                frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=True,pic_path='pic/nz_',csv_path='csv/nz_'+str(inz),output_csv=True,show=False)
+            else:
+                frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False,show=False)
+            
+            
             #!!!!!!!!!!Debatable
             #amplitude_frequency_sum=list(amplitude_frequency_sum)
             amplitude_frequency_sum=amplitude_frequency_sum[::-1]+amplitude_frequency_sum
@@ -119,10 +126,23 @@ for nZ_list in range(len(Z_list)):
             if frequency_all==True:
                 B1=sum(amplitude_frequency_sum)/2.  #double count
             else:
-                beginning_index=np.argmin(abs(frequency_kHZ-frequency_min))
-                ending_index=np.argmin(abs(frequency_kHZ-frequency_max))
+                beginning_index0=np.argmin(abs(frequency_kHZ-frequency_min))
+                ending_index0=np.argmin(abs(frequency_kHZ-frequency_max))
+                beginning_index=min(beginning_index0,ending_index0)
+                ending_index=max(beginning_index0,ending_index0)
                 amplitude_frequency_sum_band=amplitude_frequency_sum[beginning_index:ending_index+1]
                 B1=sum(amplitude_frequency_sum_band)
+            print("B1="+str(B1)+"Gauss")
+            
+
+            #plt.clf()
+            #plt.plot(frequency_kHZ,amplitude_frequency_sum)
+            #plt.plot(frequency_kHZ)
+            #plt.plot(frequency_kHZ[beginning_index:ending_index+1],amplitude_frequency_sum_band)
+            #plt.axvline(frequency_kHZ[beginning_index],color='blue',label="freq min",alpha=1)
+            #plt.axvline(frequency_kHZ[ending_index],color='red',label="freq max",alpha=1)
+            #plt.show()
+            
             
             RIP_list_temp=RIP_list_temp+B1
     RIP_list[nZ_list]=RIP_list_temp

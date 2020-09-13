@@ -39,4 +39,4 @@ pars = par.pardict
 inz=int(pars['nz0']/2.)
 
 time_start,time_end=start_end_time(suffix,pars)
-frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=True,pic_path='pic',csv_path='csv',output_csv=True)
+frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=True,pic_path='pic',csv_path='csv',output_csv=True,show=True)
