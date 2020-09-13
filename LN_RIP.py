@@ -60,7 +60,7 @@ if scan_all_Z==True:
     min_Z=min(real_Z)
     max_Z=max(real_Z)
 Z_grid=np.arange(min_Z,max_Z,Delta_Z)
-Z_list = Z_grid[:-1]+Delta_Z/2
+Z_list = Z_grid[:-1]+Delta_Z/2.
 print("Z_list: "+str(Z_list))
 Z_list_cm=Z_list*100.
 
@@ -180,14 +180,14 @@ for time0 in time_list:
 
         RIP_list=np.zeros(len(Z_list))
         for nZ_list in range(len(Z_list)):
-            RIP_list_temp=0
+            RIP_list_temp=[]
             for nZ in range(len(real_Z)):
                 Z=real_Z[nZ]
-                if Z_list[nZ_list]-Delta_Z/2<Z and Z<=Z_list[nZ_list]+Delta_Z/2:
+                if Z_list[nZ_list]-Delta_Z/2.<Z and Z<=Z_list[nZ_list]+Delta_Z/2.:
                     #one can restrict the ky range corresprons to frequency 
                     B1=np.sum(B1_ky[nZ,:])
-                    RIP_list_temp=RIP_list_temp+B1
-            RIP_list[nZ_list]=RIP_list_temp
+                    RIP_list_temp.append(B1)
+            RIP_list[nZ_list]=np.average(RIP_list_temp)
         
         
         d = {'Z(cm)':Z_list_cm,'B_R(Gauss)':RIP_list}
