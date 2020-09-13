@@ -236,6 +236,7 @@ if write_rhotor_rhopol_conversion:
     rt_rp_filename='rt_rp_%s' %filename
     rt_rp_file=open(rt_rp_filename,'w')
     rt_rp_file.write('# rho_tor          rho_pol\n')
+    rt_rp_file.write('# phi[-1]'+str(phi_fine[-1])+'\n')
     for i in range(len(x_fine)):
         rho_pol=sqrt((x_fine[i]-psiax)/(psisep-psiax))
         rt_rp_file.write('%16.8e %16.8e\n' %(rho_tor_fine[i],rho_pol))

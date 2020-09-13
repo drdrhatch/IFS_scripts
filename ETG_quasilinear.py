@@ -61,7 +61,7 @@ for i in range(N,len(f)):
     Qes.append(f[i][2])
 
 ldata = np.genfromtxt('scanfiles'+sfsuffix+'/mode_info_all')
-wf = ldata[:,11]
+wf = ldata[:,11]  #width
 wf = wf/np.max(wf)
 parlin = Parameters()
 parlin.Read_Pars('scanfiles'+sfsuffix+'/parameters')

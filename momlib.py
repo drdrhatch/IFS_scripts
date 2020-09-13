@@ -63,7 +63,7 @@ class momfile():
            
         def get_timearray(self):
 #get time arrays for field file
-            for i in range(getsize(self.file)/(self.leapmom+self.tesize)):
+            for i in range(int(getsize(self.file)/(self.leapmom+self.tesize))):
                 self.tmom.append(float(self.te.unpack(self.m.read(self.tesize))[1]))
                 self.m.seek(self.leapmom,1)
 

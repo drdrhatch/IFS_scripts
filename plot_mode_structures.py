@@ -144,6 +144,8 @@ if x_local:
 
     if pars['shat'] < 0.0:
         for i in range(int(field.nx/2)+1):
+            print("phase_fac**i",phase_fac**i)
+            print("phase_fac**(-(i+1))",phase_fac**(-(i+1)))
             phi[(i+int(field.nx/2))*field.nz:(i+int(field.nx/2)+1)*field.nz]=field.phi()[:,0,-i]*phase_fac**i
             if i < int(field.nx/2):
                 phi[(int(field.nx/2)-i-1)*field.nz : (int(field.nx/2)-i)*field.nz ]=field.phi()[:,0,i+1]*phase_fac**(-(i+1))
@@ -153,6 +155,8 @@ if x_local:
                     apar[(int(field.nx/2)-i-1)*field.nz : (int(field.nx/2)-i)*field.nz ]=field.apar()[:,0,i+1]*phase_fac**(-(i+1))
     else:
         for i in range(int(field.nx/2)):
+            print("phase_fac**i",phase_fac**i)
+            print("phase_fac**(-(i+1))",phase_fac**(-(i+1)))
             #print phi[(i+field.nx/2)*field.nz:(i+field.nx/2+1)*field.nz]
             #print (i+field.nx/2)*field.nz
             #print (i+field.nx/2+1)*field.nz
@@ -263,8 +267,8 @@ if x_local:
        for i in range(pars['nx0']):
            gradphi[pars['nz0']*i:pars['nz0']*(i+1)] = gradphi[pars['nz0']*i:pars['nz0']*(i+1)]/jacxB[:]/np.pi
     
-       ratio = gradphi/-apar
-       mode_phase = np.log(ratio / np.abs(ratio))/(0.0+1.0J)
+       #ratio = gradphi/-apar
+       #mode_phase = np.log(ratio / np.abs(ratio))/(0.0+1.0J)
     #plt.plot(zgrid,mode_phase)
     #plt.plot(zgrid,phase_array,'-.',color = 'black')
     #plt.show()
