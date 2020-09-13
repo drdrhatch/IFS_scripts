@@ -97,7 +97,7 @@ time_start,time_end=start_end_time(suffix,pars)
 
 RIP_list=np.zeros(len(Z_list))
 for nZ_list in range(len(Z_list)):
-    RIP_list_temp=0
+    RIP_list_temp=0.
     for nZ in range(len(real_Z)):
         Z=real_Z[nZ]
 
@@ -125,7 +125,7 @@ for nZ_list in range(len(Z_list)):
                 B1=sum(amplitude_frequency_sum_band)
             
             RIP_list_temp=RIP_list_temp+B1
-        RIP_list[nZ_list]=RIP_list_temp
+    RIP_list[nZ_list]=RIP_list_temp
         
 #*********************Output**************************
 
