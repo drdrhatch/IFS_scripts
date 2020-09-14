@@ -197,7 +197,7 @@ def read_iterdb_file(iterdb_filename):
     #plt.plot(rhot_vrot)
     #plt.show()
     if not with_impurity:
-       nb = False
+       nb = [False]
     return rhot_te, te, ti, ne, ni, nb, vrot
 
 
