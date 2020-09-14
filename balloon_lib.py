@@ -4,6 +4,8 @@
 import numpy as np
 import numpy.linalg as la
 import matplotlib.pyplot as plt
+from operator import attrgetter
+
 
 
 class ky_mode(object):
@@ -245,3 +247,15 @@ def get_times(f, stime, etime):
         tarray = np.array(f.tmom)
     tind = (stime < tarray) * (tarray < etime)
     return tarray[tind]
+
+
+def avg_modes(modes, var):
+    maxky_mode = max(modes, key=attrgetter("ky"))
+    z = maxky_mode.zgrid  # most limited z range at highest ky
+    ntimes = modes[0].fields[var].shape[-2]
+    tmp = np.empty((len(modes), ntimes, z.size), dtype=modes[0].fields[var].dtype)
+    for i, mode in enumerate(modes):
+        inter, ind1, ind2 = np.intersect1d(mode.zgrid, z, return_indices=True)
+        tmp[i, :, :] = mode.fields[var][:, ind1]
+    sumvar = np.sum(tmp, 0)
+    return sumvar
