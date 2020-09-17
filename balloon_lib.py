@@ -263,3 +263,9 @@ def avg_modes(modes, var):
         tmp[i, :, :] = mode.fields[var][:, ind1]
     sumvar = np.sum(tmp, 0)
     return sumvar
+
+def avg_x(mode, varname):
+    """Average variable over x dimension"""
+    var = mode.fields[varname]
+    xsum = np.sum(var.reshape(var.shape[0], -1, mode.nz), axis=0, keepdims=False)
+    return xsum
