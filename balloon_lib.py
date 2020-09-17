@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from operator import attrgetter
 
 
-
 class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
 
@@ -121,6 +120,8 @@ class ky_mode(object):
         for pvar, time in zip(self.fields[var], times):
             plt.title(r"$k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time))
             norm = pvar[self.zero_ind]
+            if norm == 0:
+                norm = 1
             pvar /= norm
             self.plot(pvar, varname)
 
