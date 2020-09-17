@@ -16,6 +16,20 @@ def interp(xin,yin,xnew):
 
     return yout
 
+def interp_lin(xin,yin,xnew):
+    """
+    xin: x variable input
+    yin: y variable input
+    xnew: new x grid on which to interpolate
+    yout: new y interpolated on xnew
+    """
+
+    ynew = interpolate.interp1d(xin,yin)
+    yout = ynew(xnew)
+
+    return yout
+
+
 def full_interp(func_xin,xin,xconv,yconv,yout):
     """
     Takes function func_xin on grid xin and outputs the function on yout grid
@@ -43,6 +57,36 @@ def full_interp(func_xin,xin,xconv,yconv,yout):
 
     func_xconv = interp(xin,func_xin,xconv)
     func_yout = interp(yconv,func_xconv,yout)
+
+    return func_yout
+
+def full_interp_lin(func_xin,xin,xconv,yconv,yout):
+    """
+    Takes function func_xin on grid xin and outputs the function on yout grid
+    func_xin: function to interpolate
+    xin: grid corresponding to func_xin
+    xconv: xgrid for conversion
+    yconv: ygrid for conversion
+    yout: output grid
+    """
+
+    #If necessary truncate func_xin onto correct range
+    if xin[0] < xconv[0]:
+        low_index = np.argmin(abs(xconv-xin[0]))
+    else:
+        low_index = 0
+    if xin[-1] > xconv[-1]:
+        high_index = np.argmin(abs(xconv-xin[-1]))
+    else:
+        high_index = -1
+
+    if high_index == -1:
+        func_xin = func_xin[low_index:]
+    else:
+        func_xin = func_xin[low_index:high_index]
+
+    func_xconv = interp_lin(xin,func_xin,xconv)
+    func_yout = interp_lin(yconv,func_xconv,yout)
 
     return func_yout
 
