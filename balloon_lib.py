@@ -37,8 +37,12 @@ class ky_mode(object):
         self.zrange()
 
     def kxrange(self):
-        hmodes = np.arange(0, self.nx / 2, self.N * self.ky, dtype=np.intc)
-        lmodes = np.arange(0, -self.nx / 2, -self.N * self.ky, dtype=np.intc)
+        if self.ky == 0:
+            step = 1
+        else:
+            step = self.N * self.ky
+        hmodes = np.arange(0, self.nx / 2, step, dtype=np.intc)
+        lmodes = np.arange(0, -self.nx / 2, -step, dtype=np.intc)
         self.kx_modes = np.union1d(lmodes, hmodes)
 
     def zrange(self):
