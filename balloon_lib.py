@@ -253,16 +253,18 @@ def get_times(f, stime, etime):
     return tarray[tind]
 
 
-def avg_modes(modes, var):
-    maxky_mode = max(modes, key=attrgetter("ky"))
-    z = maxky_mode.zgrid  # most limited z range at highest ky
-    ntimes = modes[0].fields[var].shape[-2]
-    tmp = np.empty((len(modes), ntimes, z.size), dtype=modes[0].fields[var].dtype)
+def avg_modes(modes, varname):
+    """Average variable var over modes (x & y)"""
+    ntimes = modes[0].fields[varname].shape[-2]
+    ysum = np.empty(
+        (len(modes), ntimes, modes[0].nz), dtype=modes[0].fields[varname].dtype
+    )
     for i, mode in enumerate(modes):
-        inter, ind1, ind2 = np.intersect1d(mode.zgrid, z, return_indices=True)
-        tmp[i, :, :] = mode.fields[var][:, ind1]
-    sumvar = np.sum(tmp, 0)
-    return sumvar
+        xsum = avg_x(mode, varname)
+        ysum[i] = xsum
+    yavg = ysum.sum(axis=0, keepdims=False)
+    return yavg
+
 
 def avg_x(mode, varname):
     """Average variable over x dimension"""
