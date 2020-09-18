@@ -250,7 +250,7 @@ def get_times(f, stime, etime):
         tarray = np.array(f.tfld)
     except:
         tarray = np.array(f.tmom)
-    tind = (stime < tarray) * (tarray < etime)
+    tind = (stime <= tarray) * (tarray <= etime)
     return tarray[tind]
 
 
