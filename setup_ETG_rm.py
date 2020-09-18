@@ -188,6 +188,8 @@ for i in range(len(parfile_split)):
     #    parfile_split[i] = ''
     if 'n_procs_v' in parfile_split[i]:
         parfile_split[i] = 'n_procs_v = 4' 
+    if 'n_procs_s' in parfile_split[i]:
+        parfile_split[i] = 'n_procs_s = 1' 
     if 'n_procs_sim' in parfile_split[i]:
         parfile_split[i] = 'n_procs_sim = 256' 
     if 'n_procs_w' in parfile_split[i]:
