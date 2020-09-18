@@ -90,11 +90,11 @@ class ky_mode(object):
         tmp = np.empty((len(fields), times.size, self.zgrid.size), dtype=np.cdouble)
         for i, var in enumerate(fields):
             self.fields[var] = tmp[i, :, :]
-        for i, time in enumerate(times):
+        for j, time in enumerate(times):
             print("Reading fields at time t = " + str("{:6.3f}").format(time))
             self.field.set_time(time)
-            for j, var in enumerate(fields):
-                tmp[j, i, :] = self.read_field(var)
+            for i, var in enumerate(fields):
+                tmp[i, j, :] = self.read_field(var)
         self.define_variables()
 
     def define_variables(self):
