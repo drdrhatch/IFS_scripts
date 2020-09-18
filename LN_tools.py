@@ -222,11 +222,11 @@ def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic
             plt.xlabel(r'$f(kHz)$')       
             plt.ylabel(r'$B_r(Gauss)$')
             plt.legend()
-            plt.savefig('pic/B_r_ky_out_board='+str(ky_GENE_inz[iky])+'.png')
+            plt.savefig(pic_path+'/B_r_ky_out_board='+str(ky_GENE_inz[iky])+'.png')
             
 
         if plot==True:
-            ims_B1.append(imageio.imread('pic/B_r_ky_out_board='+str(ky_GENE_inz[iky])+'.png'))
+            ims_B1.append(imageio.imread(pic_path+'/B_r_ky_out_board='+str(ky_GENE_inz[iky])+'.png'))
 
 
 
@@ -236,9 +236,9 @@ def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic
         if output_csv==True:
             d = {'ky_out_board':[ky_GENE_inz[iky]]*len(frequency_kHZ),'frequency(kHZ)':frequency_kHZ,'B_R(Gauss)amplitude_frequency':amplitude_frequency,'B_R(Gauss)amplitude_growth':amplitude_growth}
             df_k=pd.DataFrame(d, columns=['ky_out_board','frequency(kHZ)','B_R(Gauss)amplitude_frequency','B_R(Gauss)amplitude_growth'])
-            df_k.to_csv('csv/B_r_inz='+str(inz)+'ky_out_board='+str(ky_GENE_inz[iky])+'.csv',index=False)
+            df_k.to_csv(csv_path+'/B_r_inz='+str(inz)+'ky_out_board='+str(ky_GENE_inz[iky])+'.csv',index=False)
     if plot==True:
-        imageio.mimwrite('pic/0_B_r_inz='+str(inz)+'ky_dynamic_images.gif', ims_B1)
+        imageio.mimwrite(pic_path+'/0_B_r_inz='+str(inz)+'ky_dynamic_images.gif', ims_B1)
 
         plt.clf()
         plt.plot(frequency_kHZ,amplitude_frequency_sum,label='frequency')
@@ -247,7 +247,7 @@ def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic
         plt.xlabel(r'$f(kHz)$')       
         plt.ylabel(r'$B_r(Gauss)$')
         plt.legend()
-        plt.savefig('pic/0Sum_inz='+str(inz)+'B_r_ky_out_board.png') 
+        plt.savefig(pic_path+'/0Sum_inz='+str(inz)+'B_r_ky_out_board.png') 
         if show==True:
             plt.show()
         
@@ -255,7 +255,7 @@ def LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic
     if output_csv==True:
         d = {'frequency(kHZ)':frequency_kHZ,'B_R(Gauss)amplitude_frequency':amplitude_frequency_sum,'B_R(Gauss)amplitude_growth':amplitude_growth_sum}
         df_sum=pd.DataFrame(d, columns=['frequency(kHZ)','B_R(Gauss)amplitude_frequency','B_R(Gauss)amplitude_growth'])
-        df_sum.to_csv('csv/0Sum_B_r_ky_out_board=.csv',index=False)
+        df_sum.to_csv(csv_path+'/0Sum_B_r_ky_out_board=.csv',index=False)
 
     return frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum
 

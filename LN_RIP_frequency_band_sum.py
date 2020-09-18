@@ -23,11 +23,11 @@ from LN_tools import LN_apar_frequency_nz
 #*******************Beginning of the User block*******************
 
 Delta_Z=0.07  #7cm as bin for Z 
-scan_all_Z=False #Change to True if one want to scan across the whole height
+scan_all_Z=True #Change to True if one want to scan across the whole height
 max_Z0=0.21    #Add a small number so it is even
 min_Z0=-0.21
 
-Detailed_report=False    #Swtich to true if one wants to add a detailed report
+Detailed_report=True    #Swtich to true if one wants to add a detailed report
 
 frequency_all=False      #Switch to True if one wants to sum over all fequency 
 #!!!!!!!!!!If simulation has EXB shear on,  use lab frame.
@@ -98,11 +98,11 @@ Z_list_cm=Z_list*100.
 time_start,time_end=start_end_time(suffix,pars)
 
 RIP_list=np.zeros(len(Z_list))
+RIP_err=np.zeros(len(Z_list))
 for nZ_list in range(len(Z_list)):
-    RIP_list_temp=0.
+    RIP_list_temp=[]
     for nZ in range(len(real_Z)):
         Z=real_Z[nZ]
-
         if Z_list[nZ_list]-Delta_Z/2.<Z and Z<=Z_list[nZ_list]+Delta_Z/2.:
             print('***************************')
             print('***************************')
@@ -112,7 +112,7 @@ for nZ_list in range(len(Z_list)):
             #one can restrict the ky range corresprons to frequency 
             inz=nZ
             if Detailed_report==True:
-                frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=True,pic_path='pic/nz_',csv_path='csv/nz_'+str(inz),output_csv=True,show=False)
+                frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=True,pic_path='pic/nz_'+str(inz),csv_path='csv/nz_'+str(inz),output_csv=True,show=False)
             else:
                 frequency_kHZ,amplitude_frequency_sum,amplitude_growth_sum=LN_apar_frequency_nz(suffix,inz,time_start,time_end,plot=False,pic_path='pic',csv_path='csv',output_csv=False,show=False)
             
@@ -124,14 +124,14 @@ for nZ_list in range(len(Z_list)):
             #!!!!!!!!!!Debatable
 
             if frequency_all==True:
-                B1=sum(amplitude_frequency_sum)/2.  #double count
+                B1=sum(amplitude_frequency_sum)/(2.*float(len(amplitude_frequency_sum)))  #double count
             else:
                 beginning_index0=np.argmin(abs(frequency_kHZ-frequency_min))
                 ending_index0=np.argmin(abs(frequency_kHZ-frequency_max))
                 beginning_index=min(beginning_index0,ending_index0)
                 ending_index=max(beginning_index0,ending_index0)
                 amplitude_frequency_sum_band=amplitude_frequency_sum[beginning_index:ending_index+1]
-                B1=sum(amplitude_frequency_sum_band)
+                B1=sum(amplitude_frequency_sum_band)/(float(len(amplitude_frequency_sum_band)))
             print("B1="+str(B1)+"Gauss")
             
 
@@ -144,8 +144,9 @@ for nZ_list in range(len(Z_list)):
             #plt.show()
             
             
-            RIP_list_temp=RIP_list_temp+B1
-    RIP_list[nZ_list]=RIP_list_temp
+            RIP_list_temp.append(B1)
+    RIP_list[nZ_list]=np.average(RIP_list_temp)
+    RIP_err[nZ_list]=np.std(RIP_list_temp)
         
 #*********************Output**************************
 
