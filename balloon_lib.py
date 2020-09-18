@@ -244,12 +244,12 @@ class ky_mode(object):
         return varname
 
 
-def get_times(f, stime, etime):
+def get_times(field, stime, etime):
     """Get times between two extremes from either field or mom file"""
     try:
-        tarray = np.array(f.tfld)
+        tarray = np.array(field.tfld)
     except AttributeError:
-        tarray = np.array(f.tmom)
+        tarray = np.array(field.tmom)
     tind = (stime <= tarray) * (tarray <= etime)
     return tarray[tind]
 
