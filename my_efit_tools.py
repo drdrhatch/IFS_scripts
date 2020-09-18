@@ -6,7 +6,7 @@ Plots: q(psi)
        psi(R,Z)
        psi(R,Z) for psi = 0.9 and 1.0 along with grid points
 -c: outputs rho_tor and rho_pol
--p: outputs R, psi, B_pol
+-p: outputs R, psi, B_pol, q
 -n: suppresses plots
 
 Modified from extract_miller_from_eqdsk.py
