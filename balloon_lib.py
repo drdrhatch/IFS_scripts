@@ -235,10 +235,6 @@ class ky_mode(object):
             encoding="UTF-8",
         )
 
-    def write_data(self, filename, data, indices):
-        """Write data in text format for later plotting and analysis"""
-        pass
-
     @classmethod
     def get_varname(cls, var):
         try:
