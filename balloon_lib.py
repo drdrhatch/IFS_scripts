@@ -81,7 +81,7 @@ class ky_mode(object):
         else:
             phase = 1
         var = self.field_vars[varname]()
-        if var.shape[1] == 1:
+        if var.shape[1] == 1:  # for linear scan data with single ky
             indy = 0
         else:
             indy = self.ky
