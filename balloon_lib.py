@@ -76,10 +76,7 @@ class ky_mode(object):
 
     def read_field(self, varname):
         """ Read field for a given time window, returning array"""
-        if varname in {"phi", "apar", "bpar"}:
-            phase = self.phase
-        else:
-            phase = 1
+        phase = self.phase
         var = self.field_vars[varname]()
         if var.shape[1] == 1:  # for linear scan data with single ky
             indy = 0
@@ -96,6 +93,7 @@ class ky_mode(object):
         for j, time in enumerate(times):
             print("Reading fields at time t = " + str("{:6.3f}").format(time))
             self.field.set_time(time)
+            self.mom.set_time(time)
             for i, var in enumerate(fields):
                 tmp[i, j, :] = self.read_field(var)
         self.define_variables()
