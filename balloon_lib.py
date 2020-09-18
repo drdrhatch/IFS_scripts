@@ -74,15 +74,18 @@ class ky_mode(object):
         fields = ["phi", "apar", "bpar", "dens", "tpar", "tperp", "q"]
         self.fields = dict.fromkeys(fields, None)
 
-    def read_field(self, var):
+    def read_field(self, varname):
         """ Read field for a given time window, returning array"""
-        if var in {"phi", "apar", "bpar"}:
+        if varname in {"phi", "apar", "bpar"}:
             phase = self.phase
         else:
             phase = 1
-        tmp = (self.field_vars[var]()[:, self.ky, self.kx_modes] * phase).ravel(
-            order="F"
-        )
+        var = self.field_vars[varname]()
+        if var.shape[1] == 1:
+            indy = 0
+        else:
+            indy = self.ky
+        tmp = (var[:, indy, self.kx_modes] * phase).ravel(order="F")
         return tmp
 
     def read_fields(self, times, fields):
