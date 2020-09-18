@@ -248,7 +248,7 @@ def get_times(f, stime, etime):
     """Get times between two extremes from either field or mom file"""
     try:
         tarray = np.array(f.tfld)
-    except:
+    except AttributeError:
         tarray = np.array(f.tmom)
     tind = (stime <= tarray) * (tarray <= etime)
     return tarray[tind]
