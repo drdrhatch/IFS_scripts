@@ -126,3 +126,18 @@ def loop(x,f,x_min,x_max):#this function make the function return [sum f(x+n*x0)
     f_loop[nxtemp]=f_loop[nxtemp]+f[i]
 
   return x_loop, f_loop
+
+
+#x_sort,f_sort = sort_x_f(x,f)
+def sort_x_f(x_unsort,f_unsort): 
+   
+    arr_unsort=[x_unsort,f_unsort]
+    f_x_unsort=tuple(map(tuple, np.transpose(arr_unsort)))
+      
+    f_x_sort=sorted(f_x_unsort, key=lambda f_x_unsort: f_x_unsort[0])
+    f_x_sort=np.array(f_x_sort)
+    f_x_sort=np.transpose(f_x_sort)
+    x_sort=f_x_sort[0,:]
+    f_sort=f_x_sort[1,:]
+
+    return x_sort,f_sort
