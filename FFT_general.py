@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from interp import interp
+
 #Un-uniform FFT: https://scicomp.stackexchange.com/questions/593/how-do-i-take-the-fft-of-unevenly-spaced-data
 
 def FFT_function_time_uniform(function,time,timestep,plot):
@@ -42,11 +42,11 @@ def FFT_function_time_not_uniform(function,time,plot):
 
     dt_min=min(dt)
 
-    print('length of the time: '+str(float(int(abs((max(time)-min(time))/dt_min)*1.2))))
-    uni_time = np.linspace(min(time),max(time),int(abs((max(time)-min(time))/dt_min)*1.2)) #uniform time
-    uni_function = interp(time,function,uni_time)
+    print('length of the time: '+str(float(int(abs((max(time)-min(time))/dt_min)*1.5))))
+    uni_time = np.linspace(min(time),max(time),int(abs((max(time)-min(time))/dt_min)*1.5)) #uniform time
+    uni_function = np.interp(uni_time,time,function)
 
-    dt=time[:-1]-time[1:]
+    dt=uni_time[:-1]-uni_time[1:]
     timestep=dt[0]
     
     frequency,amplitude_frequency,amplitude_growth=FFT_function_time_uniform(uni_function,uni_time,timestep,plot)
@@ -65,7 +65,7 @@ def FFT_function_time(function,time,plot=False):
     #plt.title('dt',fontsize=20)
     #plt.show()
 
-    if abs(np.std(dt))<min(dt)*0.0000001:
+    if abs(np.std(dt))<min(dt)*0.01:
         timestep=dt[0]
         print('time step is uniform, dt=: '+str(timestep))
         print('Runing uniform FFT')

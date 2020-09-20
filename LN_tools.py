@@ -18,6 +18,7 @@ from read_write_geometry import read_geometry_local
 from read_iterdb_file import read_iterdb_file
 from interp import interp
 from FFT_general import FFT_function_time
+from max_stat_tool import sort_x_f
 
 
 #input the suffix , plot nrg_es, em, return time_start,time_end
@@ -646,12 +647,18 @@ def LN_apar_frequency_nz_iky(suffix,inz,iky,time_start,time_end,plot=False,pic_p
     
     
     B1_inz_t=B1_ky_t_inz[iky,:]
-    frequency,amplitude_frequency,amplitude_growth=FFT_function_time(B1_inz_t,time_list,plot=False)
-    frequency_kHZ=frequency*gyroFreq/(1000.)
+    frequency_unsort,amplitude_frequency_unsort,amplitude_growth_unsort=FFT_function_time(B1_inz_t,time_list,plot=False)
+    frequency_kHZ_unsort=frequency_unsort*gyroFreq/(1000.)
 
     #For detail reason, check: https://en.wikipedia.org/wiki/Fourier_transform#Conjugation
     #amplitude_frequency=abs(amplitude_frequency) #take amptitude
     
+    frequency_kHZ,amplitude_frequency = \
+             sort_x_f(frequency_kHZ_unsort,amplitude_frequency_unsort)
+    frequency_kHZ,amplitude_growth = \
+             sort_x_f(frequency_kHZ_unsort,amplitude_growth_unsort)
+
+
     amplitude_frequency=2.*abs(amplitude_frequency.real) #take the real part, take amptitude, then times 2
 
     if plot==True:

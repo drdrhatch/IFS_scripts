@@ -21,7 +21,7 @@ from LN_tools import LN_apar_frequency_nz_iky
 from LN_tools import frequency_Doppler
 from LN_tools import Doppler_calc
 from LN_tools import ky_list_calc
-from max_stat_tool import sort_x_f
+
 
 
 #!!!!!!!!!!!!!Needed to add the doppler shift effect!!!!!!!!!
@@ -30,8 +30,10 @@ from max_stat_tool import sort_x_f
 #*****************************************************************
 #*******************Beginning of the User block*******************
 
-max_Z0=0.02    #in the unit of meter
-min_Z0=-0.02   #in the unit of meter
+max_Z0=0.03    #in the unit of meter
+min_Z0=-0.03   #in the unit of meter
+
+Outboard_mid_plane=False  #change to True if one wants to only want to look at outboard mid-plane
 
 pic_path='pic'        #path one want to store the picture and video in
 csv_path='csv'        #path one want to store the picture and video in
@@ -103,7 +105,14 @@ for nZ in range(len(real_Z)):
     if min_Z0<Z and Z<=max_Z0:
         Z_list.append(real_Z[nZ])
         nZ_list.append(nZ)
+
+if Outboard_mid_plane==True:
+    nZ_list=[int(len(real_Z)/2)]
+    Z_list=[real_Z[int(len(real_Z)/2)]]
+
 len_nZ=len(nZ_list)
+
+
 print('nZ_list: '+str(nZ_list))
 #********End of Determin the length of the nZ****************
 #******************************************************************
@@ -141,15 +150,10 @@ for i_Z in range(len_nZ):
             new_amplitude_growth=frequency_Doppler(frequency_kHZ,\
             amplitude_frequency,amplitude_growth,omegaDoppler_kHZ)
 
-        new_frequency_kHZ_ky_sort,new_amplitude_frequency_sort = \
-             sort_x_f(new_frequency_kHZ_ky,new_amplitude_frequency)
 
-        new_frequency_kHZ_ky_sort,new_amplitude_growth_sort = \
-             sort_x_f(new_frequency_kHZ_ky,new_amplitude_growth)
-
-        frequency_kHZ_ky[i_Z,i_ky,:]=new_frequency_kHZ_ky_sort
-        amplitude_frequency_ky[i_Z,i_ky,:]=new_amplitude_frequency_sort
-        amplitude_growth_ky[i_Z,i_ky,:]=new_amplitude_growth_sort
+        frequency_kHZ_ky[i_Z,i_ky,:]=new_frequency_kHZ_ky
+        amplitude_frequency_ky[i_Z,i_ky,:]=new_amplitude_frequency
+        amplitude_growth_ky[i_Z,i_ky,:]=new_amplitude_growth
 
 
 #***********Start of Sum of Z*************************
@@ -171,7 +175,7 @@ print("df_min: "+str(df_min))
 print("min(frequency_kHZ_ky_sum_Z): "+str(np.amin(frequency_kHZ_ky_sum_Z)))
 uni_freq = np.linspace(np.amin(frequency_kHZ_ky_sum_Z),\
                        np.amax(frequency_kHZ_ky_sum_Z),\
-                       num=int(abs((np.amax(frequency_kHZ_ky_sum_Z)-np.amin(frequency_kHZ_ky_sum_Z))/df_min)*10))
+                       num=int(abs((np.amax(frequency_kHZ_ky_sum_Z)-np.amin(frequency_kHZ_ky_sum_Z))/df_min)*10.))
 len_uni_freq=len(uni_freq)                     
 
 print("len_uni_freq: "+str(len_uni_freq))
@@ -185,6 +189,8 @@ new_frequency_kHZ_uni=np.zeros((nky0,len_uni_freq))
 
 for i_ky in range(nky0):
     frequency_kHZ_uni[i_ky,:]=uni_freq
+
+    
     amplitude_frequency_uni[i_ky,:]=np.interp(uni_freq,frequency_kHZ_ky_sum_Z[i_ky,:],amplitude_frequency_ky_sum_Z[i_ky,:])
     new_frequency_kHZ_uni[i_ky,:]=np.interp(uni_freq,frequency_kHZ_ky_sum_Z[i_ky,:],frequency_kHZ_ky_sum_Z[i_ky,:])
         
@@ -215,9 +221,7 @@ for i_ky in range(len(n_list)):
     plt.title(r'$\bar{B}_r$(Gauss) spectrogram of n='+str(n_list[i_ky]),fontsize=18)
     plt.savefig(pic_path+'/Interp_B_r_freq_n_'+str(n_list[i_ky])+'.png')
 
-
-#****************end of Output***********************
-
+    
 B1_plot=amplitude_frequency_ky_sum_Z
 f_plot=frequency_kHZ_ky_sum_Z
 ky_plot=np.zeros(np.shape(frequency_kHZ_ky_sum_Z))
@@ -231,18 +235,24 @@ ky_plot=np.transpose(ky_plot)
 
 #print('shape'+str(np.shape(np.transpose(frequency_kHZ_ky_sum_Z))))
 
+
+
 plt.clf()
 plt.ylabel(r'$k_y \rho_i$',fontsize=10)
 plt.xlabel(r'$f(kHz)$',fontsize=10)
-plt.contourf(f_plot,ky_plot,B1_plot)#,cmap='RdGy')
+plt.contourf(f_plot,ky_plot,np.log(B1_plot),cmap='RdGy')
 for ky in ky_list:
     plt.axhline(ky,color='red',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
 plt.axhline(ky_list[0],color='red',alpha=0.5,label='n starts from'+str(n_list[0]) )#alpha control the transparency, alpha=0 transparency, alpha=1 solid
 plt.legend()
 plt.colorbar()
-plt.title(r'$B_r$ contour plot',fontsize=10)
+plt.title(r'log($B_r$) contour plot',fontsize=10)
 plt.savefig('0B_r_contour.png')
 #plt.show()
+
+
+#****************end of Output***********************
+
 
 
 #**********start of Sum over ky*********************
