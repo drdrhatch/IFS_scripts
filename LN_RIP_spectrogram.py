@@ -117,7 +117,7 @@ print('nZ_list: '+str(nZ_list))
 #********End of Determin the length of the nZ****************
 #******************************************************************
 
-
+#***********Start of FFT*******************************
 frequency_kHZ_ky=np.zeros((len_nZ,nky0,len_freq))
 amplitude_frequency_ky=np.zeros((len_nZ,nky0,len_freq))
 amplitude_growth_ky=np.zeros((len_nZ,nky0,len_freq))
@@ -155,19 +155,33 @@ for i_Z in range(len_nZ):
         amplitude_frequency_ky[i_Z,i_ky,:]=new_amplitude_frequency
         amplitude_growth_ky[i_Z,i_ky,:]=new_amplitude_growth
 
+#***********End of FFT*******************************
 
-#***********Start of Sum of Z*************************
+
+#***********Start of Sum of Z--Length-Weighted*************************
 
 frequency_kHZ_ky_sum_Z=np.zeros((nky0,len_freq))
 amplitude_frequency_ky_sum_Z=np.zeros((nky0,len_freq))
 amplitude_growth_ky_sum_Z=np.zeros((nky0,len_freq))
 
-for i_ky in range(nky0):
-    frequency_kHZ_ky_sum_Z[i_ky,:]=np.sum(frequency_kHZ_ky[:,i_ky,:],axis=0)/float(len_nZ)
-    amplitude_frequency_ky_sum_Z[i_ky,:]=np.sum(amplitude_frequency_ky[:,i_ky,:],axis=0)/float(len_nZ)
-    amplitude_growth_ky_sum_Z[i_ky,:]=np.sum(amplitude_growth_ky[:,i_ky,:],axis=0)/float(len_nZ)
 
-#***********End of Sum of Z*************************
+
+for i_ky in range(nky0):
+    sum_length_TEMP=0.
+    for i_Z in range(len(nZ_list)):
+        nZ=nZ_list[i_Z]
+        length=np.sqrt( (real_R[nZ]-real_R[nZ-1])**2. \
+                   +(real_Z[nZ]-real_Z[nZ-1])**2. )
+        sum_length_TEMP=sum_length_TEMP+length
+        frequency_kHZ_ky_sum_Z[i_ky,:]=frequency_kHZ_ky_sum_Z[i_ky,:]+frequency_kHZ_ky[i_Z,i_ky,:]*length
+        amplitude_frequency_ky_sum_Z[i_ky,:]=amplitude_frequency_ky_sum_Z[i_ky,:]+amplitude_frequency_ky[i_Z,i_ky,:]*length
+        amplitude_growth_ky_sum_Z[i_ky,:]=amplitude_growth_ky_sum_Z[i_ky,:]+amplitude_growth_ky[i_Z,i_ky,:]*length
+
+    frequency_kHZ_ky_sum_Z[i_ky,:]=frequency_kHZ_ky_sum_Z[i_ky,:]/sum_length_TEMP
+    amplitude_frequency_ky_sum_Z[i_ky,:]=amplitude_frequency_ky_sum_Z[i_ky,:]/sum_length_TEMP
+    amplitude_growth_ky_sum_Z[i_ky,:]=amplitude_growth_ky_sum_Z[i_ky,:]/sum_length_TEMP
+
+#***********End of Sum of Z--Length-Weighted*************************
 
 #*************End of Interperlation******************
 df_min=min(abs(frequency_kHZ_ky_sum_Z[0,:-1]-frequency_kHZ_ky_sum_Z[0,1:]))
