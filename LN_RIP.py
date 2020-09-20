@@ -170,12 +170,12 @@ for time0 in time_list:
 
         apar=abs(field.apar()[:,:,:])
         #print("apar"+str(np.shape(apar)))
-        apar_ky = np.sum(apar,axis=2)         #sum over x_axis
+        apar_ky = np.sum(apar,axis=2)         #sum over x_axis==>gets apar at x=0
         (nz0,nky0)=np.shape(apar_ky)
         B1_ky=np.zeros(np.shape(apar_ky))
         #print("apar_ky"+str(np.shape(apar_ky)))
 
-        B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss  (nz0,nky0)*(nz0,nky0)*scaler
+        B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss  (nz0,nky0)*(nz0,nky0)*scalar
 
 
         RIP_list=np.zeros(len(Z_list))

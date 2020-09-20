@@ -5,8 +5,6 @@ de = np.genfromtxt('profiles_e')
 di = np.genfromtxt('profiles_i')
 dz = np.genfromtxt('profiles_z')
 
-
-
 ne = de[:,3]
 ni = di[:,3]
 nz = dz[:,3]
