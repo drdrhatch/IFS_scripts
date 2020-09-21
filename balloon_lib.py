@@ -100,6 +100,8 @@ class ky_mode(object):
 
     def define_variables(self):
         self.phi = self.fields["phi"]
+        self.fields["phi2"] = np.square(self.phi)
+        self.phi2 = self.fields["phi2"]
         self.apar = self.fields["apar"]
         self.bpar = self.fields["bpar"]
         self.dens = self.fields["dens"]
@@ -111,9 +113,17 @@ class ky_mode(object):
         return u, sv, vh
 
     def construct_q(self):
-        self.q = (
-            -1j * self.ky * self.phi * (0.5 * self.tpar + self.tperp + 1.5 * self.dens)
-        )
+        if self.field.ny == 1:
+            indy = 0
+        else:
+            indy = self.ky
+        phi = self.field.phi()[:, indy, :]
+        tpar = self.mom.tpar()[:, indy, :]
+        tperp = self.mom.tperp()[:, indy, :]
+        dens = self.mom.dens()[:, indy, :]
+        tmp = 1j * self.ky * np.conj(phi) * (0.5 * tpar + tperp + 1.5 * dens)
+        if self.ky != 0:
+            self.q = tmp + np.conj(tmp)
         self.fields["q"] = self.q
 
     def plot_modes(self, var, times):
