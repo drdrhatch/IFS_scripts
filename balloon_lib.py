@@ -124,9 +124,8 @@ class ky_mode(object):
         tpar = self.tpar
         tperp = self.tperp
         dens = self.dens
-        tmp = (1j * self.ky * np.conj(phi) * (0.5 * tpar + tperp + 1.5 * dens)).mean(
-            axis=-1, keepdims=True
-        )
+        print(dens.shape)
+        tmp = 1j * self.ky * np.conj(phi) * (0.5 * tpar + tperp + 1.5 * dens)
         self.q = tmp + np.conj(tmp)
         self.fields["q"] = self.q
 
