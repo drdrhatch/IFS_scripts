@@ -15,10 +15,10 @@ from read_write_geometry import read_geometry_local
 from ParIO import Parameters 
 from LN_tools import start_end_time
 
-Delta_Z=0.07  #7cm as bin for Z 
+Delta_Z=0.06  #7cm as bin for Z 
 scan_all_Z=False #Change to True if one want to scan across the whole height
-max_Z0=0.21    #Add a small number so it is even
-min_Z0=-0.21
+max_Z0=0.03    #Add a small number so it is even
+min_Z0=-0.03
 
 max_Z=max_Z0*1.00001    #Add a small number so it is even
 min_Z=min_Z0
@@ -149,6 +149,7 @@ for time0 in time_list:
     
     phi = np.zeros(ntot,dtype='complex128')
     apar = np.zeros(ntot,dtype='complex128')
+
     #print "ntot",field.nz*field.nx
     
     if 'x_local' in pars:
@@ -168,26 +169,31 @@ for time0 in time_list:
         #print("kygrid"+str(kygrid))
         zgrid = np.linspace(-np.pi,np.pi,pars['nz0'],endpoint=False)            
 
-        apar=abs(field.apar()[:,:,:])
-        #print("apar"+str(np.shape(apar)))
-        apar_ky = np.sum(apar,axis=2)         #sum over x_axis==>gets apar at x=0
+        apar=abs(field.apar()[:,:,:].real * 2. )
+        print("apar shape:"+str(np.shape(apar)))
+        
+        apar_ky = np.sum(apar,axis=2)         #sum over x_axis
         (nz0,nky0)=np.shape(apar_ky)
         B1_ky=np.zeros(np.shape(apar_ky))
         #print("apar_ky"+str(np.shape(apar_ky)))
 
-        B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss  (nz0,nky0)*(nz0,nky0)*scalar
+        B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss  (nz0,nky0)*(nz0,nky0)*scaler
 
 
         RIP_list=np.zeros(len(Z_list))
         for nZ_list in range(len(Z_list)):
-            RIP_list_temp=[]
+            B1_temp=0.
+            sum_length_TEMP=0.
             for nZ in range(len(real_Z)):
                 Z=real_Z[nZ]
                 if Z_list[nZ_list]-Delta_Z/2.<Z and Z<=Z_list[nZ_list]+Delta_Z/2.:
                     #one can restrict the ky range corresprons to frequency 
                     B1=np.sum(B1_ky[nZ,:])
-                    RIP_list_temp.append(B1)
-            RIP_list[nZ_list]=np.average(RIP_list_temp)
+                    length=np.sqrt( (real_R[nZ]-real_R[nZ-1])**2. \
+                           +(real_Z[nZ]-real_Z[nZ-1])**2. )
+                    B1_temp=B1_temp+B1*length
+                    sum_length_TEMP=sum_length_TEMP+length
+            RIP_list[nZ_list]=B1_temp/sum_length_TEMP
         
         
         d = {'Z(cm)':Z_list_cm,'B_R(Gauss)':RIP_list}
