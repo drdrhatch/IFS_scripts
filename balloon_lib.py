@@ -115,18 +115,19 @@ class ky_mode(object):
         u, sv, vh = la.svd(var)
         return u, sv, vh
 
-    def construct_q(self):
-        if self.field.ny == 1:
-            indy = 0
-        else:
-            indy = self.ky
-        phi = self.field.phi()[:, indy, :]
-        tpar = self.mom.tpar()[:, indy, :]
-        tperp = self.mom.tperp()[:, indy, :]
-        dens = self.mom.dens()[:, indy, :]
-        tmp = 1j * self.ky * np.conj(phi) * (0.5 * tpar + tperp + 1.5 * dens)
-        if self.ky != 0:
-            self.q = tmp + np.conj(tmp)
+    def construct_q(self, times):
+        req_fields = {"phi", "tpar", "tperp", "dens"}
+        fields_toread = req_fields.difference(self.fields_read)
+        if fields_toread:
+            self.read_fields(times, fields_toread)
+        phi = self.phi
+        tpar = self.tpar
+        tperp = self.tperp
+        dens = self.dens
+        tmp = (1j * self.ky * np.conj(phi) * (0.5 * tpar + tperp + 1.5 * dens)).mean(
+            axis=-1, keepdims=True
+        )
+        self.q = tmp + np.conj(tmp)
         self.fields["q"] = self.q
 
     def plot_modes(self, varname, times, extend=True):
