@@ -133,13 +133,15 @@ class ky_mode(object):
             if extend:
                 pvar = (var[:, self.kx_modes] * self.phase).ravel(order="F")
                 norm = pvar[self.zero_ind]
+                zgrid = self.zgrid_ext
             else:
                 pvar = var[:, 0]
                 norm = var[0, 0]
+                zgrid = self.zgrid
             if norm == 0:
                 norm = 1
             pvar *= 1 / norm
-            self.plot(pvar, varlabel)
+            self.plot(zgrid, pvar, varlabel)
 
     def plot_pod(self, var, pods, varn):
         varname = ky_mode.get_varname(varn)
@@ -188,14 +190,10 @@ class ky_mode(object):
         plt.legend()
         plt.show()
 
-    def plot(self, var, varname):
-        plt.plot(
-            self.zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$"
-        )
-        plt.plot(
-            self.zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$"
-        )
-        plt.plot(self.zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
+    def plot(self, zgrid, var, varname):
+        plt.plot(zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$")
+        plt.plot(zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$")
+        plt.plot(zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
         plt.legend()
         plt.xlabel(r"$z/\pi$", size=18)
         plt.show()
