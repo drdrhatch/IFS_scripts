@@ -125,15 +125,20 @@ class ky_mode(object):
             self.q = tmp + np.conj(tmp)
         self.fields["q"] = self.q
 
-    def plot_modes(self, var, times):
-        varname = ky_mode.get_varname(var)
-        for pvar, time in zip(self.fields[var], times):
+    def plot_modes(self, varname, times, extend=True):
+        varlabel = ky_mode.get_varname(varname)
+        for var, time in zip(self.fields[varname], times):
             plt.title(r"$k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time))
-            norm = pvar[self.zero_ind]
+            if extend:
+                pvar = (var[:, self.kx_modes] * self.phase).ravel(order="F")
+                norm = pvar[self.zero_ind]
+            else:
+                pvar = var[:, 0]
+                norm = var[0, 0]
             if norm == 0:
                 norm = 1
-            pvar /= norm
-            self.plot(pvar, varname)
+            pvar *= 1 / norm
+            self.plot(pvar, varlabel)
 
     def plot_pod(self, var, pods, varn):
         varname = ky_mode.get_varname(varn)
