@@ -280,13 +280,16 @@ def avg_modes(modes, varname):
     )
     for i, mode in enumerate(modes):
         xsum = avg_x(mode, varname)
-        ysum[i] = xsum
-    yavg = ysum.sum(axis=0, keepdims=False)
+        if mode.ky != 0:
+            ysum[i] = xsum + np.conj(xsum)
+        else:
+            ysum[i] = xsum
+    yavg = ysum.mean(axis=0, keepdims=False)
     return yavg
 
 
 def avg_x(mode, varname):
     """Average variable over x dimension"""
     var = mode.fields[varname]
-    xsum = np.sum(var.reshape(var.shape[0], -1, mode.nz), axis=0, keepdims=False)
+    xsum = np.mean(var, axis=-1, keepdims=False)
     return xsum
