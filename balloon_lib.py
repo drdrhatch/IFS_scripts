@@ -76,18 +76,17 @@ class ky_mode(object):
 
     def read_field(self, varname):
         """ Read field for a given time window, returning array"""
-        phase = self.phase
         var = self.field_vars[varname]()
         if var.shape[1] == 1:  # for linear scan data with single ky
             indy = 0
         else:
             indy = self.ky
-        tmp = (var[:, indy, self.kx_modes] * phase).ravel(order="F")
+        tmp = var[:, indy, :]
         return tmp
 
     def read_fields(self, times, fields):
         """Read given fields data for the given times"""
-        tmp = np.empty((len(fields), times.size, self.zgrid.size), dtype=np.cdouble)
+        tmp = np.empty((len(fields), times.size, self.nz, self.nx), dtype=np.cdouble)
         for i, var in enumerate(fields):
             self.fields[var] = tmp[i, :, :]
         for j, time in enumerate(times):
@@ -95,7 +94,7 @@ class ky_mode(object):
             self.field.set_time(time)
             self.mom.set_time(time)
             for i, var in enumerate(fields):
-                tmp[i, j, :] = self.read_field(var)
+                tmp[i, j, :, :] = self.read_field(var)
         self.define_variables()
 
     def define_variables(self):
