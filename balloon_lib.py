@@ -271,24 +271,20 @@ def get_times(field, stime, etime):
     return tarray[tind]
 
 
-def avg_modes(modes, varname):
+def sum_modes(modes, varname):
     """Average variable var over modes (x & y)"""
-    ntimes = modes[0].fields[varname].shape[-2]
-    ysum = np.empty(
+    ntimes = modes[0].fields[varname].shape[0]
+    tmp = np.empty(
         (len(modes), ntimes, modes[0].nz), dtype=modes[0].fields[varname].dtype
     )
     for i, mode in enumerate(modes):
-        xsum = avg_x(mode, varname)
-        if mode.ky != 0:
-            ysum[i] = xsum + np.conj(xsum)
-        else:
-            ysum[i] = xsum
-    yavg = ysum.mean(axis=0, keepdims=False)
-    return yavg
+        tmp[i] = sum_x(mode, varname)
+    ysum = tmp.sum(axis=0, keepdims=False)
+    return ysum
 
 
-def avg_x(mode, varname):
+def sum_x(mode, varname):
     """Average variable over x dimension"""
     var = mode.fields[varname]
-    xsum = np.mean(var, axis=-1, keepdims=False)
+    xsum = np.sum(var, axis=-1, keepdims=False)
     return xsum
