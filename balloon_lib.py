@@ -137,7 +137,7 @@ class ky_mode(object):
                 norm = pvar[self.zero_ind]
                 zgrid = self.zgrid_ext
             else:
-                pvar = var[:, 0]
+                pvar = var.mean(axis=-1)
                 norm = var[0, 0]
                 zgrid = self.zgrid
             if norm == 0:
