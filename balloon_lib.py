@@ -254,6 +254,7 @@ class ky_mode(object):
 
     @classmethod
     def get_varname(cls, var):
+        """returns formatted label for plots corresponding to input variable"""
         try:
             varname = ky_mode.varnames[var]
         except:
