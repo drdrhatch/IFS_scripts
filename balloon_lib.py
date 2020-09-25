@@ -20,7 +20,7 @@ class ky_mode(object):
         "q": "$Q$",
     }
 
-    def __init__(self, ky, pars, field, mom=None):
+    def __init__(self, ky, pars, field, mom=None, geometry=None):
         self.ky = ky
         self.field = field
         self.mom = mom
@@ -30,6 +30,7 @@ class ky_mode(object):
         self.construct_ranges()
         self.define_phase(pars)
         self.define_dictionary()
+        self.geometry = geometry
 
     def construct_ranges(self):
         self.kxrange()

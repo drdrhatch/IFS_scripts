@@ -9,9 +9,13 @@ import fieldlib
 import momlib
 import matplotlib.pyplot as plt
 import balloon_lib as bl
+import read_write_geometry as rwg
 
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
+parser.add_argument(
+    "--geom", "-g", action="store", metavar="GEOMETRY_FILE", help="geometry file"
+)
 parser.add_argument(
     "--stime", "-s", action="store", type=float, default=0, help="start time window"
 )
@@ -54,6 +58,7 @@ pars = par.pardict
 
 field = fieldlib.fieldfile("field" + suffix, pars)
 mom_e = momlib.momfile("mom_e" + suffix, pars)
+geometry = rwg.read_geometry_local(args.geom)
 
 min_time, max_time = field.get_minmaxtime()
 stime = max(args.stime, min_time)
@@ -61,6 +66,7 @@ etime = min(args.etime, max_time)
 
 ky_list = args.ky_list
 ky_modes = [bl.ky_mode(ky, pars, field) for ky in ky_list]
+ky_modes = [bl.ky_mode(ky, pars, field, mom_e, geometry) for ky in ky_list]
 
 ftimes = bl.get_times(field, stime, etime)
 mtimes = bl.get_times(mom_e, stime, etime)
