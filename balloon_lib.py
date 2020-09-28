@@ -289,3 +289,16 @@ def sum_x(mode, varname):
     var = mode.fields[varname]
     xsum = np.sum(var, axis=-1, keepdims=False)
     return xsum
+
+
+def collective_pod(mode, fields):
+    ntimes = mode.fields[fields[0]].shape[0]
+    nxnz = mode.nx * mode.nz
+    all_fields = np.concatenate(
+        ([mode.fields[field].reshape(ntimes, -1) for field in fields]), axis=1
+    )
+    u, sv, vh = la.svd(all_fields, full_matrices=False)
+    VH = {}
+    for i, field in enumerate(fields):
+        VH[field] = vh[:, i * nxnz : (i + 1) * nxnz].reshape((-1, mode.nz, mode.nx))
+    return u, sv, VH
