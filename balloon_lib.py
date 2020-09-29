@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from operator import attrgetter
 
 
-class ky_mode(object):
 VARNAMES = {
     "phi": r"$\Phi$",
     "apar": r"$A_\parallel$",
@@ -19,6 +18,7 @@ VARNAMES = {
 }
 
 
+class KyMode:
     """Class for organizing ballooning structure for each ky mode"""
 
     def __init__(
