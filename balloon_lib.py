@@ -261,7 +261,8 @@ def get_varname(var):
     """returns formatted label for plots corresponding to input variable"""
     try:
         varname = VARNAMES[var]
-    except:
+    except KeyError:
+        print("ERROR: Variable not found in dictionary")
         varname = ""
     return varname
 
