@@ -21,17 +21,21 @@ VARNAMES = {
 
     """Class for organizing ballooning structure for each ky mode"""
 
-    def __init__(self, ky, pars, field, mom=None, geometry=None):
+    def __init__(
+        self, ky, pars, times, fields, field_file, mom_file=None, geom_file=None
+    ):
         self.ky = ky
-        self.field = field
-        self.mom = mom
-        self.nx = field.nx
-        self.nz = field.nz
+        self.times = times
+        self.field = field_file
+        self.mom = mom_file
+        self.nx = field_file.nx
+        self.nz = field_file.nz
         self.N = pars["nexc"]
         self.construct_ranges()
         self.define_phase(pars)
         self.define_dictionary()
-        self.geometry = geometry
+        self.geometry = geom_file
+        self.read_fields(times, fields)
 
     def construct_ranges(self):
         self.kxrange()

@@ -64,16 +64,20 @@ min_time, max_time = field.get_minmaxtime()
 stime = max(args.stime, min_time)
 etime = min(args.etime, max_time)
 
+ftimes = bl.get_times(field, stime, etime)
+mtimes = bl.get_times(mom_e, stime, etime)
+times = np.intersect1d(ftimes, mtimes)
+
 if args.ky_list == 0:
     ky_list = range(0, field.ny)
 else:
     ky_list = args.ky_list
 print(ky_list)
-ky_modes = [bl.ky_mode(ky, pars, field, mom_e, geometry) for ky in ky_list]
+fields = ("phi", "tpar", "tperp", "dens")
+ky_modes = [
+    bl.KyMode(ky, pars, times, fields, field, mom_e, geometry) for ky in ky_list
+]
 
-ftimes = bl.get_times(field, stime, etime)
-mtimes = bl.get_times(mom_e, stime, etime)
-times = np.intersect1d(ftimes, mtimes)
 
 # for time in times:
 #     field.set_time(time)
