@@ -92,14 +92,13 @@ class ky_mode(object):
         """Read given fields data for the given times"""
         self.fields_read = set(fields)
         tmp = np.empty((len(fields), times.size, self.nz, self.nx), dtype=np.cdouble)
-        for i, var in enumerate(fields):
-            self.fields[var] = tmp[i, :, :]
         for j, time in enumerate(times):
-            print("Reading fields at time t = " + str("{:6.3f}").format(time))
             self.field.set_time(time)
             self.mom.set_time(time)
             for i, var in enumerate(fields):
                 tmp[i, j, :, :] = self.read_field(var)
+        for i, var in enumerate(fields):
+            self.fields[var] = tmp[i]
         self.define_variables()
 
     def define_variables(self):
