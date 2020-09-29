@@ -8,17 +8,18 @@ from operator import attrgetter
 
 
 class ky_mode(object):
-    """Class for organizing ballooning structure for each ky mode"""
+VARNAMES = {
+    "phi": r"$\Phi$",
+    "apar": r"$A_\parallel$",
+    "bpar": r"$B_\parallel$",
+    "tperp": r"$T_\perp$",
+    "tpar": r"$T_\parallel$",
+    "dens": "$n$",
+    "q": "$Q$",
+}
 
-    varnames = {
-        "phi": r"$\Phi$",
-        "apar": r"$A_\parallel$",
-        "bpar": r"$B_\parallel$",
-        "tperp": r"$T_\perp$",
-        "tpar": r"$T_\parallel$",
-        "dens": "$n$",
-        "q": "$Q$",
-    }
+
+    """Class for organizing ballooning structure for each ky mode"""
 
     def __init__(self, ky, pars, field, mom=None, geometry=None):
         self.ky = ky
@@ -129,7 +130,7 @@ class ky_mode(object):
         self.fields["q"] = self.q
 
     def plot_modes(self, varname, times, extend=True):
-        varlabel = ky_mode.get_varname(varname)
+        varlabel = get_varname(varname)
         for var, time in zip(self.fields[varname], times):
             plt.title(r"$k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time))
             if extend:
@@ -146,7 +147,7 @@ class ky_mode(object):
             self.plot(zgrid, pvar, varlabel)
 
     def plot_pod(self, var, pods, varn):
-        varname = ky_mode.get_varname(varn)
+        varname = get_varname(varn)
         for pod in pods:
             plt.title("$k_y=$" + str(self.ky) + ", POD mode # = " + str(pod + 1))
             pvar = np.conjugate(var[pod])
@@ -251,14 +252,14 @@ class ky_mode(object):
             encoding="UTF-8",
         )
 
-    @classmethod
-    def get_varname(cls, var):
-        """returns formatted label for plots corresponding to input variable"""
-        try:
-            varname = ky_mode.varnames[var]
-        except:
-            varname = ""
-        return varname
+
+def get_varname(var):
+    """returns formatted label for plots corresponding to input variable"""
+    try:
+        varname = VARNAMES[var]
+    except:
+        varname = ""
+    return varname
 
 
 def get_times(field, stime, etime):
