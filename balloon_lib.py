@@ -11,11 +11,11 @@ class ky_mode(object):
     """Class for organizing ballooning structure for each ky mode"""
 
     varnames = {
-        "phi": "$\Phi$",
-        "apar": "$A_\parallel$",
-        "bpar": "$B_\parallel$",
-        "tperp": "$T_\perp$",
-        "tpar": "T_\parallel$",
+        "phi": r"$\Phi$",
+        "apar": r"$A_\parallel$",
+        "bpar": r"$B_\parallel$",
+        "tperp": r"$T_\perp$",
+        "tpar": r"$T_\parallel$",
         "dens": "$n$",
         "q": "$Q$",
     }
