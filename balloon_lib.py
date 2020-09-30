@@ -5,6 +5,7 @@ import numpy as np
 import numpy.linalg as la
 import matplotlib.pyplot as plt
 from operator import attrgetter
+from matplotlib.backends.backend_pdf import PdfPages
 
 
 VARNAMES = {
@@ -180,14 +181,6 @@ class KyMode:
         plt.legend()
         plt.show()
 
-    def plot(self, zgrid, var, varname):
-        plt.plot(zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$")
-        plt.plot(zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$")
-        plt.plot(zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
-        plt.legend()
-        plt.xlabel(r"$z/\pi$", size=18)
-        plt.show()
-
     def output(self, pods, times, norm):
         """Output various POD data"""
         self.output_sv()
@@ -240,9 +233,24 @@ class KyMode:
         )
 
 
-def plot_var(mode, varname, times, extend=True):
-    '''plot variable for mode with formatted key'''
+def plot(zgrid, var, varname):
+    """Base plotting function for complex variables
+    returns plot object"""
+    fig = plt.figure()
+    plt.plot(zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$")
+    plt.plot(zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$")
+    plt.plot(zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
+    plt.legend()
+    plt.xlabel(r"$z/\pi$", size=18)
+    plt.show()
+    return fig
+
+
+def plot_var(mode, varname, times, extend=True, save=False):
+    """plot variable for mode with formatted key returns plot object"""
     varlabel = get_varname(varname)
+    if save:
+        pdf_figs = PdfPages("mode_" + str(mode.ky) + ".pdf")
     for var, time in zip(mode.fields[varname], times):
         plt.title(r"$k_y=$" + str(mode.ky) + " t = " + str("{:6.3f}").format(time))
         if extend:
@@ -256,7 +264,11 @@ def plot_var(mode, varname, times, extend=True):
         if norm == 0:
             norm = 1
         pvar *= 1 / norm
-        mode.plot(zgrid, pvar, varlabel)
+        fig = plot(zgrid, pvar, varlabel)
+        pdf_figs.savefig(fig)
+    if save:
+        pdf_figs.close()
+
 
 def get_varname(var):
     """returns formatted label for plots corresponding to input variable"""
