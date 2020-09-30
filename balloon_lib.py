@@ -133,23 +133,6 @@ class KyMode:
         self.q = tmp + np.conj(tmp)
         self.fields["q"] = self.q
 
-    def plot_modes(self, varname, times, extend=True):
-        varlabel = get_varname(varname)
-        for var, time in zip(self.fields[varname], times):
-            plt.title(r"$k_y=$" + str(self.ky) + " t = " + str("{:6.3f}").format(time))
-            if extend:
-                pvar = (var[:, self.kx_modes] * self.phase).ravel(order="F")
-                norm = pvar[self.zero_ind]
-                zgrid = self.zgrid_ext
-            else:
-                pvar = var.mean(axis=-1)
-                norm = var[0, 0]
-                zgrid = self.zgrid
-            if norm == 0:
-                norm = 1
-            pvar *= 1 / norm
-            self.plot(zgrid, pvar, varlabel)
-
     def plot_pod(self, var, pods, varn):
         varname = get_varname(varn)
         for pod in pods:
@@ -256,6 +239,24 @@ class KyMode:
             encoding="UTF-8",
         )
 
+
+def plot_var(mode, varname, times, extend=True):
+    '''plot variable for mode with formatted key'''
+    varlabel = get_varname(varname)
+    for var, time in zip(mode.fields[varname], times):
+        plt.title(r"$k_y=$" + str(mode.ky) + " t = " + str("{:6.3f}").format(time))
+        if extend:
+            pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
+            norm = pvar[mode.zero_ind]
+            zgrid = mode.zgrid_ext
+        else:
+            pvar = var.mean(axis=-1)
+            norm = var[0, 0]
+            zgrid = mode.zgrid
+        if norm == 0:
+            norm = 1
+        pvar *= 1 / norm
+        mode.plot(zgrid, pvar, varlabel)
 
 def get_varname(var):
     """returns formatted label for plots corresponding to input variable"""
