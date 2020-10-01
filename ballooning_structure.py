@@ -69,7 +69,7 @@ mtimes = bl.get_times(mom_e, stime, etime)
 times = np.intersect1d(ftimes, mtimes)
 
 if args.ky_list == 0:
-    ky_list = range(0, field.ny)
+    ky_list = [ky for ky in range(0, field.ny)]
 else:
     ky_list = args.ky_list
 print(ky_list)
