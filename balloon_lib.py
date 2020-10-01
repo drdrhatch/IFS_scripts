@@ -100,7 +100,8 @@ class KyMode:
         tmp = np.empty((len(fields), times.size, self.nz, self.nx), dtype=np.cdouble)
         for j, time in enumerate(times):
             self.field.set_time(time)
-            self.mom.set_time(time)
+            if self.mom:
+                self.mom.set_time(time)
             for i, var in enumerate(fields):
                 tmp[i, j, :, :] = self.read_field(var)
         for i, var in enumerate(fields):
