@@ -57,7 +57,7 @@ class KyMode:
         self.zgrid_ext = np.linspace(
             -nxmodes, nxmodes, nxmodes * self.nz, endpoint=False
         )
-        self.zero_ind = self.zgrid.size // 2
+        self.zero_ind = self.zgrid_ext.size // 2
 
     def define_phase(self, pars):
         if "n0_global" in pars:
