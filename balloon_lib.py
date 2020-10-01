@@ -121,19 +121,6 @@ class KyMode:
         u, sv, vh = la.svd(var)
         return u, sv, vh
 
-    def construct_q(self, times):
-        req_fields = {"phi", "tpar", "tperp", "dens"}
-        fields_toread = req_fields.difference(self.fields_read)
-        if fields_toread:
-            self.read_fields(times, fields_toread)
-        phi = self.phi
-        tpar = self.tpar
-        tperp = self.tperp
-        dens = self.dens
-        tmp = -1j * self.ky * phi * np.conj(0.5 * tpar + tperp + 1.5 * dens)
-        self.q = tmp + np.conj(tmp)
-        self.fields["q"] = self.q
-
     def plot_pod(self, var, pods, varn):
         varname = get_varname(varn)
         for pod in pods:
@@ -332,3 +319,13 @@ def collective_pod(mode, fields):
     for i, field in enumerate(fields):
         VH[field] = vh[:, i * nxnz : (i + 1) * nxnz].reshape((-1, mode.nz, mode.nx))
     return u, sv, VH
+
+
+def calc_heat_flux(ky, fields):
+    phi = fields["phi"]
+    tpar = fields["tpar"]
+    tperp = fields["tperp"]
+    dens = fields["dens"]
+    tmp = -1j * ky * phi * np.conj(0.5 * tpar + tperp + 1.5 * dens)
+    heat_flux = tmp + np.conj(tmp)
+    return heat_flux
