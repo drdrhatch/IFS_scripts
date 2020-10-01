@@ -233,26 +233,24 @@ class KyMode:
         )
 
 
-def plot(zgrid, var, varname):
+def plot(zgrid, var, varname, title):
     """Base plotting function for complex variables
     returns plot object"""
     fig = plt.figure()
+    plt.title(title)
     plt.plot(zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$")
     plt.plot(zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$")
     plt.plot(zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
     plt.legend()
     plt.xlabel(r"$z/\pi$", size=18)
-    plt.show()
     return fig
 
 
-def plot_var(mode, varname, times, extend=True, save=False):
+def plot_var(mode, varname, times, extend=True, show=True, output=False):
     """plot variable for mode with formatted key returns plot object"""
     varlabel = get_varname(varname)
-    if save:
-        pdf_figs = PdfPages("mode_" + str(mode.ky) + ".pdf")
     for var, time in zip(mode.fields[varname], times):
-        plt.title(r"$k_y=$" + str(mode.ky) + " t = " + str("{:6.3f}").format(time))
+        title = r"$k_y=$" + str(mode.ky) + " t = " + str("{:6.3f}").format(time)
         if extend:
             pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
             norm = pvar[mode.zero_ind]
@@ -264,8 +262,21 @@ def plot_var(mode, varname, times, extend=True, save=False):
         if norm == 0:
             norm = 1
         pvar *= 1 / norm
-        fig = plot(zgrid, pvar, varlabel)
-        pdf_figs.savefig(fig)
+        fig = plot(zgrid, pvar, varlabel, title)
+        if show:
+            plt.show()
+        if output:
+            output.savefig(fig)
+
+
+def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
+    if save:
+        pdf_figs = PdfPages("mode_" + str(mode.ky) + ".pdf")
+        output = pdf_figs
+    else:
+        output = False
+    for varname in varnames:
+        plot_var(mode, varname, times, extend, show, output)
     if save:
         pdf_figs.close()
 

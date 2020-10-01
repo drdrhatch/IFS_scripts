@@ -78,6 +78,8 @@ ky_modes = [
     bl.KyMode(ky, pars, times, fields, field, mom_e, geometry) for ky in ky_list
 ]
 
+save_figs = True
+show_figs = False
 
 # for time in times:
 #     field.set_time(time)
@@ -87,6 +89,8 @@ ky_modes = [
 for mode in ky_modes:
     mode.read_fields(times, ("phi", "apar"))
 
+    if args.plot:
+        bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 if args.plot:
     for mode in ky_modes:
         mode.plot_modes("phi", times)
