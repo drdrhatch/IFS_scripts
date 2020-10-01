@@ -237,7 +237,7 @@ def plot_var(mode, varname, times, extend=True, show=True, output=False):
     """plot variable for mode with formatted key returns plot object"""
     varlabel = get_varname(varname)
     for var, time in zip(mode.fields[varname], times):
-        title = r"$k_y=$" + str(mode.ky) + " t = " + str("{:6.3f}").format(time)
+        title = r"$k_y=" + str(mode.ky) + ", t = " + str("{:6.3f}").format(time) + "$"
         if extend:
             pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
             norm = pvar[mode.zero_ind]
