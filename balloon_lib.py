@@ -267,6 +267,7 @@ def plot_var(mode, varname, times, extend=True, show=True, output=False):
             plt.show()
         if output:
             output.savefig(fig)
+        plt.close()
 
 
 def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
