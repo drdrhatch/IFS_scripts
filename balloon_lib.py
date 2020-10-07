@@ -210,13 +210,10 @@ def plot(zgrid, var, varname, title):
 def plot_var(mode, var, varlabel, title, extend=True, show=True, output=False):
     """plot variable for mode with formatted key returns plot object"""
     if extend:
-        print("var.shape", var.shape)
         if var.shape[-1] == mode.nx:
             pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
         else:
             pvar = (var * mode.phase).ravel(order="F")
-        print(mode.ky, mode.zero_ind)
-        print(pvar.shape)
         norm = pvar[mode.zero_ind]
         zgrid = mode.zgrid_ext
     else:
@@ -226,7 +223,6 @@ def plot_var(mode, var, varlabel, title, extend=True, show=True, output=False):
         zgrid = mode.zgrid
     if norm == 0:
         norm = 1
-    print(norm)
     pvar *= 1 / norm
     fig = plot(zgrid, pvar, varlabel, title)
     if show:
