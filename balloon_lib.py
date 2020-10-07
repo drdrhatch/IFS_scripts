@@ -118,10 +118,6 @@ class KyMode:
         self.tpar = self.fields["tpar"]
         self.tperp = self.fields["tperp"]
 
-    def pod(self, var):
-        u, sv, vh = la.svd(var)
-        return u, sv, vh
-
     def plot_pod(self, var, pods, varn):
         varname = get_varname(varn)
         for pod in pods:
@@ -309,6 +305,16 @@ def sum_x(mode, varname):
     return xsum
 
 
+def pod(mode, varname):
+    var = mode.fields[varname]
+    ntimes = var.shape[0]
+    pvar = var[:, :, mode.kx_modes].reshape(ntimes, -1, order="F")
+    u, sv, vtmp = la.svd(pvar, full_matrices=False)
+    vh = vtmp.reshape(-1, mode.nz, mode.kx_modes.size, order="F")
+    return u, sv, vh
+
+
+# collective is (slightly, usually) different because it includes all kx modes
 def collective_pod(mode, fields):
     ntimes = mode.fields[fields[0]].shape[0]
     nxnz = mode.nx * mode.nz
