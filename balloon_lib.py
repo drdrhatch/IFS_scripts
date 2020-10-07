@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import numpy.linalg as la
 import matplotlib.pyplot as plt
 from operator import attrgetter
 from matplotlib.backends.backend_pdf import PdfPages
 
+try:
+    import scipy.linalg as la
+except ImportError:
+    import numpy.linalg as la
 
 VARNAMES = {
     "phi": r"$\Phi$",
