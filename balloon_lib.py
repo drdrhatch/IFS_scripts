@@ -222,8 +222,8 @@ def plot(zgrid, var, varname, title):
     returns plot object"""
     fig = plt.figure()
     plt.title(title)
-    plt.plot(zgrid, np.real(var), color="red", label=r"$Re[$" + varname + "$]$")
-    plt.plot(zgrid, np.imag(var), color="blue", label=r"$Im[$" + varname + "$]$")
+    plt.plot(zgrid, np.real(var), color="red", label=r"$\Re[$" + varname + "$]$")
+    plt.plot(zgrid, np.imag(var), color="blue", label=r"$\Im[$" + varname + "$]$")
     plt.plot(zgrid, np.abs(var), color="black", label=r"$|$" + varname + "$|$")
     plt.legend()
     plt.xlabel(r"$z/\pi$", size=18)
