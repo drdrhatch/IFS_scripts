@@ -230,38 +230,53 @@ def plot(zgrid, var, varname, title):
     return fig
 
 
-def plot_var(mode, varname, times, extend=True, show=True, output=False):
+def plot_var(mode, var, varlabel, title, extend=True, show=True, output=False):
     """plot variable for mode with formatted key returns plot object"""
-    varlabel = get_varname(varname)
-    for var, time in zip(mode.fields[varname], times):
-        title = r"$k_y=" + str(mode.ky) + ", t = " + str("{:6.3f}").format(time) + "$"
-        if extend:
+    if extend:
+        print("var.shape", var.shape)
+        if var.shape[-1] == mode.nx:
             pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
-            norm = pvar[mode.zero_ind]
-            zgrid = mode.zgrid_ext
         else:
-            pvar = var.mean(axis=-1)
-            norm = var[0, 0]
-            zgrid = mode.zgrid
-        if norm == 0:
-            norm = 1
-        pvar *= 1 / norm
-        fig = plot(zgrid, pvar, varlabel, title)
-        if show:
-            plt.show()
-        if output:
-            output.savefig(fig)
-        plt.close()
+            pvar = (var * mode.phase).ravel(order="F")
+        print(mode.ky, mode.zero_ind)
+        print(pvar.shape)
+        norm = pvar[mode.zero_ind]
+        zgrid = mode.zgrid_ext
+    else:
+        pvar = var[:, 0]
+        mid = mode.nz // 2
+        norm = pvar[mid]
+        zgrid = mode.zgrid
+    if norm == 0:
+        norm = 1
+    print(norm)
+    pvar *= 1 / norm
+    fig = plot(zgrid, pvar, varlabel, title)
+    if show:
+        plt.show()
+    if output:
+        output.savefig(fig)
+    plt.close()
 
 
 def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
+    """Plot a given variable from mode for given times
+    By default:
+    plots extended ballooning structure
+    shows plot
+    Can also save plot"""
     if save:
         pdf_figs = PdfPages("mode_" + str(mode.ky) + ".pdf")
         output = pdf_figs
     else:
         output = False
     for varname in varnames:
-        plot_var(mode, varname, times, extend, show, output)
+        varlabel = get_varname(varname)
+        for var, time in zip(mode.fields[varname], times):
+            title = (
+                r"$k_y=" + str(mode.ky) + ", t = " + str("{:6.3f}").format(time) + "$"
+            )
+            plot_var(mode, var, varlabel, title, extend, show, output)
     if save:
         pdf_figs.close()
 
