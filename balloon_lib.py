@@ -208,21 +208,7 @@ def plot(zgrid, var, varname, title):
 
 def plot_var(mode, var, varlabel, title, extend=True, show=True, output=False):
     """plot variable for mode with formatted key returns plot object"""
-    if extend:
-        if var.shape[-1] == mode.nx:
-            pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
-        else:
-            pvar = (var * mode.phase).ravel(order="F")
-        norm = pvar[mode.zero_ind]
-        zgrid = mode.zgrid_ext
-    else:
-        pvar = var[:, 0]
-        mid = mode.nz // 2
-        norm = pvar[mid]
-        zgrid = mode.zgrid
-    if norm == 0:
-        norm = 1
-    pvar *= 1 / norm
+    pvar, zgrid = get_plot_variable(mode, var, extend)
     fig = plot(zgrid, pvar, varlabel, title)
     if show:
         plt.show()
@@ -356,3 +342,23 @@ def calc_heat_flux(ky, fields):
     tmp = -1j * ky * phi * np.conj(0.5 * tpar + tperp + 1.5 * dens)
     heat_flux = tmp + np.conj(tmp)
     return heat_flux
+
+
+def get_plot_variable(mode, var, extend):
+    """Returns plot variable and zgrid formatted for extended balloning structure, or not"""
+    if extend:
+        if var.shape[-1] == mode.nx:
+            pvar = (var[:, mode.kx_modes] * mode.phase).ravel(order="F")
+        else:
+            pvar = (var * mode.phase).ravel(order="F")
+        norm = pvar[mode.zero_ind]
+        zgrid = mode.zgrid_ext
+    else:
+        pvar = var[:, 0]
+        mid = mode.nz // 2
+        norm = pvar[mid]
+        zgrid = mode.zgrid
+    if norm == 0:
+        norm = 1
+    pvar *= 1 / norm
+    return pvar, zgrid
