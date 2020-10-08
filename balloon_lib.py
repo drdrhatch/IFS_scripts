@@ -121,14 +121,12 @@ class KyMode:
         self.tperp = self.fields["tperp"]
 
 
-def plot_pod(mode, var, pods, varn):
+def plot_pod(mode, var, pods, varn, extend=True):
     varname = get_varname(varn)
     for ipod in pods:
-        plt.title("$k_y=$" + str(mode.ky) + ", POD mode # = " + str(ipod + 1))
-        pvar = np.conjugate(var[ipod])
-        norm = pvar[mode.zero_ind]
-        pvar /= norm
-        plot(pvar, varname)
+        title = "$k_y=$" + str(mode.ky) + ", POD mode # = " + str(ipod + 1)
+        pvar, zgrid = get_plot_variable(mode, var[ipod], extend)
+        plot(zgrid, np.conj(pvar), varname, title)
         plt.show()
 
 
