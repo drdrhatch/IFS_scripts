@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
 
 try:
     import scipy.linalg as la
 except ImportError:
     import numpy.linalg as la
+import numpy as np
 
 VARNAMES = {
     "phi": r"$\Phi$",
