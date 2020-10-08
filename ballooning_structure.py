@@ -85,8 +85,6 @@ ky_modes = [
     bl.KyMode(ky, pars, times, fields, field, mom_e, geometry) for ky in ky_list
 ]
 
-save_figs = True
-show_figs = False
 
 # for time in times:
 #     field.set_time(time)
