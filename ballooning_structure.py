@@ -75,10 +75,9 @@ times = np.intersect1d(ftimes, mtimes)
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
-    ky_list = np.array([ky for ky in range(0, field.ny)])
+    ky_list = [ky for ky in range(0, field.ny)]
 else:
-    ky_list = np.array(args.ky_list)
-ky_list *= int(pars["kymin"])
+    ky_list = args.ky_list
 print("ky modes to analyze: ", ky_list)
 
 if args.pod:

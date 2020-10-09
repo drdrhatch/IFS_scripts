@@ -27,7 +27,8 @@ class KyMode:
     def __init__(
         self, ky, pars, times, fields, field_file, mom_file=None, geom_file=None
     ):
-        self.ky = ky
+        self.iky = ky
+        self.ky = ky * pars["kymin"]
         self.times = times
         self.field = field_file
         self.mom = mom_file
@@ -92,7 +93,7 @@ class KyMode:
         if var.shape[1] == 1:  # for linear scan data with single ky
             indy = 0
         else:
-            indy = self.ky
+            indy = self.iky
         tmp = var[:, indy, :]
         return tmp
 
