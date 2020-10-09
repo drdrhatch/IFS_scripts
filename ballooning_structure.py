@@ -90,15 +90,7 @@ ky_modes = [
     bl.KyMode(ky, pars, times, fields, field, mom_e, geometry) for ky in ky_list
 ]
 
-
-# for time in times:
-#     field.set_time(time)
-#     print("Reading fields at time t = " + str("{:6.3f}").format(time))
-#     for mode in ky_modes:
-#         mode.read_phi()
 for mode in ky_modes:
-    mode.read_fields(times, ("phi", "apar"))
-
     if args.plot:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 if args.plot:
