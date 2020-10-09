@@ -80,6 +80,11 @@ else:
     ky_list = args.ky_list
 print("ky modes to analyze: ", ky_list)
 
+if args.pod:
+    pods = range(args.pod)
+else:
+    pods = None
+
 fields = ("phi", "tpar", "tperp", "dens")
 ky_modes = [
     bl.KyMode(ky, pars, times, fields, field, mom_e, geometry) for ky in ky_list
@@ -100,7 +105,7 @@ if args.plot:
     for mode in ky_modes:
         mode.plot_modes("phi", times)
 
-if args.pod:
+if pods:
     for mode in ky_modes:
         mode.u, mode.sv, mode.vh = mode.pod(mode.phi)
         # print("singular values = ", mode.sv)
