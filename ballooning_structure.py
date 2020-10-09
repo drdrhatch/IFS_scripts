@@ -94,6 +94,16 @@ for mode in ky_modes:
     if args.plot:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
+# sumq = bl.sum_modes(ky_modes, "q")
+# zgrid = ky_modes[-1].zgrid
+# if args.plot:
+#     for i, time in enumerate(times):
+#         title = r"$k_y=" + str(ky_list) + ",t = " + str("{:6.3f}").format(time) + "$"
+#         varname = r"$\sum_k Q_k$"
+#         bl.plot(zgrid, sumq[i], varname, title)
+#         plt.show()
+#     pass
+
 if pods:
     for mode in ky_modes:
         ky = mode.ky
