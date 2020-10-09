@@ -93,9 +93,6 @@ ky_modes = [
 for mode in ky_modes:
     if args.plot:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
-if args.plot:
-    for mode in ky_modes:
-        mode.plot_modes("phi", times)
 
 if pods:
     for mode in ky_modes:
