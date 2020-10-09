@@ -107,9 +107,13 @@ if args.plot:
 
 if pods:
     for mode in ky_modes:
-        mode.u, mode.sv, mode.vh = mode.pod(mode.phi)
-        # print("singular values = ", mode.sv)
-        # mode.plot_singular_values()
-        # mode.plot_time_dependence(times, range(args.pod))
-        mode.plot_pod(mode.vh, range(args.pod), "phi")
-        mode.output(args.pod, times, norm=True)
+        ky = mode.ky
+        up, svp, VHp = bl.pod(mode, "phi")
+        u, sv, VH = bl.collective_pod(mode, fields)
+        bl.plot_singular_values(mode, svp, save_figs)
+        bl.plot_singular_values(mode, sv, save_figs)
+        Q = bl.calc_heat_flux(ky, VH)
+        bl.plot_pod(mode, VHp, pods, "phi")
+        bl.plot_pod(mode, Q, pods, "q")
+        for var in fields:
+            bl.plot_pod(mode, VH[var], pods, var)
