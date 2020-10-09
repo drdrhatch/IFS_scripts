@@ -324,16 +324,29 @@ def pod(mode, varname):
 
 
 # collective is (slightly, usually) different because it includes all kx modes
-def collective_pod(mode, fields):
+def collective_pod(mode, fields, extend=True):
     ntimes = mode.fields[fields[0]].shape[0]
-    nxnz = mode.nx * mode.nz
-    all_fields = np.concatenate(
-        ([mode.fields[field].reshape(ntimes, -1) for field in fields]), axis=1
-    )
+    if extend:
+        nx = len(mode.kx_modes)
+        all_fields = np.concatenate(
+            (
+                [
+                    mode.fields[field][:, :, mode.kx_modes].reshape(ntimes, -1)
+                    for field in fields
+                ]
+            ),
+            axis=1,
+        )
+    else:
+        nx = mode.nx
+        all_fields = np.concatenate(
+            ([mode.fields[field].reshape(ntimes, -1) for field in fields]), axis=1
+        )
+    nxnz = nx * mode.nz
     u, sv, vh = la.svd(all_fields, full_matrices=False)
     VH = {}
     for i, field in enumerate(fields):
-        VH[field] = vh[:, i * nxnz : (i + 1) * nxnz].reshape((-1, mode.nz, mode.nx))
+        VH[field] = vh[:, i * nxnz : (i + 1) * nxnz].reshape((-1, mode.nz, nx))
     return u, sv, VH
 
 
