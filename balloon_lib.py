@@ -49,7 +49,7 @@ class KyMode:
         if self.ky == 0:
             step = 1
         else:
-            step = self.N * self.ky
+            step = self.N * self.iky
         hmodes = np.arange(0, self.nx / 2, step, dtype=np.intc)
         lmodes = np.arange(0, -self.nx / 2, -step, dtype=np.intc)
         self.kx_modes = np.union1d(lmodes, hmodes)
