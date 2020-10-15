@@ -107,12 +107,10 @@ for mode in ky_modes:
 if pods:
     for mode in ky_modes:
         ky = mode.ky
-        up, svp, VHp = bl.pod(mode, "phi")
         u, sv, VH = bl.collective_pod(mode, fields)
-        bl.plot_singular_values(mode, svp, save_figs)
+        bl.output_pod(mode, u, sv, VH, fields, pods, times)
         bl.plot_singular_values(mode, sv, save_figs)
         Q = bl.calc_heat_flux(ky, VH)
-        bl.plot_pod(mode, VHp, pods, "phi")
-        bl.plot_pod(mode, Q, pods, "q")
+        bl.plot_pod(mode, Q, pods, "q", extend=False)
         for var in fields:
             bl.plot_pod(mode, VH[var], pods, var)
