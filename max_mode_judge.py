@@ -179,6 +179,35 @@ def D_chi_2(suffix):
     chi_i = (Qes_i+Qem_i) / omt_i / ni / Ti
 
     return Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i
+
+def D_chi_e(suffix):
+
+    #from genetools.py
+    paramfpath="parameters_"+str(suffix)
+    geneparam=read_parameters(paramfpath)
+
+    Tref=geneparam['units']['Tref']
+    nref=geneparam['units']['nref']
+
+    species=['e']
+    Te=geneparam['species'+str(species.index('e')+1)]['temp']
+    ne=geneparam['species'+str(species.index('e')+1)]['dens']
+    omn_e=geneparam['species'+str(species.index('e')+1)]['omn']
+    omt_e=geneparam['species'+str(species.index('e')+1)]['omt']
+    
+    #from genetools.py
+    nrgfpath="nrg_"+str(suffix)
+    nrgdata = read_nrg(nrgfpath)
+
+    D_e=nrgdata[nrgfpath]['e']['PFluxes'][-1]+nrgdata[nrgfpath]['e']['PFluxem'][-1]
+    D_e=D_e/ omn_e / ne
+    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][-1]
+    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][-1]
+    Q_e = (Qes_e+Qem_e)
+    chi_e = (Qes_e+Qem_e) / omt_e / ne / Te
+
+    return Qes_e,Qem_e,Q_e,D_e,chi_e
+
 #**********End of input setup**********************************************************************
 
 #**********Start of judge**************************************************************************
@@ -239,13 +268,25 @@ def f_judge(fe, fi, omega):  #judge from the typical frquency
         mode="other"
     return mode,ITG,ETG,KBM,MTM
 
+def D_chi_e_judge(Qes_e,Qem_e,Q_e,D_e,chi_e):
+
+    if abs(Qem_e/Qes_e) >= 1 and abs(D_e/chi_e)<0.6:
+        mode="MTM"
+    elif abs(Qem_e/Qes_e) >= 1 and abs(D_e/chi_e)>0.6:
+        mode="KBM"
+    elif abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_e)<0.6:
+        mode="ETG"
+    else:
+        mode="other"
+    return mode
+
 def D_chi_2_judge(Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i):
     chi_tot=chi_i+chi_e
     if abs(chi_i/chi_e) < 0.8 and abs(Q_i/Q_e) < 0.8 and abs(Qem_e/Qes_e) >= 1 and abs(D_e/chi_e)<0.6:
         mode="MTM"
     elif abs(chi_i/chi_e) > 0.8 and abs(Q_i/Q_e) > 0.8 and abs(Qem_e/Qes_e) >= 1 and abs(D_e/chi_e)>0.6:
         mode="KBM"
-    elif abs(chi_i/chi_e) < 0.8 and abs(Q_i/Q_e) < 0.8 and abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_e)>0.6:
+    elif abs(chi_i/chi_e) < 0.8 and abs(Q_i/Q_e) < 0.8 and abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_e)<0.6:
         mode="ETG"
     elif abs(chi_i/chi_e) > 0.8 and abs(Q_i/Q_e) > 0.8 and abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_tot)<0.44:
         mode="ITG/TEM"
@@ -259,7 +300,7 @@ def D_chi_3_judge(Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,ch
         mode="MTM"
     elif abs(chi_i/chi_e) > 0.8 and abs(Q_i/Q_e) > 0.8 and abs(Qem_e/Qes_e) >= 1 and abs(D_e/chi_e)>0.6:
         mode="KBM"
-    elif abs(chi_i/chi_e) < 0.8 and abs(Q_i/Q_e) < 0.8 and abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_e)>0.6:
+    elif abs(chi_i/chi_e) < 0.8 and abs(Q_i/Q_e) < 0.8 and abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_e)<0.6:
         mode="ETG"
     elif abs(chi_i/chi_e) > 0.8 and abs(Q_i/Q_e) > 0.8 and abs(Qem_e/Qes_e) < 1 and abs(D_e/chi_tot)<0.44:
         mode="ITG/TEM"
@@ -318,7 +359,7 @@ def federal_court(suffix):
 
 #**********Start of report***************************
     with open('Court_results.csv', 'a') as csvfile:
-    	csv_data = csv.writer(csvfile, delimiter=',')
+        csv_data = csv.writer(csvfile, delimiter=',')
         csv_data.writerow([suffix,tot_mode,\
                             kymin,kx,nu_ei,\
                             f_mode,omega,f,fi,fe,gamma,\
