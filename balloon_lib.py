@@ -142,56 +142,58 @@ def plot_time_dependence(mode, times, pods):
     plt.show()
 
 
-def output_pod(mode, u, sv, vh, pods, times):
+def output_pod(mode, u, sv, vh, fields, pods, times):
     """Output various POD data"""
     output_sv(mode, sv)
-    output_pod_modes(mode, vh, pods, norm=True)
-    output_time_modes(mode, u, pods, times)
+    output_pod_modes(mode, vh, fields, pods, norm=True)
+    # output_time_modes(mode, u, pods, times)
 
 
 def output_sv(mode, sv):
     """Output singular values"""
-    filename = "./sv_ky" + str("{:03d}").format(mode.ky) + ".dat"
+    filename = "./sv_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
     header = "Singular values"
     np.savetxt(filename, sv, fmt="%g", header=header, encoding="UTF-8")
 
 
-def output_pod_modes(mode, r_vec, pods, norm):
+def output_pod_modes(mode, r_vec, fields, pods, norm):
     """Output right pod modes (spatial variation)"""
     if norm:
-        filename = "./pod_ky" + str("{:03d}").format(mode.ky) + "_norm.dat"
+        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + "_norm.dat"
     else:
-        filename = "./pod_ky" + str("{:03d}").format(mode.ky) + ".dat"
+        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
     fp = open(filename, "w")
-    for ipod in range(pods):
-        header = str(ipod + 1)
-        phi = r_vec[ipod]
-        if norm:
-            phi /= phi[mode.zero_ind]
-        data = np.vstack((mode.zgrid, np.real(phi), np.imag(phi))).T
-        np.savetxt(
-            fp,
-            data,
-            fmt="%g",
-            header=header,
-            encoding="UTF-8",
-        )
-        fp.write("\n\n")
+    fp.write("# theta Re Im\n")
+    for ipod in pods:
+        for field in fields:
+            header = field + " POD " + str(ipod + 1)
+            pvar, zgrid = get_plot_variable(mode, r_vec[field][ipod], extend=True)
+            if norm:
+                pvar /= pvar[mode.zero_ind]
+            data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
+            np.savetxt(
+                fp,
+                data,
+                fmt="% E",
+                header=header,
+                encoding="UTF-8",
+            )
+            fp.write("\n\n")
     fp.close()
 
 
 def output_time_modes(mode, l_vec, pods, times):
     """Output left pod modes (time variation)"""
-    filename = "./pod_time_ky" + str("{:03d}").format(mode.ky) + ".dat"
+    filename = "./pod_time_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
     head = ["time"]
-    for ipod in range(pods):
+    for ipod in pods:
         head.append(str(ipod + 1))
     header = " ".join(head)
     data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, :pods])))
     np.savetxt(
         filename,
         data,
-        fmt="%g",
+        fmt="% E",
         header=header,
         encoding="UTF-8",
     )
