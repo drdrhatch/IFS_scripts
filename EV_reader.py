@@ -6,9 +6,11 @@ import os
 from genetools import *
 
 #Last edited by Max Curie 10/16/2020
-#Criteria: D_chi, typical frequency, Epar
 
-#**********Start of input setup**********************************************************************
+#************Start of User block*********************
+scan_name='nu_ei'  #name of scanning quantity
+
+#************End of User block*********************
 
 
 def get_omega(suffix):
@@ -72,7 +74,7 @@ def scan_cases():
     csvfile_name='EV_log.csv'
     with open(csvfile_name, 'w', newline='') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['Suffix','index','omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e'])
+        data.writerow(['Suffix','index',scan_name,'omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e'])
         csvfile.close()
 
     cwd = os.getcwd()
@@ -89,10 +91,16 @@ def scan_cases():
             Qes_e,Qem_e,Q_e,D_e,chi_e=D_chi_e(suffix,index0)
             mode=D_chi_e_judge(Qes_e,Qem_e,Q_e,D_e,chi_e)
             print('****'+str(mode)+'*****')
+            
+            par = Parameters()
+            par.Read_Pars('parameters_'+suffix)
+            pars = par.pardict
+            scan_quant=pars[scan_name]
+
             with open(csvfile_name, 'a+', newline='') as csvfile:
                 data = csv.writer(csvfile, delimiter=',')
-                data.writerow([suffix,index0,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e])
+                data.writerow([suffix,index0,scan_quant,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e])
                 csvfile.close()
-
+    
 
 scan_cases()
