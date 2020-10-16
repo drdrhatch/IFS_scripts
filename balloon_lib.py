@@ -146,7 +146,7 @@ def output_pod(mode, u, sv, vh, fields, pods, times):
     """Output various POD data"""
     output_sv(mode, sv)
     output_pod_modes(mode, vh, fields, pods, norm=True)
-    # output_time_modes(mode, u, pods, times)
+    output_time_modes(mode, u, pods, times)
 
 
 def output_sv(mode, sv):
@@ -189,7 +189,7 @@ def output_time_modes(mode, l_vec, pods, times):
     for ipod in pods:
         head.append(str(ipod + 1))
     header = " ".join(head)
-    data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, :pods])))
+    data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, :pods.stop])))
     np.savetxt(
         filename,
         data,
