@@ -125,7 +125,7 @@ class KyMode:
 def plot_pod(mode, var, pods, varn, extend=True):
     varname = get_varname(varn)
     for ipod in pods:
-        title = "$k_y=$" + str(mode.ky) + ", POD mode # = " + str(ipod + 1)
+        title = "$k_y=$" + str(mode.ky) + ", POD mode # " + str(ipod + 1)
         pvar, zgrid = get_plot_variable(mode, var[ipod], extend)
         plot(zgrid, np.conj(pvar), varname, title)
         plt.show()
