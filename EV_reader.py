@@ -4,11 +4,14 @@ import csv
 import os
 
 from genetools import *
+from max_mode_judge import D_chi_3
+from max_mode_judge import D_chi_3_judge
 
 #Last edited by Max Curie 10/16/2020
 
 #************Start of User block*********************
 scan_name='nu_ei'  #name of scanning quantity
+spec_num=3 #number of the specices 1 or 3
 
 #************End of User block*********************
 
@@ -70,7 +73,8 @@ def D_chi_e_judge(Qes_e,Qem_e,Q_e,D_e,chi_e):
     return mode
 
 
-def scan_cases():
+
+def scan_cases_e():
     csvfile_name='EV_log.csv'
     with open(csvfile_name, 'w', newline='') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
@@ -89,7 +93,7 @@ def scan_cases():
         for index0 in indice_list:
             print('****'+str(index0)+'*****')
             Qes_e,Qem_e,Q_e,D_e,chi_e=D_chi_e(suffix,index0)
-            mode=D_chi_e_judge(Qes_e,Qem_e,Q_e,D_e,chi_e)
+            mode=D_chi_3_judge(Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z)
             print('****'+str(mode)+'*****')
             
             par = Parameters()
@@ -99,8 +103,43 @@ def scan_cases():
 
             with open(csvfile_name, 'a+', newline='') as csvfile:
                 data = csv.writer(csvfile, delimiter=',')
-                data.writerow([suffix,index0,scan_quant,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e])
+                data.writerow([suffix,index0,scan_quant,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e,])
+                csvfile.close()
+
+def scan_cases_3():
+    csvfile_name='EV_log.csv'
+    with open(csvfile_name, 'w', newline='') as csvfile:
+        data = csv.writer(csvfile, delimiter=',')
+        data.writerow(['Suffix','index',scan_name,'omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e','chi_i/chi_e','Q_i/Q_e','D_e/chi_tot'])
+        csvfile.close()
+
+    cwd = os.getcwd()
+    filelist = []
+    for filename in os.listdir(cwd):
+        if filename.startswith("field"):
+            filelist.append(filename[-4:])
+    filelist.sort()
+    for suffix in filelist:
+        print('*************reading'+suffix+'*************')
+        gamma_list,omega_list,indice_list=get_omega(suffix)
+        for index0 in indice_list:
+            print('****'+str(index0)+'*****')
+            Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z=D_chi_3(suffix,index0)
+            mode=D_chi_3_judge(Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z)
+            print('****'+str(mode)+'*****')
+            
+            par = Parameters()
+            par.Read_Pars('parameters_'+suffix)
+            pars = par.pardict
+            scan_quant=pars[scan_name]
+
+            with open(csvfile_name, 'a+', newline='') as csvfile:
+                data = csv.writer(csvfile, delimiter=',')
+                data.writerow([suffix,index0,scan_quant,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e,chi_i/chi_e,Q_i/Q_e,D_e/(chi_e+chi_i+chi_z)])
                 csvfile.close()
     
 
-scan_cases()
+if spec_num==1:
+    scan_cases_e()
+elif spec_num==3:
+    scan_cases_3()

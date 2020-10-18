@@ -10,6 +10,7 @@ from omega_tool_max import omega_calc
 #Last edited by Max Curie 04/27/2020
 #Criteria: D_chi, typical frequency, Epar
 
+run=False
 #**********Start of input setup**********************************************************************
 def species_order(suffix): 
     #*****Start of calcuation of diamagnetic frequency******
@@ -18,7 +19,7 @@ def species_order(suffix):
     #Determine the order of the species
     
     if 'species3' in geneparam: 
-        species=range(3)
+        species=['','','']
         for i in range(3):
             if geneparam['species'+str(i+1)]['charge']==-1:
                 species[i]='e' #it is eletron
@@ -27,7 +28,7 @@ def species_order(suffix):
             elif geneparam['species'+str(i+1)]['charge']>1:
                 species[i]='z' #it is impurity
     elif 'species3' not in geneparam: 
-        species=range(2)
+        species=['','']
         for i in range(2):
             if geneparam['species'+str(i+1)]['charge']==-1:
                 species[i]='e' #it is eletron
@@ -94,7 +95,7 @@ def f(suffix): #calculate the frequency
     #*****End of calcuation of diamagnetic frequency******
     return fe, fi, omega, gamma, kx, kymin, f_kHz, nu_ei
 
-def D_chi_3(suffix):
+def D_chi_3(suffix,index0 = -1):
 
     #from genetools.py
     paramfpath="parameters_"+str(suffix)
@@ -121,18 +122,18 @@ def D_chi_3(suffix):
     nrgfpath="nrg_"+str(suffix)
     nrgdata = read_nrg(nrgfpath)
 
-    D_e=nrgdata[nrgfpath]['e']['PFluxes'][-1]+nrgdata[nrgfpath]['e']['PFluxem'][-1]
-    D_i=nrgdata[nrgfpath]['i']['PFluxes'][-1]+nrgdata[nrgfpath]['i']['PFluxem'][-1]
-    D_z=nrgdata[nrgfpath]['z']['PFluxes'][-1]+nrgdata[nrgfpath]['z']['PFluxem'][-1]
+    D_e=nrgdata[nrgfpath]['e']['PFluxes'][index0]+nrgdata[nrgfpath]['e']['PFluxem'][index0]
+    D_i=nrgdata[nrgfpath]['i']['PFluxes'][index0]+nrgdata[nrgfpath]['i']['PFluxem'][index0]
+    D_z=nrgdata[nrgfpath]['z']['PFluxes'][index0]+nrgdata[nrgfpath]['z']['PFluxem'][index0]
     D_e=D_e/ omn_e / ne
     D_i=D_i/ omn_i / ni
     D_z=D_z/ omn_z / nz    
-    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][-1]
-    Qes_i=nrgdata[nrgfpath]['i']['HFluxes'][-1]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxes'][-1]
-    Qes_z=nrgdata[nrgfpath]['z']['HFluxes'][-1]-3./2.*Tz*nrgdata[nrgfpath]['z']['PFluxes'][-1]
-    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][-1]
-    Qem_i=nrgdata[nrgfpath]['i']['HFluxem'][-1]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxem'][-1]
-    Qem_z=nrgdata[nrgfpath]['z']['HFluxem'][-1]-3./2.*Tz*nrgdata[nrgfpath]['z']['PFluxem'][-1]
+    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][index0]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][index0]
+    Qes_i=nrgdata[nrgfpath]['i']['HFluxes'][index0]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxes'][index0]
+    Qes_z=nrgdata[nrgfpath]['z']['HFluxes'][index0]-3./2.*Tz*nrgdata[nrgfpath]['z']['PFluxes'][index0]
+    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][index0]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][index0]
+    Qem_i=nrgdata[nrgfpath]['i']['HFluxem'][index0]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxem'][index0]
+    Qem_z=nrgdata[nrgfpath]['z']['HFluxem'][index0]-3./2.*Tz*nrgdata[nrgfpath]['z']['PFluxem'][index0]
     Q_e = (Qes_e+Qem_e)
     Q_i = (Qes_i+Qem_i)
     Q_z = (Qes_z+Qem_z)
@@ -142,7 +143,7 @@ def D_chi_3(suffix):
 
     return Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z
 
-def D_chi_2(suffix):
+def D_chi_2(suffix,index0 = -1):
 
     #from genetools.py
     paramfpath="parameters_"+str(suffix)
@@ -165,14 +166,14 @@ def D_chi_2(suffix):
     nrgfpath="nrg_"+str(suffix)
     nrgdata = read_nrg(nrgfpath)
 
-    D_e=nrgdata[nrgfpath]['e']['PFluxes'][-1]+nrgdata[nrgfpath]['e']['PFluxem'][-1]
-    D_i=nrgdata[nrgfpath]['i']['PFluxes'][-1]+nrgdata[nrgfpath]['i']['PFluxem'][-1]
+    D_e=nrgdata[nrgfpath]['e']['PFluxes'][index0]+nrgdata[nrgfpath]['e']['PFluxem'][index0]
+    D_i=nrgdata[nrgfpath]['i']['PFluxes'][index0]+nrgdata[nrgfpath]['i']['PFluxem'][index0]
     D_e=D_e/ omn_e / ne
     D_i=D_i/ omn_i / ni
-    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][-1]
-    Qes_i=nrgdata[nrgfpath]['i']['HFluxes'][-1]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxes'][-1]
-    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][-1]
-    Qem_i=nrgdata[nrgfpath]['i']['HFluxem'][-1]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxem'][-1]
+    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][index0]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][index0]
+    Qes_i=nrgdata[nrgfpath]['i']['HFluxes'][index0]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxes'][index0]
+    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][index0]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][index0]
+    Qem_i=nrgdata[nrgfpath]['i']['HFluxem'][index0]-3./2.*Ti*nrgdata[nrgfpath]['i']['PFluxem'][index0]
     Q_e = (Qes_e+Qem_e)
     Q_i = (Qes_i+Qem_i)
     chi_e = (Qes_e+Qem_e) / omt_e / ne / Te
@@ -180,7 +181,7 @@ def D_chi_2(suffix):
 
     return Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i
 
-def D_chi_e(suffix):
+def D_chi_e(suffix,index0 = -1):
 
     #from genetools.py
     paramfpath="parameters_"+str(suffix)
@@ -190,19 +191,19 @@ def D_chi_e(suffix):
     nref=geneparam['units']['nref']
 
     species=['e']
-    Te=geneparam['species'+str(species.index('e')+1)]['temp']
-    ne=geneparam['species'+str(species.index('e')+1)]['dens']
-    omn_e=geneparam['species'+str(species.index('e')+1)]['omn']
-    omt_e=geneparam['species'+str(species.index('e')+1)]['omt']
+    Te=geneparam['species1']['temp']
+    ne=geneparam['species1']['dens']
+    omn_e=geneparam['species1']['omn']
+    omt_e=geneparam['species1']['omt']
     
     #from genetools.py
     nrgfpath="nrg_"+str(suffix)
     nrgdata = read_nrg(nrgfpath)
 
-    D_e=nrgdata[nrgfpath]['e']['PFluxes'][-1]+nrgdata[nrgfpath]['e']['PFluxem'][-1]
+    D_e=nrgdata[nrgfpath]['e']['PFluxes'][index0]+nrgdata[nrgfpath]['e']['PFluxem'][index0]
     D_e=D_e/ omn_e / ne
-    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][-1]
-    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][-1]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][-1]
+    Qes_e=nrgdata[nrgfpath]['e']['HFluxes'][index0]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxes'][index0]
+    Qem_e=nrgdata[nrgfpath]['e']['HFluxem'][index0]-3./2.*Te*nrgdata[nrgfpath]['e']['PFluxem'][index0]
     Q_e = (Qes_e+Qem_e)
     chi_e = (Qes_e+Qem_e) / omt_e / ne / Te
 
@@ -314,11 +315,11 @@ def federal_court(suffix):
     print("************"+str(suffix)+"*************")
 #************Start of transport ratio case**************
     if len(species_order(suffix))==3:
-        Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z=D_chi_3(suffix)
+        Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z=D_chi_3(suffix,index0=-1)
         D_chi_mode=D_chi_3_judge(Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z)
         chi_tot=chi_i+chi_e+chi_z
     elif len(species_order(suffix))==2:
-        Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i=D_chi_2(suffix)
+        Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i=D_chi_2(suffix,index0=-1)
         D_chi_mode=D_chi_2_judge(Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i)
         chi_tot=chi_i+chi_e
     print("Based on Transport ratio, the mode is: "+str(D_chi_mode))
@@ -406,7 +407,8 @@ def scan_cases():
 
 
 #************Operatre***********************
-scan_cases()
+if run: 
+    scan_cases()
 
 
 
