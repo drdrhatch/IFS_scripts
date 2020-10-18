@@ -300,6 +300,8 @@ def read_parameters(paramfpath):
                                   geneparam[pkey][skey].append(items[1])
                               except ValueError: 
                                   geneparam[pkey][skey] = [items[1]]
+                         elif skey in ['taumfn']:
+                              geneparam[pkey][skey] = 0
                          else:
                               geneparam[pkey][skey] = float(items[1])
                       elif type(geneparam[pkey][skey]) == list:
