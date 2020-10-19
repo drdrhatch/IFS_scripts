@@ -63,7 +63,7 @@ pars = par.pardict
 
 field = fieldlib.fieldfile("field" + suffix, pars)
 mom_e = momlib.momfile("mom_e" + suffix, pars)
-geometry = rwg.read_geometry_local(args.geom)
+parameters, geometry = rwg.read_geometry_local(args.geom)
 
 min_time, max_time = field.get_minmaxtime()
 stime = max(args.stime, min_time)
@@ -85,10 +85,11 @@ if args.pod:
 else:
     pods = None
 
+
+gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 fields = ("phi", "tpar", "tperp", "dens")
-ky_modes = [
-    bl.KyMode(ky, pars, times, fields, field, mom_e, geometry) for ky in ky_list
-]
+
+ky_modes = [bl.KyMode(ky, times, fields, gene_files) for ky in ky_list]
 
 for mode in ky_modes:
     if args.plot:

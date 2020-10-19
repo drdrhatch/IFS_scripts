@@ -24,9 +24,11 @@ VARNAMES = {
 class KyMode:
     """Class for organizing ballooning structure for each ky mode"""
 
-    def __init__(
-        self, ky, pars, times, fields, field_file, mom_file=None, geom_file=None
-    ):
+    def __init__(self, ky, times, fields, gene_files):
+        pars = gene_files["pars"]
+        field_file = gene_files["field"]
+        mom_file = gene_files["mom"]
+        geom_file = gene_files["geometry"]
         self.iky = ky
         self.ky = ky * pars["kymin"]
         self.nx = field_file.nx
