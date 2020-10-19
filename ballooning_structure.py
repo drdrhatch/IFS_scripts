@@ -26,6 +26,7 @@ parser.add_argument("--plot", "-p", action="store_true", help="plot individual m
 parser.add_argument("--output", "-o", action="store_true", help="output plots to pdfs")
 parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup plots")
 parser.add_argument("--heat", "-q", action="store_true", help="calculate heat flux")
+parser.add_argument("--debug", "-d", action="store_true", help="calculate heat flux")
 parser.add_argument(
     "--pod",
     "-P",
@@ -86,14 +87,13 @@ if args.pod:
 else:
     pods = None
 
-
 gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 fields = ("phi", "tpar", "tperp", "dens")
 
 ky_modes = [bl.KyMode(ky, times, fields, gene_files) for ky in ky_list]
 
-for mode in ky_modes:
-    if args.plot:
+if args.debug:
+    for mode in ky_modes:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
 if pods:
