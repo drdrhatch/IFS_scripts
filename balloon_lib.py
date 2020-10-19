@@ -33,15 +33,15 @@ class KyMode:
         self.nz = field_file.nz
         self.construct_ranges(pars)
         self.define_phase(pars)
-        self.define_dictionary(field_file,mom_file)
+        self.define_dictionary(field_file, mom_file)
         self.geometry = geom_file
-        self.read_fields(times, fields,field_file,mom_file)
+        self.read_fields(times, fields, field_file, mom_file)
 
-    def construct_ranges(self,pars):
+    def construct_ranges(self, pars):
         self.kxrange(pars)
         self.zrange()
 
-    def kxrange(self,pars):
+    def kxrange(self, pars):
         if self.ky == 0:
             step = 1
         else:
@@ -66,7 +66,7 @@ class KyMode:
         step = max(1, max(self.kx_modes))
         self.phase = phase ** (self.kx_modes / step)
 
-    def define_dictionary(self,field_file,mom_file=None):
+    def define_dictionary(self, field_file, mom_file=None):
         self.field_vars = {
             "phi": field_file.phi,
             "apar": field_file.apar,
@@ -93,7 +93,7 @@ class KyMode:
         tmp = var[:, indy, :]
         return tmp
 
-    def read_fields(self, times, fields,field_file,mom_file):
+    def read_fields(self, times, fields, field_file, mom_file):
         """Read given fields data for the given times"""
         self.fields_read = set(fields)
         tmp = np.empty((len(fields), times.size, self.nz, self.nx), dtype=np.cdouble)
@@ -174,7 +174,7 @@ def output_time_modes(mode, l_vec, pods, times):
     for ipod in pods:
         head.append(str(ipod + 1))
     header = " ".join(head)
-    data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, :pods.stop])))
+    data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, : pods.stop])))
     np.savetxt(
         filename,
         data,
