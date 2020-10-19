@@ -29,27 +29,23 @@ class KyMode:
     ):
         self.iky = ky
         self.ky = ky * pars["kymin"]
-        self.times = times
-        self.field = field_file
-        self.mom = mom_file
         self.nx = field_file.nx
         self.nz = field_file.nz
-        self.N = pars["nexc"]
-        self.construct_ranges()
+        self.construct_ranges(pars)
         self.define_phase(pars)
-        self.define_dictionary()
+        self.define_dictionary(field_file,mom_file)
         self.geometry = geom_file
-        self.read_fields(times, fields)
+        self.read_fields(times, fields,field_file,mom_file)
 
-    def construct_ranges(self):
-        self.kxrange()
+    def construct_ranges(self,pars):
+        self.kxrange(pars)
         self.zrange()
 
-    def kxrange(self):
+    def kxrange(self,pars):
         if self.ky == 0:
             step = 1
         else:
-            step = self.N * self.iky
+            step = pars["nexc"] * self.iky
         hmodes = np.arange(0, self.nx / 2, step, dtype=np.intc)
         lmodes = np.arange(0, -self.nx / 2, -step, dtype=np.intc)
         self.kx_modes = np.union1d(lmodes, hmodes)
@@ -70,18 +66,18 @@ class KyMode:
         step = max(1, max(self.kx_modes))
         self.phase = phase ** (self.kx_modes / step)
 
-    def define_dictionary(self):
+    def define_dictionary(self,field_file,mom_file=None):
         self.field_vars = {
-            "phi": self.field.phi,
-            "apar": self.field.apar,
-            "bpar": self.field.bpar,
+            "phi": field_file.phi,
+            "apar": field_file.apar,
+            "bpar": field_file.bpar,
         }
-        if self.mom:
+        if mom_file:
             self.field_vars.update(
                 {
-                    "dens": self.mom.dens,
-                    "tpar": self.mom.tpar,
-                    "tperp": self.mom.tperp,
+                    "dens": mom_file.dens,
+                    "tpar": mom_file.tpar,
+                    "tperp": mom_file.tperp,
                 }
             )
         fields = ["phi", "apar", "bpar", "dens", "tpar", "tperp", "q"]
@@ -97,14 +93,14 @@ class KyMode:
         tmp = var[:, indy, :]
         return tmp
 
-    def read_fields(self, times, fields):
+    def read_fields(self, times, fields,field_file,mom_file):
         """Read given fields data for the given times"""
         self.fields_read = set(fields)
         tmp = np.empty((len(fields), times.size, self.nz, self.nx), dtype=np.cdouble)
         for j, time in enumerate(times):
-            self.field.set_time(time)
-            if self.mom:
-                self.mom.set_time(time)
+            field_file.set_time(time)
+            if mom_file:
+                mom_file.set_time(time)
             for i, var in enumerate(fields):
                 tmp[i, j, :, :] = self.read_field(var)
         for i, var in enumerate(fields):
