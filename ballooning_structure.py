@@ -25,6 +25,7 @@ parser.add_argument(
 parser.add_argument("--plot", "-p", action="store_true", help="plot individual modes")
 parser.add_argument("--output", "-o", action="store_true", help="output plots to pdfs")
 parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup plots")
+parser.add_argument("--heat", "-q", action="store_true", help="calculate heat flux")
 parser.add_argument(
     "--pod",
     "-P",
@@ -95,24 +96,16 @@ for mode in ky_modes:
     if args.plot:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
-# sumq = bl.sum_modes(ky_modes, "q")
-# zgrid = ky_modes[-1].zgrid
-# if args.plot:
-#     for i, time in enumerate(times):
-#         title = r"$k_y=" + str(ky_list) + ",t = " + str("{:6.3f}").format(time) + "$"
-#         varname = r"$\sum_k Q_k$"
-#         bl.plot(zgrid, sumq[i], varname, title)
-#         plt.show()
-#     pass
-
 if pods:
     for mode in ky_modes:
         ky = mode.ky
         u, sv, VH = bl.collective_pod(mode, fields)
         bl.output_pod(mode, u, sv, VH, fields, pods, times)
-        Q = bl.calc_heat_flux(ky, VH)
+        if args.heat:
+            Q = bl.calc_heat_flux(ky, VH)
         if args.plot:
             bl.plot_singular_values(mode, sv, save_figs)
-            bl.plot_pod(mode, Q, pods, "q", extend=False)
+            if args.heat:
+                bl.plot_pod(mode, Q, pods, "q", extend=False)
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)
