@@ -104,8 +104,9 @@ if pods:
         if args.heat:
             Q = bl.calc_heat_flux(ky, VH)
         if args.plot:
-            bl.plot_singular_values(mode, sv, save_figs)
+            bl.plot_singular_values(mode, sv, show_figs, save_figs)
             if args.heat:
                 bl.plot_pod(mode, Q, pods, "q", extend=False)
+                bl.plot_heat_flux(mode, Q, show_figs, save_figs)
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)

@@ -232,37 +232,53 @@ def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
         pdf_figs.close()
 
 
-def plot_singular_values(mode, sv, save=False):
-    pods = range(1, sv.size + 1)
+def plot_cumulative_array(mode, var, varname, show=True, fname=None):
+    pods = range(1, var.size + 1)
 
     fig, ax1 = plt.subplots()
 
     color = "red"
     ax1.set_ylabel("value", color=color)
     ax1.tick_params(axis="y", labelcolor=color)
-    ax1.plot(pods, sv, marker="o", color=color)
+    ax1.plot(pods, var, marker="o", color=color)
 
     ax2 = ax1.twinx()
 
-    sv_sum = np.cumsum(sv) / sv.sum()
+    var_sum = np.cumsum(var) / var.sum()
     color = "blue"
-    ax2.plot(pods, sv_sum, color=color)
+    ax2.plot(pods, var_sum, color=color)
     ax2.set_ylim(0, 1.0)
     ax2.set_ylabel("cumulative", color=color)
     ax2.tick_params(axis="y", labelcolor=color)
     ax2.grid()
 
-    plt.title(r"Singular values for mode $k_y = $" + str(mode.ky))
-    plt.xlabel("POD #", size=18)
+    plt.title(varname + r" for mode $k_y = $" + str(mode.ky))
+    # plt.xlabel("POD #")
+    ax1.set_xlabel("POD #")
     plt.xticks(pods)
     plt.grid(True)
-    plt.show()
-    if save:
-        pdf_figs = PdfPages("mode_" + str(mode.ky) + "_sv.pdf")
+    if show:
+        plt.show()
+    if fname:
+        pdf_figs = PdfPages("mode_" + str(mode.ky) + "_" + fname + ".pdf")
         output = pdf_figs
         output.savefig(fig)
         pdf_figs.close()
     plt.close()
+
+
+def plot_singular_values(mode, sv, show=True, save=False):
+    if save:
+        fname = "sv"
+    plot_cumulative_array(mode, sv, "Singular values", show, fname)
+
+
+def plot_heat_flux(mode, Q, show=True, save=False):
+    if save:
+        fname = "qsum"
+    print(fname)
+    heat = Q.sum(axis=(1, 2))
+    plot_cumulative_array(mode, heat, "Heat flux", show, fname)
 
 
 def get_varname(var):
