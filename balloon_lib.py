@@ -109,17 +109,6 @@ class KyMode:
                 tmp[i, j, :, :] = self.read_field(var)
         for i, var in enumerate(fields):
             self.fields[var] = tmp[i]
-        self.define_variables()
-
-    def define_variables(self):
-        self.phi = self.fields["phi"]
-        self.fields["phi2"] = np.square(self.phi)
-        self.phi2 = self.fields["phi2"]
-        self.apar = self.fields["apar"]
-        self.bpar = self.fields["bpar"]
-        self.dens = self.fields["dens"]
-        self.tpar = self.fields["tpar"]
-        self.tperp = self.fields["tperp"]
 
 
 def plot_pod(mode, var, pods, varn, extend=True):
