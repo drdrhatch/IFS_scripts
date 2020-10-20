@@ -100,7 +100,8 @@ if pods:
     for mode in ky_modes:
         ky = mode.ky
         u, sv, VH = bl.collective_pod(mode, fields)
-        bl.output_pod(mode, u, sv, VH, fields, pods, times)
+        if save_figs:
+            bl.output_pod(mode, u, sv, VH, fields, pods, times)
         if args.heat:
             Q = bl.calc_heat_flux(ky, VH)
         if args.plot:
