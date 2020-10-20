@@ -376,7 +376,7 @@ def get_plot_variable(mode, var, extend):
         norm = pvar[mode.zero_ind]
         zgrid = mode.zgrid_ext
     else:
-        pvar = var[:, 0]
+        pvar = var.sum(axis=1)
         mid = mode.nz // 2
         norm = pvar[mid]
         zgrid = mode.zgrid
