@@ -240,7 +240,8 @@ def plot_cumulative_array(mode, var, varname, show=True, fname=None):
     color = "red"
     ax1.set_ylabel("value", color=color)
     ax1.tick_params(axis="y", labelcolor=color)
-    ax1.plot(pods, var, marker="o", color=color)
+    # ax1.plot(pods, var, marker="o", color=color)
+    ax1.scatter(pods, var, marker="o", c=color)
     ax1.set_xlim(1, pods[-1])
     ax1.set_xlabel("POD #")
     ax1.set_xticks(np.arange(5, pods[-1] + 1, 5))
