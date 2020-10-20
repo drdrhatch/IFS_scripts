@@ -276,7 +276,6 @@ def plot_singular_values(mode, sv, show=True, save=False):
 def plot_heat_flux(mode, Q, show=True, save=False):
     if save:
         fname = "qsum"
-    print(fname)
     heat = Q.sum(axis=(1, 2))
     plot_cumulative_array(mode, heat, "Heat flux", show, fname)
 
