@@ -233,7 +233,7 @@ def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
 
 
 def plot_cumulative_array(mode, var, varname, show=True, fname=None):
-    pods = range(1, var.size + 1)
+    pods = np.arange(1, var.size + 1)
 
     fig, ax1 = plt.subplots()
 
@@ -241,10 +241,10 @@ def plot_cumulative_array(mode, var, varname, show=True, fname=None):
     ax1.set_ylabel("value", color=color)
     ax1.tick_params(axis="y", labelcolor=color)
     ax1.plot(pods, var, marker="o", color=color)
-    ax1.set_xlim(1, pods.stop)
+    ax1.set_xlim(1, pods[-1])
     ax1.set_xlabel("POD #")
-    ax1.set_xticks(np.arange(1, pods.stop, 5))
-    ax1.set_xticks(np.arange(1, pods.stop, 1), minor=True)
+    ax1.set_xticks(np.arange(5, pods[-1] + 1, 5))
+    ax1.set_xticks(pods, minor=True)
 
     ax2 = ax1.twinx()
 
