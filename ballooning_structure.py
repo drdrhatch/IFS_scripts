@@ -26,7 +26,7 @@ parser.add_argument("--plot", "-p", action="store_true", help="plot individual m
 parser.add_argument("--output", "-o", action="store_true", help="output plots to pdfs")
 parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup plots")
 parser.add_argument("--heat", "-q", action="store_true", help="calculate heat flux")
-parser.add_argument("--debug", "-d", action="store_true", help="calculate heat flux")
+parser.add_argument("--debug", "-d", action="store_true", help="debug switch")
 parser.add_argument(
     "--pod",
     "-P",
