@@ -83,7 +83,7 @@ else:
 print("ky modes to analyze: ", ky_list)
 
 if args.pod:
-    pods = range(args.pod)
+    pods = range(min(args.pod, times.size))
 else:
     pods = None
 
