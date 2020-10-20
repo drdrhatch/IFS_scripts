@@ -253,9 +253,9 @@ def plot_cumulative_array(mode, var, varname, show=True, fname=None):
     ax2.grid()
 
     plt.title(varname + r" for mode $k_y = $" + str(mode.ky))
-    # plt.xlabel("POD #")
     ax1.set_xlabel("POD #")
-    plt.xticks(pods)
+    ax1.set_xticks(np.arange(0, pods.stop, 5))
+    ax1.set_xticks(np.arange(0, pods.stop, 1), minor=True)
     plt.grid(True)
     if show:
         plt.show()
