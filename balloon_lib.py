@@ -260,7 +260,7 @@ def plot_cumulative_array(mode, var, varname, show=True, fname=None):
     if show:
         plt.show()
     if fname:
-        pdf_figs = PdfPages("mode_" + str(mode.ky) + "_" + fname + ".pdf")
+        pdf_figs = PdfPages("mode_" + str(int(mode.ky)) + "_" + fname + ".pdf")
         output = pdf_figs
         output.savefig(fig)
         pdf_figs.close()
