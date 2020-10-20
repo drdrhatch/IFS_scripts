@@ -241,21 +241,23 @@ def plot_cumulative_array(mode, var, varname, show=True, fname=None):
     ax1.set_ylabel("value", color=color)
     ax1.tick_params(axis="y", labelcolor=color)
     ax1.plot(pods, var, marker="o", color=color)
+    ax1.set_xlim(1, pods.stop)
+    ax1.set_xlabel("POD #")
+    ax1.set_xticks(np.arange(1, pods.stop, 5))
+    ax1.set_xticks(np.arange(1, pods.stop, 1), minor=True)
 
     ax2 = ax1.twinx()
 
     var_sum = np.cumsum(var) / var.sum()
     color = "blue"
     ax2.plot(pods, var_sum, color=color)
+    # ax2.set_xlim(1, pods.stop)
     ax2.set_ylim(0, 1.0)
     ax2.set_ylabel("cumulative", color=color)
     ax2.tick_params(axis="y", labelcolor=color)
     ax2.grid()
 
     plt.title(varname + r" for mode $k_y = $" + str(mode.ky))
-    ax1.set_xlabel("POD #")
-    ax1.set_xticks(np.arange(0, pods.stop, 5))
-    ax1.set_xticks(np.arange(0, pods.stop, 1), minor=True)
     plt.grid(True)
     if show:
         plt.show()
