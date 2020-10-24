@@ -15,7 +15,7 @@ from finite_differences import *
 #mode = 'omti': increase omti without compensation
 #mode = 'omne': increase omne without compensation
 
-mode = 'omte'
+mode = 'omne'
 alpha = 1.2
 target_factor = 1.2
 #Set this to True if you want to pin the separatrix electron temperature
@@ -24,9 +24,9 @@ Tesep_target = 80  #Separatrix electron temperature in eV
 x0_Tsep = 0.993 #radial location at which to send Tsep to target
 lambda_Tsep = 0.016  #scale length over which to smooth to Tsep
 
-fileName = 'DIIID175823.iterdb'
+fileName = 'DIIID175823_omte120.iterdb'
 profilesName = 'profiles_e'
-file_out_base = 'DIIID175823_omte120'
+file_out_base = 'DIIID175823_omte120_omnt_120'
 base_number = '175823'
 rhotMidPed = 0.98
 rhotTopPed =0.96
@@ -147,7 +147,7 @@ if mode == 'omne':
     #total pressure with new density and tempeturate profiles
     newPtot = newNe * newTe + newTi * (newNi + newNz)
 
-    qz = float(raw_input("Enter charge of impurity species:"))
+    qz = float(input("Enter charge of impurity species:"))
 
     qltest = np.sum(newNi-newNe+qz*newNz)/np.sum(newNe)
     print("Test of quasineutrality (should be <<1):"+str(qltest))
