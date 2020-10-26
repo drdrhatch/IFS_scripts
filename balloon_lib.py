@@ -273,6 +273,8 @@ def plot_cumulative_array(mode, var, varname, show=True, fname=None):
 def plot_singular_values(mode, sv, show=True, save=False):
     if save:
         fname = "sv"
+    else:
+        fname = None
     plot_cumulative_array(mode, sv, "Singular values", show, fname)
 
 
