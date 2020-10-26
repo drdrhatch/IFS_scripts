@@ -20,6 +20,11 @@ VARNAMES = {
     "q": "$Q$",
 }
 
+HEADER_NAMES = {
+    "sv": "Singular values",
+    "q": "Heat flux",
+}
+
 
 class KyMode:
     """Class for organizing ballooning structure for each ky mode"""
@@ -131,17 +136,17 @@ def plot_time_dependence(mode, times, pods):
 
 def output_pod(mode, u, sv, vh, fields, pods, times):
     """Output various POD data"""
-    output_sv(mode, sv)
+    output_cum_sum(mode, sv, "sv")
     output_pod_modes(mode, vh, fields, pods, norm=True)
     output_time_modes(mode, u, pods, times)
 
 
-def output_sv(mode, sv):
-    """Output singular values"""
-    filename = "./sv_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
-    header = "Singular values"
-    sv_sum = np.cumsum(sv) / sv.sum()
-    data = np.vstack((sv,sv_sum)).T
+def output_cum_sum(mode, var, varname):
+    """Output variable and its cumulative sum"""
+    filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+    header = HEADER_NAMES[varname]
+    var_sum = np.cumsum(var) / var.sum()
+    data = np.vstack((var, var_sum)).T
     np.savetxt(filename, data, fmt="%g", header=header, encoding="UTF-8")
 
 
