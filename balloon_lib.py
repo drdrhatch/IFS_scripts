@@ -140,7 +140,9 @@ def output_sv(mode, sv):
     """Output singular values"""
     filename = "./sv_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
     header = "Singular values"
-    np.savetxt(filename, sv, fmt="%g", header=header, encoding="UTF-8")
+    sv_sum = np.cumsum(sv) / sv.sum()
+    data = np.vstack((sv,sv_sum)).T
+    np.savetxt(filename, data, fmt="%g", header=header, encoding="UTF-8")
 
 
 def output_pod_modes(mode, r_vec, fields, pods, norm):
