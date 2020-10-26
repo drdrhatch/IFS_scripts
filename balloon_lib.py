@@ -286,9 +286,12 @@ def plot_singular_values(mode, sv, show=True, save=False):
 
 
 def plot_heat_flux(mode, Q, show=True, save=False):
+    heat = np.real(Q.sum(axis=(1, 2)))
     if save:
         fname = "qsum"
-    heat = np.real(Q.sum(axis=(1, 2)))
+        output_cum_sum(mode, heat, "q")
+    else:
+        fname = None
     plot_cumulative_array(mode, heat, "Heat flux", show, fname)
 
 
