@@ -3,7 +3,7 @@
 
 import numpy as np
 import argparse
-import re
+import genelib as glib
 import ParIO as pario
 import fieldlib
 import momlib
@@ -47,7 +47,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-suffix = bl.check_suffix(args.suffix)
+suffix = glib.check_suffix(args.suffix)
 
 save_figs = args.output
 show_figs = args.noshow
