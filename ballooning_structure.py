@@ -47,14 +47,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-if re.search("dat$", args.suffix):
-    suffix = ".dat"
-elif re.search("[0-9]{1,4}$", args.suffix):
-    match = re.search(r"([0-9]{1,4})$", args.suffix)
-    suffix = "_" + match.group(0).zfill(4)
-    print(suffix)
-else:
-    print("Please enter a valid run number, e.g. .dat or 0123")
+suffix = bl.check_suffix(args.suffix)
 
 save_figs = args.output
 show_figs = args.noshow

@@ -398,3 +398,16 @@ def get_plot_variable(mode, var, extend):
         norm = 1
     pvar *= 1 / norm
     return pvar, zgrid
+
+
+def check_suffix(run_number):
+    if re.search("dat$", run_number):
+        suffix = ".dat"
+    elif re.search("[0-9]{1,4}$", run_number):
+        match = re.search(r"([0-9]{1,4})$", run_number)
+        suffix = "_" + match.group(0).zfill(4)
+        print(suffix)
+    else:
+        print("Please enter a valid run number, e.g. .dat or 0123")
+        return None
+    return suffix
