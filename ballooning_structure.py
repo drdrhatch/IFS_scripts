@@ -28,6 +28,14 @@ parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup
 parser.add_argument("--heat", "-q", action="store_true", help="calculate heat flux")
 parser.add_argument("--debug", "-d", action="store_true", help="debug switch")
 parser.add_argument(
+    "--eigen",
+    "-E",
+    action="store",
+    nargs="+",
+    metavar="EIGENVALUE_DIRECTORY RUN_NUMBER_0001 [RUN_NUMBER_0002 ...]",
+    help="eigenvalue directory, followed by a list of run numbers",
+)
+parser.add_argument(
     "--pod",
     "-P",
     action="store",
@@ -48,6 +56,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 suffix = glib.check_suffix(args.suffix)
+if args.eigen:
+    esuffix = [glib.check_suffix(eigen) for eigen in args.eigen[1:]]
 
 save_figs = args.output
 show_figs = args.noshow
