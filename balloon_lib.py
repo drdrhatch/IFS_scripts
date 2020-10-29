@@ -9,6 +9,10 @@ try:
 except ImportError:
     import numpy.linalg as la
 import numpy as np
+import ParIO as pario
+import fieldlib
+import momlib
+import read_write_geometry as rwg
 
 VARNAMES = {
     "phi": r"$\Phi$",
@@ -398,3 +402,27 @@ def get_plot_variable(mode, var, extend):
         norm = 1
     pvar *= 1 / norm
     return pvar, zgrid
+
+
+def get_input_params(directory, suffix, geom=None):
+    par = pario.Parameters()
+    par.Read_Pars(directory + "/parameters" + suffix)
+    pars = par.pardict
+
+    field = fieldlib.fieldfile(directory + "/field" + suffix, pars)
+    mom_e = momlib.momfile(directory + "/mom_e" + suffix, pars)
+    if geom:
+        parameters, geometry = rwg.read_geometry_local(geom)
+    else:
+        geometry = None
+
+    # min_time, max_time = field.get_minmaxtime()
+    # stime = max(args.stime, min_time)
+    # etime = min(args.etime, max_time)
+
+    # ftimes = bl.get_times(field, stime, etime)
+    # mtimes = bl.get_times(mom_e, stime, etime)
+    # times = np.intersect1d(ftimes, mtimes)
+    times = field.tfld
+    gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
+    return times, gene_files
