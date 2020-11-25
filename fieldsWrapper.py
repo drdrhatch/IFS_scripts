@@ -155,14 +155,17 @@ def eigenfunction_squared(z_grid,jacobian,field):
     return ave_sq_int, ave_int_sq
 
 def kz_from_dfielddz(zgrid, jacobian, field, plot, name, zstart = 0., zend = 0.):
-    dfielddz = np.empty(len(field),dtype='complex128')
+    dfielddz = np.empty(len(field)-1,dtype='complex128')
     for i in range(len(field)-1):
         dfielddz[i] = (field[i+1]-field[i])/\
             (zgrid[i+1]-zgrid[i])*jacobian[i]
     if plot:
-        plt.plot(zgrid, np.abs(dfielddz), label = 'abs d'+name+'/dz')
-        plt.plot(zgrid, np.real(dfielddz), label = 'real d'+name+'/dz')
-        plt.plot(zgrid, np.imag(dfielddz), label = 'imag d'+name+'/dz')
+        zg_plot = zgrid[:-1]
+        plt.plot(zg_plot, np.abs(dfielddz), label = 'abs d'+name+'/dz')
+        plt.plot(zg_plot, np.real(dfielddz), label = 'real d'+name+'/dz')
+        plt.plot(zg_plot, np.imag(dfielddz), label = 'imag d'+name+'/dz')
+        plt.plot(zgrid, np.abs(field), label = 'abs '+name)
+        plt.plot(zgrid, jacobian, label = 'jacobian')
         plt.legend()
         plt.xlabel('z')
         plt.show()
