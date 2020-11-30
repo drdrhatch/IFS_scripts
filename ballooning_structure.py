@@ -10,6 +10,7 @@ import momlib
 import matplotlib.pyplot as plt
 import balloon_lib as bl
 import read_write_geometry as rwg
+import fft
 
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
@@ -114,4 +115,6 @@ if pods:
                 bl.plot_pod(mode, Q, pods, "q", extend=False)
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)
-        bl.fft_freq(u)
+        # bl.kz_pod_modes(mode, VH, pods, "phi", pars)
+        # bl.fft_freq(u, times)
+        fft.fft_freq(u, times)
