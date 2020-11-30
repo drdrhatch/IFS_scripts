@@ -434,7 +434,7 @@ def fft_freq(l_vec, times):
     timestep = (times[-1] - times[0]) / (ntimes - 1)
     omegas = np.fft.fftfreq(ntimes, d=timestep)
     dom_omega = omegas[
-        np.argmax(abs(l_fft[:1]), axis=0) + 1
+        np.argmax(abs(l_fft[1:]), axis=0) + 1
     ]  # skip freq zero as dominant
     print(dom_omega)
     plt.plot(dom_omega, marker="o")
