@@ -14,7 +14,7 @@ def fft_freq(f, t):
     dom_omega = np.empty(f.shape[1])
     for i, vec in enumerate(f.T):
         vec_hat = nfft_adjoint(t, vec, ntimes)
-        dom_omega[i] = omegas[np.argmax(abs(vec_hat[:]))]  # skip freq zero as dominant
+        dom_omega[i] = omegas[np.argmax(abs(vec_hat[1:]))+1]  # skip freq zero as dominant
     print(omegas)
     plt.plot(dom_omega, marker="o")
     plt.show()
