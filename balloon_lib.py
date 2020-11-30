@@ -433,7 +433,7 @@ def fft_freq(l_vec, times):
     l_fft = np.fft.fft(l_vec, axis=0)
     timestep = (times[-1] - times[0]) / (ntimes - 1)
     omegas = np.fft.fftfreq(ntimes, d=timestep)
-    dom_omega = omegas[np.argmax(abs(l_fft[1:]), axis=0)]  # skip freq zero as dominant
+    dom_omega = omegas[np.argmax(abs(l_fft[:]), axis=0)]  # skip freq zero as dominant
     print(dom_omega)
     plt.plot(dom_omega, marker="o")
     plt.show()
