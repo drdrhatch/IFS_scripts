@@ -114,3 +114,4 @@ if pods:
                 bl.plot_pod(mode, Q, pods, "q", extend=False)
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)
+        bl.fft_freq(u, pods)

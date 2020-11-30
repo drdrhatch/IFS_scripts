@@ -426,3 +426,13 @@ def get_input_params(directory, suffix, geom=None):
     times = field.tfld
     gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
     return times, gene_files
+
+
+def fft_freq(l_vec):
+    ntimes = l_vec.shape[0]
+    l_fft = np.fft.fft(l_vec, axis=0)
+    omegas = np.fft.fftfreq(ntimes)
+    dom_omega = omegas[np.argmax(abs(l_fft), axis=0)]
+    print(dom_omega)
+    plt.plot(dom_omega)
+    plt.show()
