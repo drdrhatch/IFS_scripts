@@ -116,5 +116,4 @@ if pods:
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)
         # bl.kz_pod_modes(mode, VH, pods, "phi", pars)
-        bl.fft_freq(u, times)
-        fft.fft_freq(u, times)
+        dom_omega = bl.dom_freq(times,u)

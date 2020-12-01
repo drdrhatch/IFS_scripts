@@ -428,14 +428,32 @@ def get_input_params(directory, suffix, geom=None):
     return times, gene_files
 
 
-def fft_freq(l_vec, times):
-    ntimes = l_vec.shape[0]
-    l_fft = np.fft.fft(l_vec, axis=0)
+def fft_freq(times, f, samplerate=2, axis=0):
+    """Calculates fft of nonuniform data by first interpolating to uniform grid"""
+    ntimes = times.size
+    samples = samplerate * ntimes
+    times_lin = np.linspace(times[0], times[-1], samples)
+    if axis == 0:
+        f_lin = np.empty((samples, f.shape[1]), dtype=np.cdouble)
+        for i, row in enumerate(f.T):
+            f_int = np.interp(times_lin, times, row)
+            f_lin[:, i] = f_int.T
+    else:
+        f_lin = np.empty((f.shape[0], samples), dtype=np.cdouble)
+        for i, row in enumerate(f):
+            f_lin[i] = np.interp(times_lin, times, row)
+    f_hat = np.fft.fft(f_lin, axis=axis)
+    return f_hat, times_lin
+
+
+def dom_freq(times, f, samplerate=2):
+    """Returns the dominant frequency from field"""
+    ntimes = times.size
     timestep = (times[-1] - times[0]) / (ntimes - 1)
-    omegas = np.fft.fftfreq(ntimes, d=timestep)
+    samples = samplerate * ntimes
+    omegas = np.fft.fftfreq(samples, d=timestep)
+    f_hat, times_lin = fft_freq(times, f)
     dom_omega = omegas[
-        np.argmax(abs(l_fft[1:]), axis=0) + 1
+        np.argmax(abs(f_hat[1:]), axis=0) + 1
     ]  # skip freq zero as dominant
-    print(dom_omega)
-    plt.plot(dom_omega, marker="o")
-    plt.show()
+    return dom_omega
