@@ -449,8 +449,8 @@ def fft_freq(times, f, samplerate=2, axis=0):
 def dom_freq(times, f, samplerate=2):
     """Returns the dominant frequency from field"""
     ntimes = times.size
-    timestep = (times[-1] - times[0]) / (ntimes - 1)
     samples = samplerate * ntimes
+    timestep = (times[-1] - times[0]) / samples
     omegas = np.fft.fftfreq(samples, d=timestep)
     f_hat, times_lin = fft_freq(times, f)
     dom_omega = omegas[
