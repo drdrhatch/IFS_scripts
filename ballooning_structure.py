@@ -10,7 +10,6 @@ import momlib
 import matplotlib.pyplot as plt
 import balloon_lib as bl
 import read_write_geometry as rwg
-import fft
 
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
