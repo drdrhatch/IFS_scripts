@@ -468,5 +468,5 @@ def avg_freq(times, f, samplerate=2):
     f_hat, times_lin = fft_freq(times, f)
     norm = np.sum(abs(f_hat) ** 2, axis=0)
     weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
-    freq = weights / norm
+    freq = np.sqrt(weights / norm)
     return freq
