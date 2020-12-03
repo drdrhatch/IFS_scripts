@@ -457,3 +457,16 @@ def dom_freq(times, f, samplerate=2):
         np.argmax(abs(f_hat[1:]), axis=0) + 1
     ]  # skip freq zero as dominant
     return dom_omega
+
+
+def avg_freq(times, f, samplerate=2):
+    """Returns the dominant frequency from field"""
+    ntimes = times.size
+    samples = samplerate * ntimes
+    timestep = (times[-1] - times[0]) / samples
+    omegas = np.fft.fftfreq(samples, d=timestep)
+    f_hat, times_lin = fft_freq(times, f)
+    norm = np.sum(abs(f_hat) ** 2, axis=0)
+    weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
+    freq = weights / norm
+    return freq
