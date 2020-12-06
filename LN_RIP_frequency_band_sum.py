@@ -20,8 +20,9 @@ from LN_tools import B1_ky_f_spectrum_Z_sum_time_set
 
 Delta_Z=0.07  #7cm as bin for Z 
 scan_all_Z=False #Change to True if one want to scan across the whole height
-max_Z0=0.035    #Add a small number so it is even
-min_Z0=-0.035
+max_Z0=0.21   
+min_Z0=-0.21
+time_step=100     #read time with this step size
 
 frequency_all=False      #Switch to True if one wants to sum over all fequency 
 
@@ -80,7 +81,7 @@ for i_Z_list in range(len(Z_list)):
     uni_freq,amplitude_frequency_uni_ky_sum,amplitude_frequency_uni=\
         B1_ky_f_spectrum_Z_sum_time_set(suffix,iterdb_file_name,\
             min_Z0,max_Z0,Outboard_mid_plane,\
-            time_start,time_end,\
+            time_step,time_start,time_end,\
             plot,show,csv_output,pic_path,csv_path)
     #uni_freq is 1D array
     #amplitude_frequency_uni_ky_sum is 1D array B1(f) length weighted average over Z, sum of ky

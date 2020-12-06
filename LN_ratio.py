@@ -14,6 +14,7 @@ from geomWrapper import init_read_geometry_file
 from read_write_geometry import read_geometry_local
 from ParIO import Parameters 
 from LN_tools import start_end_time
+from momentsWrapper_max import LILO_moments_from_mom_file
 
 
 #*************Start of user block*********************
@@ -21,7 +22,7 @@ Delta_Z=0.07  #7cm as bin for Z
 scan_all_Z=False #Change to True if one want to scan across the whole height
 max_Z0=0.21    #Add a small number so it is even
 min_Z0=-0.21
-time_step=100		#read time with this step size
+time_step=1		#read time with this step size
 pic_path='pic'        #path one want to store the picture and video in
 csv_path='csv'        #path one want to store the picture and video in
 
@@ -60,6 +61,7 @@ geom_type, geom_pars, geom_coeff = init_read_geometry_file(suffix, pars)
 
 real_R=geometry['gl_R'] #it is major radius in meter
 real_Z=geometry['gl_z'] #it is height in meter, midland is 0, down is negative ,up is positive
+B0_GENE =geometry['gBfield']
 
 if scan_all_Z==True:
     min_Z=min(real_Z)
@@ -68,8 +70,6 @@ Z_grid=np.arange(min_Z,max_Z,Delta_Z)
 Z_list = Z_grid[:-1]+Delta_Z/2.
 print("Z_list: "+str(Z_list))
 Z_list_cm=Z_list*100.
-
-time_start,time_end=start_end_time(suffix,pars)
 
 #Import the field file using fieldlib
 field = fieldfile('field'+suffix,pars)
@@ -103,6 +103,9 @@ Omegaref = qref * Bref / mref / c  #in rad/s
 rhoref = cref / Omegaref           #in m rho_i(ion gyroradii)
 rhorefStar = rhoref / Lref         #Unitless
 
+B0_GENE =geometry['gBfield']
+n0=nref #nref
+B0=abs(np.mean(B0_GENE)*Bref*B_gauss)
 
 #ky comes from geomWrapper.py
 ky_GENE_temp=ky(pars, geom_coeff,plot=False)     #ky for ky min for differen z
@@ -126,7 +129,7 @@ print('n0 list: '+str(n_list))
 #B1=abs(np.mean(Apar_GENE[z,:])*len(Apar_GENE[z,:])*(ky_GENE_temp[z]/rhoref)*Bref*B_gauss*rhorefStar*rhoref)
 Apar_to_B1=abs((1./rhoref)*Bref*B_gauss*rhorefStar*rhoref)         #B1=Apar*ky_GENE_temp*Apar_to_B1
 
-
+time_start,time_end=start_end_time(suffix,pars)
 
 
 time_start_index=np.argmin(abs(time - time_start))
@@ -137,7 +140,7 @@ time_list=[]
     
 for i in range(0,len(time_list_temp),time_step):
     time_list.append(time_list_temp[i])
-print(str(len(time_list)))
+print(str(time_list))
     
 time_list=np.array(time_list)
 
@@ -189,7 +192,7 @@ for time0 in time_list:
 
         apar=abs(field.apar()[:,:,:].real * 2. )
         print("apar shape:"+str(np.shape(apar)))
-        
+
         apar_ky = np.sum(apar,axis=2)         #sum over x_axis
         (nz0,nky0)=np.shape(apar_ky)
         B1_ky=np.zeros(np.shape(apar_ky))
@@ -198,55 +201,126 @@ for time0 in time_list:
         B1_ky=ky_GENE_grid*apar_ky*Apar_to_B1 #B1 in Gauss  (nz0,nky0)*(nz0,nky0)*scaler
 
 
-        RIP_list=np.zeros(len(Z_list))
+        upar,deln,deln_global= LILO_moments_from_mom_file(pars,suffix,False,setTime=itime)
+        n1_GENE=abs(deln_global[:,:,:])
+        n1_GENE_ky=np.sum(n1_GENE,axis=2) 	#sum over radial 
+        n1_ky=n1_GENE_ky*(rhorefStar)*nref
+
+
+        B0_list=np.zeros(len(Z_list))
+        B1_list=np.zeros(len(Z_list))
+        n0_list=np.zeros(len(Z_list))
+        n1_list=np.zeros(len(Z_list))
+        Ratio_list=np.zeros(len(Z_list))
+
         for nZ_list in range(len(Z_list)):
             B1_temp=0.
+            n1_temp=0.
             sum_length_TEMP=0.
             for nZ in range(len(real_Z)):
                 Z=real_Z[nZ]
                 if Z_list[nZ_list]-Delta_Z/2.<Z and Z<=Z_list[nZ_list]+Delta_Z/2.:
                     #one can restrict the ky range corresprons to frequency 
                     B1=np.sum(B1_ky[nZ,:])
+                    n1=np.sum(n1_ky[nZ,:])
                     length=np.sqrt( (real_R[nZ]-real_R[nZ-1])**2. \
                            +(real_Z[nZ]-real_Z[nZ-1])**2. )
                     B1_temp=B1_temp+B1*length
+                    n1_temp=n1_temp+n1*length
                     sum_length_TEMP=sum_length_TEMP+length
-            RIP_list[nZ_list]=B1_temp/sum_length_TEMP
+
+            B1_list[nZ_list]=B1_temp/sum_length_TEMP
+            B0_list[nZ_list]=B0
+            n1_list[nZ_list]=n1/sum_length_TEMP
+            n0_list[nZ_list]=n0
+
+            Ratio_list[nZ_list]=(B1/B0) / (n1/n0)
         
         
-        d = {'Z(cm)':Z_list_cm,'B_R(Gauss)':RIP_list}
-        df=pd.DataFrame(d, columns=['Z(cm)','B_R(Gauss)'])
+        d = {'Z(cm)':Z_list_cm,\
+        'Ratio':Ratio_list,\
+        'B_R(Gauss)':B1_list,\
+        'B0(Gauss)':B0_list,\
+        'n1(m^-3)':n1_list,\
+        'n0(m^-3)':n1_list}
+        df=pd.DataFrame(d, columns=['Z(cm)',\
+        'Ratio',\
+        'B_R(Gauss)',\
+        'B0(Gauss)',\
+        'n1(m^-3)',\
+        'n0(m^-3)'])
+        #d = {'Z(cm)':Z_list_cm,'B_R(Gauss)':RIP_list}
+        #df=pd.DataFrame(d, columns=['Z(cm)','B_R(Gauss)'])
         df.to_csv('csv/RIP_t='+str(time[itime])+'.csv',index=False)
 
     else:  #x_local = False
         pass
 
 #****Read, plot and analyze the data*********
-RIP_summary_avg=np.zeros(len(Z_list))
-RIP_summary_err=np.zeros(len(Z_list))
+B1_summary_avg=np.zeros(len(Z_list))
+B1_summary_err=np.zeros(len(Z_list))
+B0_summary_avg=np.zeros(len(Z_list))
+B0_summary_err=np.zeros(len(Z_list))
+n1_summary_avg=np.zeros(len(Z_list))
+n1_summary_err=np.zeros(len(Z_list))
+n0_summary_avg=np.zeros(len(Z_list))
+n0_summary_err=np.zeros(len(Z_list))
+Ratio_summary_avg=np.zeros(len(Z_list))
+Ratio_summary_err=np.zeros(len(Z_list))
+
 Z_err=[Delta_Z/2.]*len(Z_list)
 #Z_err_cm=Z_err * 100.
 Z_err_cm=[Delta_Z*100./2.]*len(Z_list)
 
 for iZ in range(len(Z_list)):
-    RIP_temp_list=[]
+    B1_temp_list=[]
+    B0_temp_list=[]
+    n1_temp_list=[]
+    n0_temp_list=[]
+    Ratio_temp_list=[]
+
     for time0 in time_list:
         itime = np.argmin(abs(time - time0))
         itime0 = itime
         df = pd.read_csv('csv/RIP_t='+str(time[itime])+'.csv')
         #print("df['B_R(Gauss)'][iZ]:"+str(df['B_R(Gauss)'][iZ]))
-        RIP_temp_list.append(df['B_R(Gauss)'][iZ])
-    RIP_summary_avg[iZ]=np.average(RIP_temp_list)
-    RIP_summary_err[iZ]=np.std(RIP_temp_list)
+        B1_temp_list.append(df['B_R(Gauss)'][iZ])
+        B0_temp_list.append(df['B0(Gauss)'][iZ])
+        n1_temp_list.append(df['n1(m^-3)'][iZ])
+        n0_temp_list.append(df['n0(m^-3)'][iZ])
+        Ratio_temp_list.append(df['Ratio'][iZ])
+
+
+    B1_summary_avg[iZ]=np.average(B1_temp_list)
+    B1_summary_err[iZ]=np.std(B1_temp_list)
+    B0_summary_avg[iZ]=np.average(B0_temp_list)
+    B0_summary_err[iZ]=np.std(B0_temp_list)
+    n1_summary_avg[iZ]=np.average(n1_temp_list)
+    n1_summary_err[iZ]=np.std(n1_temp_list)
+    n0_summary_avg[iZ]=np.average(n0_temp_list)
+    n0_summary_err[iZ]=np.std(n0_temp_list)
+    Ratio_summary_avg[iZ]=np.average(Ratio_temp_list)
+    Ratio_summary_err[iZ]=np.std(Ratio_temp_list)
+
     #print('err:' +str(RIP_summary_err[iZ]))
     #print('avg:' +str(RIP_summary_avg[iZ]))
 
 
 
+d = {'Z(cm)':Z_list_cm,'Z_err(cm)':Z_err_cm,\
+    'Ratio':Ratio_summary_avg,'Ratio_err':Ratio_summary_err,\
+    'B_R(Gauss)':B1_summary_avg,'B_R_err(Gauss)':B1_summary_err,\
+    'B0(Gauss)':B0_summary_avg,'B0_err(Gauss)':B0_summary_err,\
+    'n1(m^-3)':n1_summary_avg,'n1_err(m^-3)':n1_summary_err,\
+    'n0(m^-3)':n1_summary_avg,'n0_err(m^-3)':n0_summary_err }
+df_summary=pd.DataFrame(d, columns=['Z(cm)','Z_err(cm)',\
+    'Ratio','Ratio_err',\
+    'B_R(Gauss)','B_R_err(Gauss)',\
+    'B0(Gauss)','B0_err(Gauss)',\
+    'n1(m^-3)','n1_err(m^-3)',\
+    'n0(m^-3)','n0_err(m^-3)'])
+df_summary.to_csv('csv/0RIP_Ratio_ky_space.csv',index=False)
 
-d = {'Z(cm)':Z_list_cm,'Z_err(cm)':Z_err_cm,'B_R(Gauss)':RIP_summary_avg,'B_R_err(Gauss)':RIP_summary_err}
-df_summary=pd.DataFrame(d, columns=['Z(cm)','Z_err(cm)','B_R(Gauss)','B_R_err(Gauss)'])
-df_summary.to_csv('csv/0summary_RIP.csv',index=False)
 
 
 plt.clf()
@@ -254,9 +328,27 @@ ax=df_summary.plot(kind='scatter',x='Z(cm)',xerr='Z_err(cm)',y='B_R(Gauss)',yerr
 ax.set_xlabel(r'$Height(cm)$',fontsize=15)
 ax.set_ylabel(r'$\bar{B}_r(Gauss)$',fontsize=15)
 #plt.xlim(min_Z0*100.,max_Z0*100.)
-plt.savefig('pic/0summary_RIP.png')
+plt.savefig('pic/0summary_RIP_B1.png')
 
 
+plt.clf()
+ax=df_summary.plot(kind='scatter',x='Z(cm)',xerr='Z_err(cm)',y='n1(m^-3)',yerr='n1_err(m^-3)',grid=True,label='Average',color='blue')
+ax.set_xlabel(r'$Height(cm)$',fontsize=15)
+ax.set_ylabel(r'$n1(/m^3)$',fontsize=15)
+#plt.xlim(min_Z0*100.,max_Z0*100.)
+plt.savefig('pic/0summary_RIP_n1.png')
+
+
+plt.clf()
+ax=df_summary.plot(kind='scatter',x='Z(cm)',xerr='Z_err(cm)',y='Ratio',yerr='Ratio_err',grid=True,label='Average',color='blue')
+ax.set_xlabel(r'$Height(cm)$',fontsize=15)
+ax.set_ylabel(r'$\frac{B_1/B_0}{n_1/n_0}$',fontsize=15)
+#plt.xlim(min_Z0*100.,max_Z0*100.)
+plt.savefig('pic/0summary_RIP_Ratio.png')
+
+
+
+'''
 #*******Makting animation!!!*****
 ims_RIP=[]
 for time0 in time_list:
@@ -282,6 +374,7 @@ for time0 in time_list:
 
 
 imageio.mimwrite('pic/0LN_RIP_dynamic_images.gif', ims_RIP)
+'''
 
 print("Finished, Everything is in the directory csv and pic")
 
