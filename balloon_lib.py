@@ -428,7 +428,7 @@ def get_input_params(directory, suffix, geom=None):
     return times, gene_files
 
 
-def fft_freq(times, f, samplerate=2, axis=0):
+def fft_nonuniform(times, f, samplerate=2, axis=0):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
     ntimes = times.size
     samples = samplerate * ntimes
