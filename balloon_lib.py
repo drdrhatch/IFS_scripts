@@ -446,14 +446,23 @@ def fft_nonuniform(times, f, samplerate=2, axis=0):
     return f_hat, times_lin
 
 
-def avg_freq(times, f, samplerate=2):
+def avg_freq(times, f, axis=0, samplerate=2):
     """Returns the dominant frequency from field"""
     ntimes = times.size
-    samples = samplerate * ntimes
+    dt = np.diff(times)
+    even_dt = np.all(dt == dt[0])
+    if not even_dt:
+        samples = samplerate * ntimes
+        f_hat, times_lin = fft_nonuniform(times, f)
+    else:
+        samples = ntimes
+        f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
     omegas = np.fft.fftfreq(samples, d=timestep)
-    f_hat, times_lin = fft_freq(times, f)
-    norm = np.sum(abs(f_hat) ** 2, axis=0)
-    weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
+    if axis == 0:
+        weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
+    elif axis == 1:
+        weights = np.sum(np.expand_dims(omegas, 0) ** 2 * abs(f_hat) ** 2, axis=1)
+    norm = np.sum(abs(f_hat) ** 2, axis=axis)
     freq = np.sqrt(weights / norm)
     return freq
