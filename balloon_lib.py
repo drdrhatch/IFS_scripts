@@ -466,3 +466,11 @@ def avg_freq(times, f, axis=0, samplerate=2):
     norm = np.sum(abs(f_hat) ** 2, axis=axis)
     freq = np.sqrt(weights / norm)
     return freq
+
+
+def get_extended_var(mode, var):
+    """Flattens array over last two dimensions to return z-extended variable"""
+    phase = np.expand_dims(mode.phase, axis=0)
+    newshape = (var.shape[0], -1)
+    ext_var = np.reshape(var * phase, newshape, order="F")
+    return ext_var
