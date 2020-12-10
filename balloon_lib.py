@@ -13,6 +13,7 @@ import ParIO as pario
 import fieldlib
 import momlib
 import read_write_geometry as rwg
+import finite_differences as fd
 
 VARNAMES = {
     "phi": r"$\Phi$",
@@ -474,3 +475,27 @@ def get_extended_var(mode, var):
     newshape = (var.shape[0], -1)
     ext_var = np.reshape(var * phase, newshape, order="F")
     return ext_var
+
+
+def avg_kz(mode, var):
+    """Calculate the average kz mode weighted by given field"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    var_ext = get_extended_var(mode, var)
+    field = var_ext.T
+    zgrid = mode.zgrid_ext
+    dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    dz = np.expand_dims(np.diff(zgrid)[zstart:zend], -1)
+    dfdz1 = dfielddz[zstart:zend]
+    dfdz2 = dfielddz[zstart + 1 : zend + 1]
+    jac = jacxBpi_ext[zstart:zend]
+    f1 = field[zstart:zend]
+    f2 = field[zstart + 1 : zend + 1]
+
+    sum_ddz = np.sum(0.5 * (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) / dz * jac, axis=0)
+    denom = np.sum(0.5 * (abs(f1) ** 2 + abs(f2) ** 2) / dz * jac, axis=0)
+    kz = np.sqrt(sum_ddz / denom).T
+    return kz
