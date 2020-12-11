@@ -120,5 +120,5 @@ if pods:
         if args.avgs:
             avg_freq = bl.avg_freq(times, u)
             avg_kz = bl.avg_kz(mode, VH["phi"])
-            print("<omega> = ", avg_freq)
-            print("<kz> = ", avg_kz)
+            bl.output_freqs(mode, avg_freq, "avg_freq")
+            bl.output_freqs(mode, avg_kz, "avg_kz")

@@ -499,3 +499,18 @@ def avg_kz(mode, var):
     denom = np.sum(0.5 * (abs(f1) ** 2 + abs(f2) ** 2) / dz * jac, axis=0)
     kz = np.sqrt(sum_ddz / denom).T
     return kz
+
+
+def output_freqs(mode, freqs, varname):
+    """Output a list of frequencies for a mode"""
+    filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+    header = "POD " + varname
+    pods = np.arange(1, freqs.size + 1)
+    data = np.vstack((pods, freqs)).T
+    np.savetxt(
+        filename,
+        data,
+        fmt="% E",
+        header=header,
+        encoding="UTF-8",
+    )
