@@ -128,12 +128,12 @@ def plot_pod(mode, var, pods, varn, extend=True):
         plt.show()
 
 
-def plot_time_dependence(mode, times, pods):
+def plot_time_dependence(mode, u, times, pods):
     plt.title(r"Time dependece of POD modes")
     plt.xlabel("Time")
     plt.ylabel(r"$|\Phi_s|$")
     for ipod in pods:
-        plt.plot(times, np.abs(mode.u[:, ipod]), label=r"$s_" + str(ipod + 1) + "$")
+        plt.plot(times, np.abs(u[:, ipod]), label=r"$s_" + str(ipod + 1) + "$")
     plt.grid(True)
     plt.legend()
     plt.show()
