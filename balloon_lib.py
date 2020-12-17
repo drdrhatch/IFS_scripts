@@ -514,3 +514,45 @@ def output_freqs(mode, freqs, varname):
         header=header,
         encoding="UTF-8",
     )
+
+
+def autocorrelate(mode, var, domain, axis=-1, samplerate=2):
+    """Calculate correlation length/time for given input field"""
+    if var.ndim > 2:
+        fvar = get_extended_var(mode, var)
+    else:
+        fvar = var
+
+    dt = np.diff(domain)
+    even_dt = np.all(dt == dt[0])
+    if not even_dt:
+        npts = domain.size
+        samples = samplerate * npts
+        dom_lin = np.linspace(domain[0], domain[-1], samples)
+        if axis == 0:
+            f_lin = np.empty((fvar.shape[1], samples), dtype=np.cdouble)
+            for i, row in enumerate(fvar.T):
+                f_int = np.interp(dom_lin, domain, row).T
+                f_lin[i] = f_int.T
+        else:
+            f_lin = np.empty((fvar.shape[0], samples), dtype=np.cdouble)
+            for i, row in enumerate(fvar):
+                f_lin[i] = np.interp(dom_lin, domain, row)
+        dom = dom_lin
+        f = f_lin
+    else:
+        dom = domain
+        if axis == 0:
+            f = fvar.T
+        else:
+            f = fvar
+
+    N = f.shape[1]
+    N2 = N // 2
+    corr = np.empty((f.shape[0], N2))
+    for i, row in enumerate(f):
+        f1 = row - np.mean(row)
+        corr[i] = np.correlate(f1, f1, mode="same")[N2:] / (N * np.var(row))
+    r = np.linspace(0, (dom[-1] - dom[0]) / 2, N2)
+    plt.plot(r, corr.T, marker=".")
+    plt.show()
