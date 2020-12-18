@@ -556,3 +556,5 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2):
     r = np.linspace(0, (dom[-1] - dom[0]) / 2, N2)
     plt.plot(r, corr.T, marker=".")
     plt.show()
+
+    return r, corr
