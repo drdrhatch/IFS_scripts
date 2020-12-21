@@ -113,6 +113,7 @@ if pods:
             Q = bl.calc_heat_flux(ky, VH)
             bl.plot_heat_flux(mode, Q, show_figs, save_figs)
         if args.plot:
+            bl.plot_time_dependence(mode,u, times,pods)
             if args.heat:
                 bl.plot_pod(mode, Q, pods, "q", extend=False)
             for var in fields:
