@@ -549,11 +549,11 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2):
 
     N = f.shape[1]
     N2 = N // 2
-    corr = np.empty((f.shape[0], N2),dtype=np.cdouble)
+    corr = np.empty((f.shape[0], N2), dtype=np.cdouble)
     for i, row in enumerate(f):
         f1 = row
         corr[i] = np.correlate(f1, f1, mode="same")[N2:] / N
-        corr[i] /= corr[i,0]
+        corr[i] /= corr[i, 0]
     r = np.linspace(0, (dom[-1] - dom[0]) / 2, N2)
     scale = r[1] - r[0]
     corr_len = scale * np.real(np.sum(corr, axis=-1))
