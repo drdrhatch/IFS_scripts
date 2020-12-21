@@ -554,5 +554,6 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2):
         f1 = row - np.mean(row)
         corr[i] = np.correlate(f1, f1, mode="same")[N2:] / (N * np.var(row))
     r = np.linspace(0, (dom[-1] - dom[0]) / 2, N2)
-    corr_len = np.sum(corr, axis=-1)
+    scale = r[1] - r[0]
+    corr_len = scale * np.sum(corr, axis=-1)
     return r, corr, corr_len
