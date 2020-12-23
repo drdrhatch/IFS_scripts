@@ -501,12 +501,12 @@ def avg_kz(mode, var):
     return kz
 
 
-def output_freqs(mode, freqs, varname):
-    """Output a list of frequencies for a mode"""
+def output_scales(mode, scales, varname):
+    """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
     filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
     header = "POD " + varname
-    pods = np.arange(1, freqs.size + 1)
-    data = np.vstack((pods, freqs)).T
+    pods = np.arange(1, scales.size + 1)
+    data = np.vstack((pods, scales)).T
     np.savetxt(
         filename,
         data,
