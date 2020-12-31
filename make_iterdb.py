@@ -87,7 +87,7 @@ if 1 == 1:
 # construct rho_tor grid with uniform spacing 
 # find pressure, temperature, density values on uniform rho_tor grid
 
-uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10.)
+uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10)
 ti_u = interp(rhot0,ti0,uni_rhot)
 te_u = interp(rhot0,te0,uni_rhot)
 ne_u = interp(rhot0,ne0,uni_rhot)

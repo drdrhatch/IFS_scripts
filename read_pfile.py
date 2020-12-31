@@ -1,7 +1,14 @@
 import numpy as np
 from interp import *
 import matplotlib.pyplot as plt
+import sys
+import math
+from finite_differences_x import *
+from read_EFIT import read_EFIT
 
+#Created by Max T. Curie  11/02/2020
+#Last edited by Max Curie 11/02/2020
+#Supported by scripts in IFS
 
 def read_pfile(p_file_name,Z,add_impurity=False):
 
@@ -23,7 +30,7 @@ def read_pfile(p_file_name,Z,add_impurity=False):
         name_list.append(sdata[i*nr+i].split()[2])
 
     need_list=['ne','ni','te','ti','er','vtor']   #List of quantities that need for to be read
-    need_list_number=[]                           #Number of the namelist that matches with the list of quantities that need for to be read
+    need_list_number=[-1]*len(need_list)          #Number of the namelist that matches with the list of quantities that need for to be read
     
     
     for j in range(len(need_list)):
@@ -32,11 +39,39 @@ def read_pfile(p_file_name,Z,add_impurity=False):
             if str(need_list[j]) in str(name_list[i]):
                 #print(str(need_list[j])+'   '+str(name_list[i]))
                 #print(str(i))
-                need_list_number.append(i)
+                #need_list_number.append(i)
+                need_list_number[j]=i
 
-  # more work on the error check
-    if len(need_list) > len(need_list_number): 
-        print('Error, missing needed quantities in q file, check line 25 in read_qfile.py')
+    
+    case=0
+    
+    #if len(need_list) > len(need_list_number): 
+    if -1 in need_list_number:
+        print(need_list)
+        print('number coorepsonds to the name list, -1 means missing')
+        print(need_list_number)
+        print('Error, missing needed quantities in p file, check line 31 need_list in read_qfile.py')
+        if need_list_number[4]==-1:
+            need_list_number[4]=0
+            temp0=input("The array er is missing, force the array to zero, countiune: 1:Yes, 2.No         ")
+            if temp0==2:
+                sys.exit()
+            elif temp0==1:
+                case=1    #er missing 
+                
+        elif need_list_number[5]==-1:
+            temp0=input("The array vtor is missing, force the array to zero, countiune: 1:Yes, 2.No        ")
+            need_list_number[5]=0
+            if temp0==2:
+                sys.exit()
+            elif temp0==1 and case==1:
+                print("Both array vtor and er are missing, cannot calculate doppler shift")
+                case=3   #both 
+            elif temp0==1 and case==0:
+                case=2	 #vtor missing
+                
+
+        
         #for j in range(len(need_list)):
         #    if need_list_number need_list[j]
         #        print('Error, missing'+str(need_list[j]))
@@ -56,6 +91,10 @@ def read_pfile(p_file_name,Z,add_impurity=False):
             psi.append(float(temp[0]))
             f.append(float(temp[1]))
             df.append(float(temp[2]))
+            
+        #plt.clf()
+        #plt.plot(psi,f)
+        #plt.show()
 
 # ne is electron density profile, dne is gradient of ne
 # psipne is the grid of psi_pol on which ne&dne above is recorded
@@ -71,7 +110,7 @@ def read_pfile(p_file_name,Z,add_impurity=False):
     psiper = psi[temp_i*nr:(temp_i+1)*nr]
     temp_i=temp_i+1
     psipvtor = psi[temp_i*nr:(temp_i+1)*nr]
-
+    
     temp_i=0
     ne = f[temp_i*nr:(temp_i+1)*nr]
     temp_i=temp_i+1
@@ -98,6 +137,17 @@ def read_pfile(p_file_name,Z,add_impurity=False):
     temp_i=temp_i+1
     dvtor = df[temp_i*nr:(temp_i+1)*nr]
 
+    if case==1: #er missing 
+        er=np.zeros(len(er))
+        der=np.zeros(len(der))
+    elif case==2: #vtor missing
+        vtor=np.zeros(len(vtor))
+        dvtor=np.zeros(len(dvtor))
+    elif case==3: #both are missing
+        vtor=np.zeros(len(vtor))
+        dvtor=np.zeros(len(dvtor))
+        er=np.zeros(len(er))
+        der=np.zeros(len(der))
 
     # psipne is the grid of psi_pol on which ne&dne above is recorded
     
@@ -144,55 +194,123 @@ def read_pfile(p_file_name,Z,add_impurity=False):
     return psi0, ne_out, te_out, ni_out, ti_out, nz_out, er_out, vtor_out
 
 
+
+
     
-def read_pfile_raw(p_file_name):
+def p_to_iterdb_format(p_file_name,geomfile_name):
+    impurityCharge=float(input("Impurity Charge:"))
+    psi0, ne0, te0, ni0, ti0, nz0, er0, vtor_out = read_pfile(p_file_name,impurityCharge,add_impurity=True)
+    case=0
+    if sum(er0)==0:
+        print('Er is empty, using vtor to calculate Shear')
+        case=1
+    elif sum(vtor_out)==0:
+        print('vtor is empty, using Er to calculate Shear')
+        case=2
+    elif sum(er0)!=0 and sum(er0)!=0:
+        print('Neither Er nor vtor is empty, using both to calculate')
+        case=3
+    elif sum(er0)==0 and sum(er0)==0:
+        print('Both Er and vtor are empty, cannot calculate Shear')
+        case=4
 
-    f=open(p_file_name,'r')
-    data = f.read()
-    f.close()
+    zeff = (ni0 + nz0 * impurityCharge**2.) / ne0 
 
-    sdata = data.split('\n')
-    nr = int(sdata[0].split()[0])
-    print("p file resolution: nr = ", nr)
+    EFITdict = read_EFIT(geomfile_name)
+    print(str(list(EFITdict.keys())))
 
-    # ne is electron density profile, dne is gradient of ne
-    ne = np.empty(0)
-    dne = np.empty(0)
-    ni = np.empty(0)
-    dni = np.empty(0)
-    te = np.empty(0)
-    dte = np.empty(0)
-    ti = np.empty(0)
-    dti = np.empty(0)
-    er = np.empty(0)
-    der = np.empty(0)
-    # psipne is the grid of psi_pol on which ne&dne above is recorded
-    psipne = np.empty(0)
-    psipni = np.empty(0)
-    psipte = np.empty(0)
-    psipti = np.empty(0)
-    psiper = np.empty(0)
+    sepInd = np.argmin(abs(EFITdict['psipn'] - 1.))
+    print('index at psipn = 1 is '+str(sepInd) )
+    Rsep = EFITdict['R'][sepInd]
+    print('major R(m) at psipn = 1 is '+str(Rsep))
+    print('major R(m) at index = 1 is '+str(EFITdict['R'][0]))
+    
+    # construct R grid with uniform spacing 
+    # uniform spacing because first_derivative requires so
+    # find pressure, temperature, density values on uniform R grid
 
-    for i in np.array(range(nr)):
-        temp = sdata[i+1].split()
-        psipne = np.append(psipne,float(temp[0]))
-        ne = np.append(ne,float(temp[1]))
-        dne = np.append(dne,float(temp[2]))
-        temp = sdata[nr+i+2].split()
-        psipte = np.append(psipte,float(temp[0]))
-        te = np.append(te,float(temp[1]))
-        dte = np.append(dte,float(temp[2]))
-        temp = sdata[2*nr+i+3].split()
-        psipni = np.append(psipni,float(temp[0]))
-        ni = np.append(ni,float(temp[1]))
-        dni = np.append(dni,float(temp[2]))
-        temp = sdata[3*nr+i+4].split()
-        psipti = np.append(psipti,float(temp[0]))
-        ti = np.append(ti,float(temp[1]))
-        dti = np.append(dti,float(temp[2]))
-        temp = sdata[16*nr+i+17].split()
-        psiper = np.append(psiper,float(temp[0]))
-        er = np.append(er,float(temp[1]))
-        der = np.append(der,float(temp[2]))
+    uni_R = np.linspace(EFITdict['R'][0],Rsep,EFITdict['nw']*10.)
+    psip_uniR = interp(EFITdict['R'], EFITdict['psipn'], uni_R)
+    rhot_uniR = interp(EFITdict['R'], EFITdict['rhotn'], uni_R)
 
-    return psipne,ne,psipte,te,psipni,ni,psipti,ti,psiper,er
+    rhot0 = interp(EFITdict['psipn'], EFITdict['rhotn'], psi0)
+    pi0 = ni0 * ti0
+    pi_uniR = interp(rhot0,pi0,rhot_uniR)
+    ni_uniR = interp(rhot0,ni0,rhot_uniR)
+    ti_uniR = interp(rhot0,ti0,rhot_uniR)
+    pe0 = ne0 * te0
+    pe_uniR = interp(rhot0,pe0,rhot_uniR)
+    ne_uniR = interp(rhot0,ne0,rhot_uniR)
+    te_uniR = interp(rhot0,te0,rhot_uniR)
+    
+    # compute grad P_i / n_i / e, grad P_e / n_e / e 
+    gradPioverNe = first_derivative(pi_uniR,uni_R)/ni_uniR 
+    gradPeoverNe = first_derivative(pe_uniR,uni_R)/ne_uniR 
+
+
+    uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10.)
+    ti_u = interp(rhot0,ti0,uni_rhot)
+    te_u = interp(rhot0,te0,uni_rhot)
+    ne_u = interp(rhot0,ne0,uni_rhot)
+    ni_u = interp(rhot0,ni0,uni_rhot)
+    nz_u = interp(rhot0,nz0,uni_rhot)
+    p_u = (ni_u + nz_u) * ti_u + ne_u * te_u
+
+
+    tprime_i = -first_derivative(ti_u,uni_rhot)/ti_u
+    tprime_e = -first_derivative(te_u,uni_rhot)/te_u
+    nprime_e = -first_derivative(ne_u,uni_rhot)/ne_u
+    nprime_i = -first_derivative(ni_u,uni_rhot)/ni_u
+    nprime_z = -first_derivative(nz_u,uni_rhot)/nz_u
+    eta_i = tprime_i / nprime_i
+    eta_e = tprime_e / nprime_e
+    eta_z = tprime_i / nprime_z
+
+
+    # convert from kV/m to V/m
+    Er_Vm = interp(rhot0,er0,uni_rhot)*1E3
+
+
+    R_u = interp(EFITdict['rhotn'],EFITdict['R'],uni_rhot)
+    Bpol_u = interp(EFITdict['rhotn'],EFITdict['Bpol'],uni_rhot)
+    vtor_out_u = interp(psi0,vtor_out,uni_rhot)
+    
+    # add minus sign for consistency
+    omega_tor_Er = - Er_Vm / (R_u * Bpol_u)
+    #print(R_u[0])
+    omega_tor_Vor = vtor_out_u*1000. / (R_u)
+
+    if case==1:
+        omega_tor=omega_tor_Vor
+    if case==2:
+        omega_tor=omega_tor_Er
+    if case==3:
+        if sum(abs((omega_tor_Er-omega_tor_Vor)/omega_tor_Vor))>0.05*float(len(omega_tor_Vor)):
+            print("Too much difference between omega_tor calculated from Er and vtor")
+            plt.clf()
+            plt.plot(uni_rhot,omega_tor_Er,label='omega_tor_Er')
+            plt.plot(uni_rhot,omega_tor_Vor,label='omega_tor_Vor')
+            plt.xlabel('rhot')
+            plt.legend()
+            plt.show()
+
+            decide=int(input("omega_tor_Er or omega_tor_Vor, 1. omega_tor_Er, 2. omega_tor_Vor:      "))
+
+            if decide==1:
+                omega_tor=omega_tor_Er
+            elif decide==2:
+                omega_tor=omega_tor_Vor
+            else:
+                print("please input 1 or 2")
+        else:
+            omega_tor=omega_tor_Vor
+    if case==4:
+        print('Both Er and vtor are empty, cannot calculate Shear')
+        omega_tor=omega_tor_Er
+    # densities are multiplied by 10 here 
+    # because output_iterdb() expects density in 10^19 m^-3
+    
+    psi_u = interp(rhot0,psi0,uni_rhot)
+    rhop_u = np.sqrt(np.array(psi_u))
+
+    return uni_rhot, rhop_u, 1000.0*te_u, 1000.0*ti_u, 1.0e19*ne_u*10., 1.0e19*ni_u*10., omega_tor
