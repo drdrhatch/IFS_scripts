@@ -519,7 +519,7 @@ def output_scales(mode, scales, varname):
     )
 
 
-def autocorrelate(mode, var, domain, axis=-1, samplerate=2):
+def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     """Calculate correlation length/time for given input field"""
     if var.ndim > 2:
         fvar = get_extended_var(mode, var)
@@ -527,7 +527,8 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2):
         fvar = var
 
     dt = np.diff(domain)
-    even_dt = np.all(dt == dt[0])
+    test_dt = np.floor(dt / tol)
+    even_dt = np.all(test_dt == test_dt[0])
     if not even_dt:
         npts = domain.size
         samples = samplerate * npts
