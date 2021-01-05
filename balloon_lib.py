@@ -551,7 +551,7 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
         else:
             f = fvar
 
-    N = f.shape[1]
+    N = f.shape[-1]
     N2 = N // 2
     norm = N - np.arange(0, N2)
     corr = np.empty((f.shape[0], N2), dtype=np.cdouble)
