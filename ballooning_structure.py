@@ -102,9 +102,9 @@ if args.debug:
     for mode in ky_modes:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
-if pods:
-    for mode in ky_modes:
-        ky = mode.ky
+for mode in ky_modes:
+    ky = mode.ky
+    if pods:
         u, sv, VH = bl.collective_pod(mode, fields)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
         if save_figs:
