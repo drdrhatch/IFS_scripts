@@ -481,7 +481,10 @@ def avg_kz(mode, var):
     """Calculate the average kz mode weighted by given field"""
     jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
     jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
-    var_ext = get_extended_var(mode, var)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
     field = var_ext.T
     zgrid = mode.zgrid_ext
     dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
