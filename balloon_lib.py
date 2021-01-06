@@ -434,15 +434,19 @@ def fft_nonuniform(times, f, axis=0, samplerate=2):
     ntimes = times.size
     samples = samplerate * ntimes
     times_lin = np.linspace(times[0], times[-1], samples)
-    if axis == 0:
-        f_lin = np.empty((samples, f.shape[1]), dtype=np.cdouble)
-        for i, row in enumerate(f.T):
-            f_int = np.interp(times_lin, times, row)
-            f_lin[:, i] = f_int.T
+    if f.ndim > 1:
+        if axis == 0:
+            f_lin = np.empty((samples, f.shape[1]), dtype=np.cdouble)
+            for i, row in enumerate(f.T):
+                f_int = np.interp(times_lin, times, row)
+                f_lin[:, i] = f_int.T
+        else:
+            f_lin = np.empty((f.shape[0], samples), dtype=np.cdouble)
+            for i, row in enumerate(f):
+                f_lin[i] = np.interp(times_lin, times, row)
     else:
-        f_lin = np.empty((f.shape[0], samples), dtype=np.cdouble)
-        for i, row in enumerate(f):
-            f_lin[i] = np.interp(times_lin, times, row)
+        f_lin = np.interp(times_lin, times, f)
+        axis = 0
     f_hat = np.fft.fft(f_lin, axis=axis)
     return f_hat, times_lin
 
@@ -460,10 +464,13 @@ def avg_freq(times, f, axis=0, samplerate=2):
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
     omegas = np.fft.fftfreq(samples, d=timestep)
-    if axis == 0:
-        weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
-    elif axis == 1:
-        weights = np.sum(np.expand_dims(omegas, 0) ** 2 * abs(f_hat) ** 2, axis=1)
+    if f.ndim > 1:
+        if axis == 0:
+            weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
+        elif axis == 1:
+            weights = np.sum(np.expand_dims(omegas, 0) ** 2 * abs(f_hat) ** 2, axis=1)
+    else:
+        weights = np.sum(omegas ** 2 * abs(f_hat) ** 2)
     norm = np.sum(abs(f_hat) ** 2, axis=axis)
     freq = np.sqrt(weights / norm)
     return freq
