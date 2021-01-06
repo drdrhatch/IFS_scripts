@@ -485,7 +485,11 @@ def avg_kz(mode, var):
         var_ext = get_extended_var(mode, var)
     else:
         var_ext = var
-    field = var_ext.T
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
     zgrid = mode.zgrid_ext
     dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
 
