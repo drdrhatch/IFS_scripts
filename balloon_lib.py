@@ -582,3 +582,17 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     scale = r[1] - r[0]
     corr_len = scale * np.real(np.sum(corr, axis=-1))
     return r, corr, corr_len
+
+
+def norm_z_field(mode, var):
+    fvar = var[:, :, mode.kx_modes]
+    evar = get_extended_var(mode, fvar)
+    norm_var = la.norm(evar, axis=-1)
+    return norm_var
+
+
+def avg_t_field(mode, var):
+    fvar = var[:, :, mode.kx_modes]
+    evar = get_extended_var(mode, fvar)
+    avg_var = np.mean(evar, axis=0)
+    return avg_var
