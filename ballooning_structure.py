@@ -102,7 +102,10 @@ if args.debug:
     for mode in ky_modes:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
-for mode in ky_modes:
+if args.avgs and not pods:
+    scales = np.empty((len(ky_list), 4))
+
+for i, mode in enumerate(ky_modes):
     ky = mode.ky
     if pods:
         u, sv, VH = bl.collective_pod(mode, fields)
@@ -140,15 +143,7 @@ for mode in ky_modes:
             )
             avg_freq = bl.avg_freq(times, norm_phi)
             avg_kz = bl.avg_kz(mode, avg_phi)
-            bl.output_scales(mode, avg_freq, "avg_freq")
-            bl.output_scales(mode, avg_kz, "avg_kz")
-            bl.output_scales(mode, corr_time, "corr_time")
-            bl.output_scales(mode, corr_len, "corr_len")
+            scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
 
-
-if args.eigen:
-    directory = args.eigen[0]
-    inputs = [bl.get_input_params(directory, suffix) for suffix in esuffix]
-    ky_eigenmodes = [
-        bl.KyMode(1, times, fields, gene_files) for times, gene_files in inputs
-    ]
+if args.avgs and not pods:
+    bl.output_scales(ky_modes, scales, "avgs", "avgs")

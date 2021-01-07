@@ -515,12 +515,21 @@ def avg_kz(mode, var):
     return kz
 
 
-def output_scales(mode, scales, varname):
+def output_scales(modes, scales, varname, intype="POD"):
     """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
-    filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
-    header = "POD " + varname
-    pods = np.arange(1, scales.size + 1)
-    data = np.vstack((pods, scales)).T
+    if intype == "POD":
+        ky = str("{:03d}").format(int(modes.ky)) + "_pod"
+        header = "POD # " + varname
+    else:
+        ky = "_all"
+        header = "ky avg_omega avg_kz corr_time corr_len"
+    filename = "./" + varname + "_ky" + ky + ".dat"
+    if scales.ndim == 1:
+        pods = np.arange(1, scales.size + 1)
+        data = np.vstack((pods, scales)).T
+    else:
+        kylist = np.expand_dims(np.array([mode.ky for mode in modes]).T, -1)
+        data = np.hstack((kylist, scales))
     np.savetxt(
         filename,
         data,
