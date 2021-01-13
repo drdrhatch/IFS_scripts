@@ -610,9 +610,7 @@ def avg_t_field(mode, var):
 def avg_kz_tz(mode, var):
     fvar = var[:, :, mode.kx_modes]
     evar = get_extended_var(mode, fvar)
-    print("evar.shape = ", evar.shape)
     kz = avg_kz(mode, evar)
-    print("kz.shape = ", kz.shape)
     mean_kz = np.sqrt(np.mean(kz ** 2))
     return mean_kz
 
@@ -620,8 +618,6 @@ def avg_kz_tz(mode, var):
 def avg_freq_tz(mode, times, var):
     fvar = var[:, :, mode.kx_modes]
     evar = get_extended_var(mode, fvar)
-    print("evar.shape = ", evar.shape)
     omega = avg_freq(times, evar)
-    print("omega.shape = ", omega.shape)
     avg_omega = np.sqrt(np.mean(omega ** 2))
     return avg_omega
