@@ -141,8 +141,8 @@ for i, mode in enumerate(ky_modes):
             r, r_corr, corr_len = bl.autocorrelate(
                 mode, avg_phi, mode.zgrid_ext * np.pi, axis=-1
             )
-            avg_freq = bl.avg_freq(times, norm_phi)
-            avg_kz = bl.avg_kz(mode, avg_phi)
+            avg_freq = bl.avg_freq_tz(mode, times, phi)
+            avg_kz = bl.avg_kz_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
 
 if args.avgs and not pods:
