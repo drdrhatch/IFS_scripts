@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from LN_tools import get_suffix
 from ParIO import Parameters 
+from LN_tools import get_suffix
 from LN_tools import start_end_time
-from LN_tools import BES_f_spectrum
+from LN_tools import BES_f_spectrum_sum_then_FFT
 
 #*****************************************************************
 #*******************Beginning of the User block*******************
@@ -18,12 +18,13 @@ Delta_Z=0.02  #7cm as bin for Z
 time_step=1     #read time with this step size
 frequency_all=False      #Switch to True if one wants to sum over all fequency 
 
-frequency_max=255.       #maximum frequency(Lab Frame) to sum over in kHz
-frequency_min=245.       #minimum frequency(Lab Frame) in sum over in kHz
+frequency_max=-249.5       #maximum frequency(Lab Frame) to sum over in kHz
+frequency_min=-250.5       #minimum frequency(Lab Frame) in sum over in kHz
 
 pic_path='BES_pic'        #path one want to store the picture and video in
 csv_path='BES_csv'        #path one want to store the picture and video in
 iterdb_file_name='/global/u1/m/maxcurie/max/Cases/DIIID175823_250k/DIIID175823.iterdb'
+manual_Doppler=-7.	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
 
 #*********************End of the User block***********************
 #*****************************************************************
@@ -42,32 +43,21 @@ par.Read_Pars('parameters'+suffix)
 pars = par.pardict
 time_start,time_end=start_end_time(suffix,pars)
 
-f_ky_f,n1_ky_f,growth_ky_f=\
-BES_f_spectrum(suffix,iterdb_file_name,min_Z0,max_Z0,\
-    Outboard_mid_plane,time_step,time_start,time_end,\
-    plot,show,csv_output,pic_path,csv_path)
-(n_ky,n_f)=np.shape(f_ky_f)
-print(np.shape(f_ky_f))
-print(np.max(f_ky_f))
-print(np.min(f_ky_f))
-print(n_ky)
-print(n_f)
+f,n1_f=\
+        BES_f_spectrum_sum_then_FFT(suffix,iterdb_file_name,manual_Doppler,\
+        	min_Z0,max_Z0,Outboard_mid_plane,\
+        	time_step,time_start,time_end,\
+            plot,show,csv_output,pic_path,csv_path)
+len_f=len(f)
+
 n1_BES0=0.
-n1_BES_temp=0.
-int_f=0.
 
-
-for iky in range(n_ky):
-    for i_f in range(n_f):
-        if frequency_min<=f_ky_f[iky][i_f] and f_ky_f[iky][i_f]<=frequency_max:
-            int_f=int_f+abs(f_ky_f[iky][i_f]-f_ky_f[iky][i_f-1])
-            n1_BES0=n1_BES0+abs(n1_ky_f[iky][i_f])*abs(f_ky_f[iky][i_f]-f_ky_f[iky][i_f-1])
-            n1_BES_temp=n1_BES_temp+abs(n1_ky_f[iky][i_f])
+for i_f in range(len_f):
+    if frequency_min<=f[i_f] and f[i_f]<=frequency_max:
+        n1_BES0=n1_BES0+abs(n1_f[i_f])
 
 nref = pars['nref']         #in 10^(19) /m^3
-print('n1_BES_temp='+str(n1_BES_temp))
-print('nref='+str(nref))
-n1_BES=n1_BES0/int_f
+n1_BES=n1_BES0
 
 file=open("0BES.txt","w")
 file.write('n1_BES='+str(n1_BES)+'/m^3\n')

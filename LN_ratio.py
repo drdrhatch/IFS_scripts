@@ -2,7 +2,7 @@ import pandas as pd
 
 
 RIP_file_path='RIP_csv'        #path one stores 0RIP_from_all_freq.csv, default: 'RIP_csv'
-RIP_file_name='0RIP_from 150.0kHz to 500.0kHz.csv'	#the name of the RIP csv file, default: '0RIP_from_all_freq.csv'
+RIP_file_name='0RIP_from -500.0kHz to -150.0kHz.csv'	#the name of the RIP csv file, default: '0RIP_from_all_freq.csv'
 
 BES_file_path='.'        	#path one stores 0BES.txt, default: '.'  (current folder)
 BES_file_name='0BES.txt'	#the name of the BES text file, default: '0BES.txt'

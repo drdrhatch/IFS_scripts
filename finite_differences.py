@@ -52,7 +52,7 @@ def fd_d1_o4_uneven(var,grid,mat=False,return_new_grid = False):
     grid: grid for var 
     mat: matrix for the finite-differencing operator. if mat=False then it is created"""
 
-    N = 2.0*len(grid)
+    N = 2*len(grid)
     grid0 = np.linspace(grid[0],grid[-1],N)
     var0 = interp(grid,var,grid0)
 
