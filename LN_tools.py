@@ -1391,7 +1391,7 @@ def RIP_k_space_sum(suffix,iterdb_file_name,manual_Doppler,\
             #print("kygrid"+str(kygrid))
             zgrid = np.linspace(-np.pi,np.pi,pars['nz0'],endpoint=False)  
 
-            apar=field.apar()[:,:,:]
+            apar=abs(field.apar()[:,:,:])
             apar_ky=np.sum(apar[:,:,:],axis=2) 
             B1_GENE_ky0=ky_GENE_grid*apar_ky*Apar_to_B1
             B1_GENE_ky= np.zeros(np.shape(B1_GENE_ky0[0,:]))

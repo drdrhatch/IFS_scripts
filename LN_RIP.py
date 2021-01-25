@@ -124,6 +124,24 @@ for i_Z_list in range(len(Z_list)):
                 min_Z0,max_Z0,Outboard_mid_plane,\
                 time_step,time_start,time_end,\
                 plot,show,csv_output,pic_path,csv_path)
+    elif run_mode==4:
+        B1_RIP0=0.
+        B1_RIP_temp=0.
+        if frequency_all==True:
+            B1_RIP0=np.sum(abs(B1_f)**2.)*abs(f[1]-f[0])
+        else:
+            for i_f in range(len(f)):
+                frequency_max=abs(frequency_max)
+                frequency_min=abs(frequency_min)
+                if frequency_max<frequency_min:
+                    temp=frequency_max
+                    frequency_max=frequency_min
+                    frequency_min=temp
+                if -frequency_max<=f[i_f] and f[i_f]<=-frequency_min:
+                    print(B1_f[i_f])
+                    B1_RIP0=B1_RIP0+abs(B1_f[i_f])**2.*abs(f[i_f]-f[i_f-1])
+        B1=np.sqrt(B1_RIP0)
+        B1_error=0.
     else:
         B1_RIP0=0.
         B1_RIP_temp=0.
