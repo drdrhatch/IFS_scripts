@@ -230,7 +230,7 @@ def p_to_iterdb_format(p_file_name,geomfile_name):
     # uniform spacing because first_derivative requires so
     # find pressure, temperature, density values on uniform R grid
 
-    uni_R = np.linspace(EFITdict['R'][0],Rsep,EFITdict['nw']*10.)
+    uni_R = np.linspace(EFITdict['R'][0],Rsep,EFITdict['nw']*10)
     psip_uniR = interp(EFITdict['R'], EFITdict['psipn'], uni_R)
     rhot_uniR = interp(EFITdict['R'], EFITdict['rhotn'], uni_R)
 
@@ -249,7 +249,7 @@ def p_to_iterdb_format(p_file_name,geomfile_name):
     gradPeoverNe = first_derivative(pe_uniR,uni_R)/ne_uniR 
 
 
-    uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10.)
+    uni_rhot = np.linspace(min(rhot0),max(rhot0),len(rhot0)*10)
     ti_u = interp(rhot0,ti0,uni_rhot)
     te_u = interp(rhot0,te0,uni_rhot)
     ne_u = interp(rhot0,ne0,uni_rhot)
