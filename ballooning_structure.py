@@ -81,9 +81,11 @@ ftimes = bl.get_times(field, stime, etime)
 mtimes = bl.get_times(mom_e, stime, etime)
 if args.heat:  # moment values needed for heat flux calc
     times = np.intersect1d(ftimes, mtimes)
+    fields = ("phi", "tpar", "tperp", "dens")
 else:  # otherwise, default to phi
     times = ftimes
     mom_e = None
+    fields = "phi"
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
@@ -98,7 +100,6 @@ else:
     pods = None
 
 gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
-fields = ("phi", "tpar", "tperp", "dens")
 
 ky_modes = [bl.KyMode(ky, times, fields, gene_files) for ky in ky_list]
 
