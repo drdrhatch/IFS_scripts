@@ -85,7 +85,7 @@ if args.heat:  # moment values needed for heat flux calc
 else:  # otherwise, default to phi
     times = ftimes
     mom_e = None
-    fields = "phi"
+    fields = ("phi",)
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
