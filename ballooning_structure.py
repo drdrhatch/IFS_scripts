@@ -83,6 +83,7 @@ if args.heat:  # moment values needed for heat flux calc
     times = np.intersect1d(ftimes, mtimes)
 else:  # otherwise, default to phi
     times = ftimes
+    mom_e = None
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
