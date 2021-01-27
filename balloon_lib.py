@@ -92,7 +92,9 @@ class KyMode:
                     "tperp": mom_file.tperp,
                 }
             )
-        fields = ["phi", "apar", "bpar", "dens", "tpar", "tperp", "q"]
+            fields = ("phi", "apar", "bpar", "dens", "tpar", "tperp", "q")
+        else:
+            fields = ("phi", "apar", "bpar")
         self.fields = dict.fromkeys(fields, None)
 
     def read_field(self, varname):
