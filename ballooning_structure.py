@@ -79,7 +79,10 @@ etime = min(args.etime, max_time)
 
 ftimes = bl.get_times(field, stime, etime)
 mtimes = bl.get_times(mom_e, stime, etime)
-times = np.intersect1d(ftimes, mtimes)
+if args.heat:  # moment values needed for heat flux calc
+    times = np.intersect1d(ftimes, mtimes)
+else:  # otherwise, default to phi
+    times = ftimes
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
