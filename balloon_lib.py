@@ -626,3 +626,49 @@ def avg_freq_tz(mode, times, var):
     omega = avg_freq(times, evar)
     avg_omega = np.sqrt(np.mean(omega ** 2))
     return avg_omega
+
+
+def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
+    var = mode.fields[varname]
+    fvar = var[:, :, mode.kx_modes]
+    evar = get_extended_var(mode, fvar)
+    f = evar
+    ntimes = times.size
+    dt = np.diff(times)
+    even_dt = np.all(dt == dt[0])
+    if not even_dt:
+        samples = samplerate * ntimes
+        f_hat, times_lin = fft_nonuniform(times, f)
+    else:
+        samples = ntimes
+        f_hat = np.fft.fft(f, axis=axis)
+    timestep = (times[-1] - times[0]) / samples
+    omegas = np.fft.fftfreq(samples, d=timestep)
+
+    dims = tuple(range(f_hat.ndim))
+    saxes = dims[dims != axis]
+    spectrum = np.sum(np.abs(f_hat) ** 2, axis=saxes)
+
+    om = np.array(omegas[0 : samples // 2])
+    spec = np.union1d(
+        spectrum[0], spectrum[1 : samples // 2] + spectrum[-1 : -samples // 2 : -1]
+    )
+
+    if output:
+        output_spec(mode, om, spec, varname)
+    return omegas, spec
+
+
+def output_spec(mode, omegas, spec, varname):
+    """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
+    header = "omega " + varname + "^2"
+    ky = str("{:03d}").format(int(mode.ky))
+    filename = "./" + varname + "_ky" + ky + "_spec.dat"
+    data = np.vstack((omegas, spec)).T
+    np.savetxt(
+        filename,
+        data,
+        fmt="% E",
+        header=header,
+        encoding="UTF-8",
+    )
