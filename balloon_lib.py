@@ -486,7 +486,7 @@ def get_extended_var(mode, var):
     return ext_var
 
 
-def avg_kz(mode, var):
+def avg_kz(mode, var, outspect=False):
     """Calculate the average kz mode weighted by given field"""
     jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
     jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
@@ -511,10 +511,13 @@ def avg_kz(mode, var):
     f1 = field[zstart:zend]
     f2 = field[zstart + 1 : zend + 1]
 
-    sum_ddz = np.sum(0.5 * (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) / dz * jac, axis=0)
+    ddz = 0.5 * (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) / dz * jac
+    sum_ddz = np.sum(ddz, axis=0)
     denom = np.sum(0.5 * (abs(f1) ** 2 + abs(f2) ** 2) / dz * jac, axis=0)
-    kz = np.sqrt(sum_ddz / denom).T
-    return kz
+    akz = np.sqrt(sum_ddz / denom).T
+    if outspect:
+        return akz, ddz
+    return akz
 
 
 def output_scales(modes, scales, varname, intype="POD"):
