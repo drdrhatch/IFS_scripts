@@ -25,9 +25,9 @@ def create_k_grid(x_grid):
     dKx = 2.0*npy.pi/nx/dx
     iKx = npy.zeros(nx)
     for ix in range(nx):
-        if   ix<=nx/2-1:
+        if   ix<=int(nx/2)-1:
              iKx[ix] = ix*dx
-        elif ix>=nx/2:
+        elif ix>=int(nx/2):
              iKx[ix] =-(nx-ix)*dx
     return npy.fft.fftshift(iKx)
 
@@ -279,6 +279,13 @@ def read_parameters(paramfpath):
                          else:
                               if geneparam[pkey][skey] != float(items[1]):
                                  geneparam[pkey][skey]  = [geneparam[pkey][skey],float(items[1])]
+                 elif pkey == "info":
+                      #print(skeys)
+                      if skey not in skeys:
+                         if skey in ['lx']:
+                             geneparam[pkey][skey] = float(items[1])
+                         elif skey in ['nu_ei']:
+                             geneparam[pkey][skey] = float(items[1])
                  elif pkey == "general":
                       if skey not in skeys:
                          if   skey in ['antenna_type','perf_tsteps','hyp_z_order','hyp_y_order','hyp_x_order','ev_max_it','n_ev','timelim','ntimesteps']:
@@ -816,14 +823,14 @@ def read_field(fieldfpath,timeslot=None,fieldfmt=None):
               shatsgn = int(npy.sign(float(pars['shat'])))
 
               for iy in range(ny):
-                for ix in range(nx/2):
-                  phi[(ix+nx/2)*nz:(ix+nx/2+1)*nz]=phi3d[:,iy,ix*shatsgn]*phase**ix
-                  if ix < nx/2:
-                     phi[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=phi3d[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                for ix in range(int(int(nx/2))):
+                  phi[(ix+int(nx/2))*nz:(ix+int(nx/2)+1)*nz]=phi3d[:,iy,ix*shatsgn]*phase**ix
+                  if ix < int(nx/2):
+                     phi[(int(nx/2)-ix-1)*nz:(int(nx/2)-ix)*nz]=phi3d[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                   if int(field.nfields)>1  and float(pars['beta'])!=0:
-                     apar[(ix+nx/2)*nz:(ix+nx/2+1)*nz]=apar3d[:,iy,ix*shatsgn]*phase**ix
-                     if ix < nx/2:
-                        apar[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=apar3d[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                     apar[(ix+int(nx/2))*nz:(ix+int(nx/2)+1)*nz]=apar3d[:,iy,ix*shatsgn]*phase**ix
+                     if ix < int(nx/2):
+                        apar[(int(nx/2)-ix-1)*nz:(int(nx/2)-ix)*nz]=apar3d[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
 
               fielddata[ifieldf]['t']       = field.tfld
               fielddata[ifieldf]['nx']      = field.nx
@@ -889,14 +896,14 @@ def read_field(fieldfpath,timeslot=None,fieldfmt=None):
                  shatsgn = int(npy.sign(float(gpars['shat'])))
 
                  for iy in range(ny):
-                   for ix in range(nx/2):
-                     phix[(ix+nx/2)*(nz+4):(ix+nx/2+1)*(nz+4)]=phi[:,iy,ix*shatsgn]*phase**ix
-                     if ix < nx/2:
-                        phix[(nx/2-ix-1)*(nz+4):(nx/2-ix)*(nz+4)]=phi[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                   for ix in range(int(int(nx/2))):
+                     phix[(ix+int(nx/2))*(nz+4):(ix+int(nx/2)+1)*(nz+4)]=phi[:,iy,ix*shatsgn]*phase**ix
+                     if ix < int(nx/2):
+                        phix[(int(nx/2)-ix-1)*(nz+4):(int(nx/2)-ix)*(nz+4)]=phi[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                      if int(field.nfields)>1  and float(pars['beta'])!=0:
-                        aparx[(ix+nx/2)*nz:(ix+nx/2+1)*nz]=apar[:,iy,ix*shatsgn]*phase**ix
-                        if ix < nx/2:
-                           aparx[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=apar[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                        aparx[(ix+int(nx/2))*nz:(ix+int(nx/2)+1)*nz]=apar[:,iy,ix*shatsgn]*phase**ix
+                        if ix < int(nx/2):
+                           aparx[(int(nx/2)-ix-1)*nz:(int(nx/2)-ix)*nz]=apar[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                  fielddata[ifieldf]['phi']     = phix
                  fielddata[ifieldf]['apar']    = aparx
 
@@ -968,17 +975,17 @@ def field_info(field,param={}):
            apar1d = npy.zeros(nx*nz,dtype='complex128')
 
            shatsgn = int(npy.sign(param['geometry']['shat']))
-           for i in range(nx/2):
-               phi1d[(i+nx/2)*nz:(i+nx/2+1)*nz]=phi[:,0,i*shatsgn]*phase**i
-               if i < nx/2:
-                   phi1d[(nx/2-i-1)*nz:(nx/2-i)*nz]=phi[:,0,-(i+1)*shatsgn]*phase**(-(i+1))
+           for i in range(int(int(nx/2))):
+               phi1d[(i+int(nx/2))*nz:(i+int(nx/2)+1)*nz]=phi[:,0,i*shatsgn]*phase**i
+               if i < int(nx/2):
+                   phi1d[(int(nx/2)-i-1)*nz:(int(nx/2)-i)*nz]=phi[:,0,-(i+1)*shatsgn]*phase**(-(i+1))
                if int(nfields)>1:
-                  apar1d[(i+nx/2)*nz:(i+nx/2+1)*nz]=apar[:,0,i*shatsgn]*phase**i
-                  if i < nx/2:
-                       apar1d[(nx/2-i-1)*nz:(nx/2-i)*nz]=apar[:,0,-(i+1)*shatsgn]*phase**(-(i+1))
+                  apar1d[(i+int(nx/2))*nz:(i+int(nx/2)+1)*nz]=apar[:,0,i*shatsgn]*phase**i
+                  if i < int(nx/2):
+                       apar1d[(int(nx/2)-i-1)*nz:(int(nx/2)-i)*nz]=apar[:,0,-(i+1)*shatsgn]*phase**(-(i+1))
 
-           phi  = phi1d/phi[nz/2,0,0]
-           apar = apar1d/apar[nz/2,0,0]
+           phi  = phi1d/phi[int(nz/2),0,0]
+           apar = apar1d/apar[int(nz/2),0,0]
 
            field_info = {}
 
@@ -1026,9 +1033,9 @@ def field_info(field,param={}):
               kxgrid[0] = float(param['box']['kx_center'])
            else:
               kxgrid[0] = 0.0
-           for k in range(int(param['box']['nx0'])/2):
+           for k in range(int(param['box']['nx0']/2)):
               kxgrid[k+1] = kxgrid[0] + (k+1)*dkx
-           for k in range((int(param['box']['nx0'])-1)/2):
+           for k in range(int((int(param['box']['nx0'])-1)/2)):
               kxgrid[-k-1] = kxgrid[0] - (k+1)*dkx
            kxavg = 0.0
            #Get eigenmode averaged |kx|
@@ -1222,14 +1229,14 @@ def find_mode_frequency(fieldfpath,fraction=0.9,bgn_t=None,end_t=None,method='fa
                   shatsgn = int(npy.sign(float(pars['shat'])))
 
                   for iy in range(ny):
-                    for ix in range(nx/2):
-                      phi[(ix+nx/2)*nz:(ix+nx/2+1)*nz]=field.phi()[:,iy,ix*shatsgn]*phase**ix
-                      if ix < nx/2:
-                         phi[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=field.phi()[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                    for ix in range(int(nx/2)):
+                      phi[(ix+int(nx/2))*nz:(ix+int(nx/2)+1)*nz]=field.phi()[:,iy,ix*shatsgn]*phase**ix
+                      if ix < int(nx/2):
+                         phi[(int(nx/2)-ix-1)*nz:(int(nx/2)-ix)*nz]=field.phi()[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                       if int(field.nfields)>1  and float(pars['beta'])!=0:
-                         apar[(ix+nx/2)*nz:(ix+nx/2+1)*nz]=field.apar()[:,iy,ix*shatsgn]*phase**ix
-                         if ix < nx/2:
-                            apar[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=field.apar()[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                         apar[(ix+int(nx/2))*nz:(ix+int(nx/2)+1)*nz]=field.apar()[:,iy,ix*shatsgn]*phase**ix
+                         if ix < int(nx/2):
+                            apar[(int(nx/2)-ix-1)*nz:(int(nx/2)-ix)*nz]=field.apar()[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                 elif not x_local:
                   if 'field.dat' in ifieldf:
                      gpars,geometry = read_geometry_global(ifieldf[:-9]+pars['magn_geometry'][1:-1]+ifieldf[-4:])
@@ -1270,14 +1277,14 @@ def find_mode_frequency(fieldfpath,fraction=0.9,bgn_t=None,end_t=None,method='fa
                      apar = npy.zeros(nx*(nz+4),dtype='complex128')
 
                   for iy in range(ny):
-                    for ix in range(nx/2):
-                      phi[(ix+nx/2)*(nz+4):(ix+nx/2+1)*(nz+4)]=phix[:,iy,ix*shatsgn]*phase**ix
-                      if ix < nx/2:
-                         phi[(nx/2-ix-1)*(nz+4):(nx/2-ix)*(nz+4)]=phix[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                    for ix in range(int(nx/2)):
+                      phi[(ix+int(nx/2))*(nz+4):(ix+int(nx/2)+1)*(nz+4)]=phix[:,iy,ix*shatsgn]*phase**ix
+                      if ix < int(nx/2):
+                         phi[(int(nx/2)-ix-1)*(nz+4):(int(nx/2)-ix)*(nz+4)]=phix[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
                       if nfields>1  and float(pars['beta'])!=0:
-                         apar[(ix+nx/2)*nz:(ix+nx/2+1)*nz]=aparx[:,iy,ix*shatsgn]*phase**ix
-                         if ix < nx/2:
-                            apar[(nx/2-ix-1)*nz:(nx/2-ix)*nz]=aparx[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
+                         apar[(ix+int(nx/2))*nz:(ix+int(nx/2)+1)*nz]=aparx[:,iy,ix*shatsgn]*phase**ix
+                         if ix < int(nx/2):
+                            apar[(int(nx/2)-ix-1)*nz:(int(nx/2)-ix)*nz]=aparx[:,iy,-(ix+1)*shatsgn]*phase**(-(ix+1))
 
                 phi_t.append(phi)
                 if nfields>1:
