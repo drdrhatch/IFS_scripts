@@ -133,10 +133,10 @@ for i, mode in enumerate(ky_modes):
             )
             avg_freq = bl.avg_freq(times, u)
             avg_kz = bl.avg_kz(mode, VH["phi"])
-            bl.output_scales(mode, avg_freq, "avg_freq_pod")
-            bl.output_scales(mode, avg_kz, "avg_kz_pod")
-            bl.output_scales(mode, corr_time, "corr_time_pod")
-            bl.output_scales(mode, corr_len, "corr_len_pod")
+            bl.output_scales(mode, avg_freq, "avg_freq")
+            bl.output_scales(mode, avg_kz, "avg_kz")
+            bl.output_scales(mode, corr_time, "corr_time")
+            bl.output_scales(mode, corr_len, "corr_len")
     else:
         if args.avgs:
             phi = mode.fields["phi"]
