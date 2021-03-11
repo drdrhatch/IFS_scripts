@@ -221,7 +221,7 @@ if 'x_local' in pars and not pars['x_local']:
             #plt.plot(zgrid,(np.imag(gradphi[2:-2,0,3*field.nx/4])),'-.',color = 'black')
             #plt.plot(zgrid,(np.imag(-omega_complex*field.apar()[:,0,3*field.nx/4])),'-.',color = 'red')
             #plt.show()
-            print( "omega_complex",omega_complex)
+            print("omega_complex",omega_complex)
             
             diff = np.sum(np.abs(gradphi[2:-2,:] + omega_complex*apar[:,:]))
             phi_cont = np.sum(np.abs(gradphi[2:-2,:]))
@@ -324,7 +324,10 @@ else:
             elif calc_grs:
                 scan_info[i,4]=calc_gr2('_'+scan_num,nspec=nspec)
                 scan_info[i,5]= 0.0
-                np.savetxt('omega_'+scan_num,[scan_info[i,0],scan_info[i,4],np.nan])
+                #np.savetxt('omega_'+scan_num,[scan_info[i,0],scan_info[i,4],np.nan])
+                f=open('omega_'+scan_num,'w')
+                f.write(str(pars['kymin'])+'    '+str(scan_info[i,0])+'    '+str(scan_info[i,4])+'\n')
+                f.close()
             else:
                 scan_info[i,4]=np.nan
                 scan_info[i,5]=np.nan
