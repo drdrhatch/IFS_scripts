@@ -194,6 +194,8 @@ for i in range(len(parfile_split)):
         parfile_split[i] = 'n_procs_sim = 256' 
     if 'n_procs_w' in parfile_split[i]:
         parfile_split[i] = 'n_procs_w = 8' 
+    if 'coll_order' in parfile_split[i]:
+        parfile_split[i] = ' ' 
     if 'n_procs_z' in parfile_split[i]:
         parfile_split[i] = 'n_procs_z = 8' 
     if 'nx0' in parfile_split[i]:
