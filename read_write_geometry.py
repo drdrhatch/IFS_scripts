@@ -201,7 +201,7 @@ def write_tracer_efit_file(parameters,geometry,file_name):
 
     nz0 = int(float(parameters['gridpoints']))
     gsize = np.shape(geometry['gxx'])    
-    nx0 = gsize[0]*gsize[1]/nz0
+    nx0 = int(gsize[0]*gsize[1]/nz0)
 
     #geometry['q'] = np.empty(0)
     f.write('q\n')

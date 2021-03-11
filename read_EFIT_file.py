@@ -252,7 +252,7 @@ def get_geom_pars(efit_file_name,rhot0):
     q0 = qpsi[irhot_n]
 
 
-    rhot_new = np.linspace(rhot_n[0],rhot_n[-1],4.0*len(rhot_n))
+    rhot_new = np.linspace(rhot_n[0],rhot_n[-1],4*len(rhot_n))
     qpsi_new = interp(rhot_n,qpsi,rhot_new)  
     shat = rhot_new/qpsi_new*fd_d1_o4(qpsi_new,rhot_new)
     irhot_new = np.argmin(abs(rhot_new-rhot0))

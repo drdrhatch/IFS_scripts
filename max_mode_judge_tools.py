@@ -10,7 +10,7 @@ from omega_tool_max import omega_calc
 #Last edited by Max Curie 04/27/2020
 #Criteria: D_chi, typical frequency, Epar
 
-run=True
+
 #**********Start of input setup**********************************************************************
 def species_order(suffix): 
     #*****Start of calcuation of diamagnetic frequency******
@@ -56,11 +56,6 @@ def f(suffix): #calculate the frequency
         gamma_list,omega_list,indice_list=get_omega(suffix)
     else:
         omegadata = read_omega(omegafpath)
-        if abs(omegadata['omega'][0])<0.0000001:
-            omega_calc("_"+str(suffix))
-            #from genetools.py
-            omegadata = read_omega(omegafpath)
-            #gamma_list,omega_list,indice_list=get_omega(suffix)
     
     omega=omegadata['omega'][0]
     gamma=omegadata['gamma'][0]
@@ -93,20 +88,18 @@ def f(suffix): #calculate the frequency
     fi = kymin*(omn_i+omt_i) #omega*i in cs/a
     #print("fe is "+str(fe))
 
-    nu_ei = geneparam['info']['nu_ei']
-    #nu_ei = 0
+    #nu_ei = geneparam['info']['nu_ei']
+    nu_ei = 0
 
     if 'kx_center' in geneparam['box']:
         kx=geneparam['box']['kx_center']
     else:
         kx=0
     
-    Cs = np.sqrt(geneparam['units']['Tref']*1000.0*1.602e-19/geneparam['units']['mref']/1.6726e-27)
+    Cs = npy.sqrt(geneparam['units']['Tref']*1000.0*1.602e-19/geneparam['units']['mref']/1.6726e-27)
     omegaref = Cs/geneparam['units']['Lref']
 
-
     f_kHz=omega*omegaref/(2.*3.1415926*1000.)
-    print(f_kHz)
 
     #doppler = vrot_u*n0_global/2./np.pi/1E3 #Doppler shift in kHz
 
@@ -381,7 +374,7 @@ def federal_court(suffix):
         csv_data = csv.writer(csvfile, delimiter=',')
         csv_data.writerow([suffix,tot_mode,\
                             kymin,kx,nu_ei,\
-                            f_mode,omega,f_kHz,fi,fe,gamma,\
+                            f_mode,omega,f,fi,fe,gamma,\
                             epar_mode,epar,\
                             D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,Qem_z/Qes_z,Q_i/Q_e,chi_i/chi_e,\
                             D_i/chi_tot,D_e/chi_tot,D_z/chi_tot,D_i/chi_e,D_e/chi_e,D_z/chi_e,\
@@ -424,9 +417,6 @@ def scan_cases():
         federal_court(suffix)
 
 
-#************Operatre***********************
-if run: 
-    scan_cases()
 
 
 

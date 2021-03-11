@@ -66,3 +66,10 @@ GENE tool for plotting linear mode structures from GENE (can be used for local o
 
 read_write_geometry.py:
 Scripts for reading / writing GENE geometry files (e.g. tracer_efit.dat)
+
+LN_RIP.py: 
+Nonloal nonlinear radial magnetic fluctruation for Sythetic diagnostic for RIP (Faraday-Effect Radial Interferometer-Polarimeter) 
+
+k_f_B_contour:
+Reads the csv files from the output of LN_RIP.py to replot or add the desired Doppler shift 
+

@@ -24,12 +24,12 @@ Tesep_target = 80  #Separatrix electron temperature in eV
 x0_Tsep = 0.993 #radial location at which to send Tsep to target
 lambda_Tsep = 0.016  #scale length over which to smooth to Tsep
 
-fileName = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96.iterdb'
-profilesName = 'gene_profiles_e_jet78697'
-file_out_base = 'jet78697.51005_hager_Z6.0Zeff2.35_negom_alpha0.7_omti_x0_0.96'
-base_number = '78697'
-rhotMidPed = 0.97
-rhotTopPed =0.955
+fileName = 'DIIID175823_omte120.iterdb'
+profilesName = 'profiles_e'
+file_out_base = 'DIIID175823_omte120_omnt_120'
+base_number = '175823'
+rhotMidPed = 0.98
+rhotTopPed =0.96
 
 rhot, te, ti, ne, ni, nz, omega_tor = read_iterdb_file(fileName)
 data = np.genfromtxt(profilesName)
@@ -70,9 +70,9 @@ if mode == 'eta':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
-    print 'ti =', tiMidPed
+    print ('rhot ='+str (rhotMidPed))
+    print ('te ='+str(teMidPed))
+    print ('ti ='+str( tiMidPed))
 
     newTe = teMidPed*np.power(te/teMidPed,alpha)
     newTi = tiMidPed*np.power(ti/tiMidPed,alpha)
@@ -100,8 +100,8 @@ if mode == 'eta':
 if mode == 'omte':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
+    print ('rhot ='+str( rhotMidPed))
+    print ('te ='+str( teMidPed))
 
     newTe = teMidPed*np.power(te/teMidPed,alpha)
     newTi = ti
@@ -123,7 +123,7 @@ if mode == 'omte':
     plt.plot(rhot,target_factor*omte0,'--',color='black',label='target')
     plt.plot(rhot,newomte,label='omte new')
     ax = plt.axis()
-    print "ax",ax
+    print ("ax"+str(ax))
     plt.axis([0.9,1.0,0.0,ax[3]])
     plt.legend()
     plt.show()
@@ -131,8 +131,8 @@ if mode == 'omte':
 if mode == 'omne':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     neMidPed = ne[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'ne =', neMidPed
+    print('rhot ='+str(rhotMidPed))
+    print('ne ='+ str(neMidPed))
 
     newNe = neMidPed*np.power(ne/neMidPed,alpha)
     newNi = newNe/ne*ni
@@ -147,10 +147,10 @@ if mode == 'omne':
     #total pressure with new density and tempeturate profiles
     newPtot = newNe * newTe + newTi * (newNi + newNz)
 
-    qz = float(raw_input("Enter charge of impurity species:"))
+    qz = float(input("Enter charge of impurity species:"))
 
     qltest = np.sum(newNi-newNe+qz*newNz)/np.sum(newNe)
-    print("Test of quasineutrality (should be <<1):",qltest)
+    print("Test of quasineutrality (should be <<1):"+str(qltest))
  
     plt.plot(rhot,newNe,label='new ne')
     plt.plot(rhot,newNi,label='new ni')
@@ -172,8 +172,8 @@ if mode == 'omne':
 if mode == 'omti':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'ti =', tiMidPed
+    print ('rhot ='+str(rhotMidPed))
+    print ('ti ='+str (tiMidPed))
 
     newTi = tiMidPed*np.power(ti/tiMidPed,alpha)
     newTe = te
@@ -195,7 +195,7 @@ if mode == 'omti':
     plt.plot(rhot,target_factor*omti0,'--',color='black',label='target')
     plt.plot(rhot,newomti,label='omti new')
     ax = plt.axis()
-    print "ax",ax
+    print ("ax"+str(ax))
     plt.axis([0.9,1.0,0.0,ax[3]])
     plt.legend()
     plt.show()
@@ -204,9 +204,9 @@ if mode == 'etaTe':
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     teMidPed = te[midPedIndex]
     tiMidPed = ti[midPedIndex]
-    print 'rhot =', rhotMidPed
-    print 'te =', teMidPed
-    print 'ti =', tiMidPed
+    print ('rhot ='+str(rhotMidPed))
+    print ('te ='+str (teMidPed))
+    print ('ti ='+str (tiMidPed))
 
     newTe = teMidPed*np.power(te/teMidPed,alpha)
     #new Ti profile to keep total pressure the same
@@ -232,7 +232,7 @@ if mode == 'etaTe':
 
 if mode == 'omnz':
     Z = float(raw_input('Enter Z of impurity:\n'))
-    print "Using Z= ",Z
+    print ("Using Z= "+str(Z))
     midPedIndex = np.argmin(abs(rhot - rhotMidPed))
     nzMidPed = nz[midPedIndex]
 
@@ -283,7 +283,7 @@ if mode == 'TiTe':
 
 if set_Tesep:
     ix_Ts = np.argmin(abs(rhot-x0_Tsep)) 
-    print "ix_Ts",ix_Ts
+    print ("ix_Ts"+str(ix_Ts))
     dtedx_ts = fd_d1_o4_uneven(newTe,rhot)
     dtedx0 = dtedx_ts[ix_Ts]
     c0 = newTe[ix_Ts] - lambda_Tsep * abs(dtedx0)

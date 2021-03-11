@@ -14,7 +14,7 @@ def species_order(suffix):
     #Determine the order of the species
     
     if 'species3' in geneparam: 
-        species=range(3)
+        species=['','','']
         for i in range(3):
             if geneparam['species'+str(i+1)]['charge']==-1:
                 species[i]='e' #it is eletron
@@ -23,7 +23,7 @@ def species_order(suffix):
             elif geneparam['species'+str(i+1)]['charge']>1:
                 species[i]='z' #it is impurity
     elif 'species3' not in geneparam: 
-        species=range(2)
+        species=['','']
         for i in range(2):
             if geneparam['species'+str(i+1)]['charge']==-1:
                 species[i]='e' #it is eletron
