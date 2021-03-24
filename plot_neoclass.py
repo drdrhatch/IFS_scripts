@@ -30,7 +30,7 @@ while keep_going:
         keep_going = False
     i += 1
 
-print "Number of species:",num_spec 
+print ("Number of species:",num_spec )
     
 time = np.empty(0)
 # delete header

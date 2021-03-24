@@ -141,7 +141,7 @@ def zGrid(geom_coeff, \
     if not center_only:
         jacobian = np.zeros(nx * nz, dtype = 'float128')
         for i in ikx_grid:
-	    jacobian[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=\
+            jacobian[(i-ikx_grid[0])*nz:(i-ikx_grid[0]+1)*nz]=\
                 jacobian_center
     if center_only:
         jacobian = jacobian_center
