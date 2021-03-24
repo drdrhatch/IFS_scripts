@@ -269,9 +269,9 @@ def coll_SI(suffix):#From GENE Apar to Gauss B_r
     par = Parameters()
     par.Read_Pars('parameters'+suffix)
     pars = par.pardict
-    print 'GENE coll'
+    print('GENE coll')
 
-    print pars['coll']
+    print(pars['coll'])
 
     factor=10**19*(e_SI*1000/kB_SI)**(-2)*10**(-3)
     

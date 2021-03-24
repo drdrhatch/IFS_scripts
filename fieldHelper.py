@@ -27,7 +27,7 @@ def global_eigenfunctions(field, \
                           plot_format = 'display'):
     field.set_time(field.tfld[setTime])
     time = field.tfld[setTime]
-    print 'Reading eigenfunctions are at t = ', time
+    print( 'Reading eigenfunctions are at t = '+str( time))
     nz = field.nz
     ny = field.ny
     nx = field.nx
@@ -126,11 +126,11 @@ def local_eigenfunctions(pars, \
 
     if (setTime == -1):
         field.set_time(field.tfld[setTime])
-        print 'Reading eigenfunctions are at t = ', field.tfld[setTime]
+        print ('Reading eigenfunctions are at t = ', field.tfld[setTime])
     else:
         isetTime = np.argmin(abs(np.array(field.tfld)-setTime))
         field.set_time(field.tfld[isetTime])
-        print 'Reading eigenfunctions are at t = ', field.tfld[isetTime]
+        print ('Reading eigenfunctions are at t = ', field.tfld[isetTime])
 
     if center_only:
         ikx_grid = [0]
@@ -149,22 +149,22 @@ def local_eigenfunctions(pars, \
     
     if pars['shat'] > 0.:
         for i in ikx_grid:
-	    this_phi = field.phi()[:,0,i] * phase_fac ** i
-	    phi[(i - ikx_grid[0]) * field.nz: \
+            this_phi = field.phi()[:,0,i] * phase_fac ** i
+            phi[(i - ikx_grid[0]) * field.nz: \
                 (i - ikx_grid[0] + 1) * field.nz] = this_phi
             if pars['n_fields'] > 1 and pars['beta'] != 0:
                 this_apar = field.apar()[:,0,i] * phase_fac ** i
-	        apar[(i - ikx_grid[0]) * field.nz: \
+                apar[(i - ikx_grid[0]) * field.nz: \
                      (i - ikx_grid[0] + 1) * field.nz] = \
                 this_apar
     else:
         for i in ikx_grid:
-	    this_phi = field.phi()[:,0,-i] * phase_fac ** i
-	    phi[(i - ikx_grid[0]) * field.nz: \
+            this_phi = field.phi()[:,0,-i] * phase_fac ** i
+            phi[(i - ikx_grid[0]) * field.nz: \
                 (i - ikx_grid[0] + 1) * field.nz] = this_phi
             if pars['n_fields'] > 1 and pars['beta'] != 0:
-	        this_apar = field.apar()[:,0,-i] * phase_fac ** i
-	        apar[(i - ikx_grid[0]) * field.nz: \
+                this_apar = field.apar()[:,0,-i] * phase_fac ** i
+                apar[(i - ikx_grid[0]) * field.nz: \
                      (i - ikx_grid[0] + 1) * field.nz] = \
                 this_apar
 
@@ -224,7 +224,7 @@ def epar(pars, geom_coeff, suffix, show_plots = True):
     #GENE has the convention of omega = -freq+i*gamma
     omega_complex = np.complex(-omega_array[2],omega_array[1])
     E_par_sum =sum(abs(-dphidz_mp+zi*omega_complex*apar))/(sum(abs(dphidz_mp))+sum(abs(zi*omega_complex*apar)))
-    print 'E_par = ', E_par_sum
+    print ('E_par = ', E_par_sum)
     E_par =-dphidz_mp+zi*omega_complex*apar
     if show_plots:
         plt.plot(zgrid,np.abs(E_par),label=r'$|E_{\parallel}|$',color='black')
