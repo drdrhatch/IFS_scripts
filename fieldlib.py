@@ -76,9 +76,15 @@ class fieldfile(object):
     # defines the struct for a time entry in field
     def TimeEntry(self):
         if self.bigendian:
-            timeentry = struct.Struct('>idi')
+            if self.pars['PRECISION'] == 'SINGLE':
+                timeentry = struct.Struct('>ifi')
+            else:
+                timeentry = struct.Struct('>idi')
         else:
-            timeentry = struct.Struct('=idi')
+            if self.pars['PRECISION'] == 'SINGLE':
+                timeentry = struct.Struct('=ifi')
+            else:
+                timeentry = struct.Struct('=idi')
         return timeentry, timeentry.size
 
     # calculate offset in field file for a given timestep and variable
