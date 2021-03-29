@@ -129,48 +129,30 @@ def ky_list_calc(suffix):
     n_min=round(kymin/ky_n1)   #n for ky_min
     if n_min==0:
         n_min=1
-    n_list=np.arange(int(n_min),int(n_min+nky0*n_step),int(n_step))
-    ky_list=ky_n1*n_list
+    n_min=0
+    
+    ky_list = np.linspace(0,(pars['nky0']-1)*pars['kymin'],num=pars['nky0'])
+
+    n_list= []
+    for i in range(len(ky_list)):
+        if i==0:
+            n_list.append(0)
+        elif i!=0:
+            n_list.append(round(ky_list[i]/ky_n1))
+
     return n_list, ky_list
 
 #************Sample function line
 #omegaDoppler=Doppler_calc(suffix,iky,iterdb_file_name)
 def Doppler_calc(suffix,iky,iterdb_file_name):
-    #Import the parameters from parameter file using ParIO
+
+	#Import the parameters from parameter file using ParIO
     par = Parameters()
     par.Read_Pars('parameters'+suffix)
     pars = par.pardict
-
-    B_gauss=10.**4              #1T=10^4Gauss
-    qref = 1.6E-19              #in C
-    c  = 1.                     #in 3*10^8m/s
-    m_kg = 1.673E-27            #in kg
-    Bref = pars['Bref']         #in Tesla
-    Tref = pars['Tref']         #in keV
-    nref = pars['nref']         #in 10^(19) /m^3
-    Lref = pars['Lref']         #in m
-    mref = pars['mref']         #in proton mass(kg)
-    q0 = pars['q0']              #unitless, safety factor/q95
     x0 = pars['x0']             #x/a, location
-    kymin = pars['kymin']       #in rhoi
-    nky0 = pars['nky0']         #in total number of ky
-    n_step = pars['n0_global']  #in rhoi
-    nref = nref * 1.E19         #in the unit of /m^3
-    Tref = Tref * qref * 1.E03  #in the unit of J
-    mref = mref * m_kg          #in the unit of kg
-    pref = nref * Tref          #in Pa*k_{B}
-    cref = np.sqrt(Tref / mref) #in the unit of m/s
-    Omegaref = qref * Bref / mref / c  #in rad/s
-    rhoref = cref / Omegaref           #in m rho_i(ion gyroradii)
-    rhorefStar = rhoref / Lref         #Unitless
-    gyroFreq= cref/Lref                 #the facor convert frequency from cs/a to rad/s
-    
-    #Determine the n for kymin
-    ky_n1=1.*q0*rhoref/(Lref*x0)  #ky for n=1
-    n_min=round(kymin/ky_n1)   #n for ky_min
-    if n_min==0:
-        n_min=1
-    n_list=np.arange(int(n_min),int(n_min+nky0*n_step),int(n_step))
+    #Import the parameters from parameter file using ParIO
+    n_list, ky_list = ky_list_calc(suffix)
 
     #**********************Doppler shift**********************************************
 
@@ -596,7 +578,10 @@ def RIP_f_spectrum_sum_then_FFT(suffix,iterdb_file_name,manual_Doppler,min_Z0,ma
     print('n0 list: '+str(n_list))
     n_min=np.min(n_list)
     ky_GENE_n1=ky_GENE_temp/float(n_min)
-    ky_GENE_grid = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
+
+    nz=len(real_Z)
+    ky_GENE_grid=np.outer([1.]*nz,ky_list)#outer product of the two vectors
+ 
     
     print("kygrid"+str(np.shape(ky_GENE_grid)))
     
@@ -783,7 +768,10 @@ def RIP_f_spectrum_FFT_then_sum(suffix,iterdb_file_name,manual_Doppler,min_Z0,ma
     n_min=np.min(n_list)
     ky_GENE_n1=ky_GENE_temp/float(n_min)
     ky_GENE_grid=np.zeros((nz0,nky0,nx0))
-    ky_GENE_grid0 = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
+    
+    nz=len(real_Z)
+    ky_GENE_grid=np.outer([1.]*nz,ky_list)#outer product of the two vectors
+ 
     
     for i in range(nx0):
         ky_GENE_grid[:,:,i]=ky_GENE_grid0
@@ -965,7 +953,10 @@ def RIP_f_spectrum_sum_kx_then_FFT_then_sum_Z(suffix,iterdb_file_name,manual_Dop
     print('n0 list: '+str(n_list))
     n_min=np.min(n_list)
     ky_GENE_n1=ky_GENE_temp/float(n_min)
-    ky_GENE_grid = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
+
+    nz=len(real_Z)
+    ky_GENE_grid=np.outer([1.]*nz,ky_list)#outer product of the two vectors
+ 
 
     
     print("kygrid"+str(np.shape(ky_GENE_grid)))
@@ -1110,6 +1101,8 @@ def RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,min_Z0,max_Z0,
     field = fieldfile('field'+suffix,pars)
     time = np.array(field.tfld)  #time stampes
 
+    J=geometry['gjacobian']
+
     B_gauss=10.**4.              #1T=10^4Gauss
     qref = 1.6E-19              #in C
     c  = 1.                     #in 3*10^8m/s
@@ -1145,8 +1138,14 @@ def RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,min_Z0,max_Z0,
     print('n0 list length: '+str(len(n_list)))
     print('n0 list: '+str(n_list))
     n_min=np.min(n_list)
-    ky_GENE_n1=ky_GENE_temp/float(n_min)
-    ky_GENE_grid = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
+
+    #ky_GENE_n1=ky_GENE_temp/float(n_min)
+
+    nz=len(real_Z)
+    ky_GENE_grid=np.outer([1.]*nz,ky_list)
+
+    #ky_GENE_grid = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
+
     
     print("kygrid"+str(np.shape(ky_GENE_grid)))
     
@@ -1219,8 +1218,10 @@ def RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,min_Z0,max_Z0,
             else:
                 for nZ in range(len(real_Z)):
                     if min_Z0<=real_Z[nZ] and real_Z[nZ]<=max_Z0:
-                        length=np.sqrt( (real_R[nZ]-real_R[nZ-1])**2.\
-                            +(real_Z[nZ]-real_Z[nZ-1])**2. )
+                        #length=np.sqrt( (real_R[nZ]-real_R[nZ-1])**2.\
+                        #    +(real_Z[nZ]-real_Z[nZ-1])**2. )
+                        length=np.sqrt((real_Z[nZ]-real_Z[nZ-1])**2. )
+                        #length=J[nZ]
                         sum_length_TEMP=sum_length_TEMP+length
                         B1_GENE_ky=B1_GENE_ky+B1_GENE_ky0[nZ,:]*length
                 B1_GENE_ky=B1_GENE_ky/sum_length_TEMP
@@ -1356,7 +1357,10 @@ def RIP_k_space_sum(suffix,iterdb_file_name,manual_Doppler,\
     print('n0 list: '+str(n_list))
     n_min=np.min(n_list)
     ky_GENE_n1=ky_GENE_temp/float(n_min)
-    ky_GENE_grid = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
+
+    nz=len(real_Z)
+    ky_GENE_grid=np.outer([1.]*nz,ky_list)#outer product of the two vectors
+
     
     print("kygrid"+str(np.shape(ky_GENE_grid)))
     
@@ -1526,7 +1530,7 @@ def RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
 
 
     #ky comes from geomWrapper.py
-    ky_GENE_temp=ky(pars, geom_coeff,plot=False)     #ky for ky min for differen z
+    #ky_GENE_temp=ky(pars, geom_coeff,plot=False)     #ky for ky min for differen z
     #print('ky shape: '+str(np.shape(ky_GENE_temp)))
 
     #Determine the n for kymin
@@ -1535,10 +1539,8 @@ def RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
     print('n0 list length: '+str(len(n_list)))
     print('n0 list: '+str(n_list))
     n_min=np.min(n_list)
-    ky_GENE_n1=ky_GENE_temp/float(n_min)
-    ky_GENE_grid = np.outer(ky_GENE_n1,n_list) #outer product of the two vectors
     
-    print("kygrid"+str(np.shape(ky_GENE_grid)))
+    #print("kygrid"+str(np.shape(ky_GENE_grid)))
     
     print('n0 list length: '+str(len(n_list)))
     print('n0 list: '+str(n_list))
@@ -1598,7 +1600,14 @@ def RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
             zgrid = np.linspace(-np.pi,np.pi,pars['nz0'],endpoint=False)  
 
             apar=abs(field.apar()[:,:,:])
+            (nz,nky,nkx)=np.shape(apar)
+            #print('(nz,nky,nkx)'+str(np.shape(apar)))
+            #sum over kx
             apar_ky=np.sum(apar[:,:,:]**2.,axis=2) 
+
+            ky_GENE_grid=np.outer([1.]*nz,ky_list)
+
+
             B1_GENE_ky0=apar_ky*(ky_GENE_grid*Apar_to_B1)**2.
             B1_GENE_ky= np.zeros(np.shape(B1_GENE_ky0[0,:]))
             
@@ -1612,13 +1621,9 @@ def RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
                 B1_GENE_ky=B1_GENE_ky0[int(len(real_Z)/2),:]
             else:
                 for nZ in range(len(real_Z)):
-                    length=np.sqrt( (real_R[nZ]-real_R[nZ-1])**2.\
-                        +(real_Z[nZ]-real_Z[nZ-1])**2. )
-                    if nZ==0:
-                       length=J[nZ]*abs(zgrid[1]-zgrid[0])
-                    else:
-                    	length=J[nZ]*abs(zgrid[nZ]-zgrid[nZ-1])
-                    
+                    length=J[nZ]
+                    #print('length'+str(length))
+                    #print('B1_GENE_ky0[nZ,:]'+str(B1_GENE_ky0[nZ,:]))
                     sum_length_TEMP=sum_length_TEMP+length
                     B1_GENE_ky=B1_GENE_ky+B1_GENE_ky0[nZ,:]*length
                 B1_GENE_ky=B1_GENE_ky/sum_length_TEMP
@@ -1634,23 +1639,15 @@ def RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
         #Recall B1_ky_t_inz=np.zeros((nky0,ntime))
         B1_ky_t[:,i]=B1_ky #2 comes from the -ky to ky while GENE has 0 to ky
     
-    ky_GENE_inz = ky_GENE_grid[int(len(real_Z)/2),:]
-    
-    amplitude_frequency_sum=0
-    amplitude_growth_sum=0
-    #print(str(B1_ky_t_inz))
-    if plot==True:
-        ims_n1=[]
-
     B1_t=[]
     B1_error_t=[]
 
-    
-
     for iT in range(len(time_list)):
         B1_t_TEMP=abs(B1_ky_t[:,iT])
-        B1=(np.sum(B1_t_TEMP))*2.
-        B1_error=np.sum((B1_t_TEMP)*2. )**0.5 # sqrt( (sum of B^2) )
+        #print('B1_t_TEMP'+str(B1_t_TEMP))
+        #sum over ky
+        B1=(np.sum(B1_t_TEMP[1:]))*2.+B1_t_TEMP[0]
+        B1_error=np.sum((B1_t_TEMP[1:])*2. + B1_t_TEMP[0] )**0.5 # sqrt( (sum of B^2) )
         B1_t.append(B1)
         B1_error_t.append(B1_error)
 
@@ -1665,6 +1662,8 @@ def RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
 
     B1_t=np.array(B1_t)
     B1_error_t=np.array(B1_error_t)
+
+    print('B1_t'+str(B1_t))
 
     '''
     plt.clf()
