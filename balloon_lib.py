@@ -107,10 +107,17 @@ class KyMode:
         tmp = var[:, indy, :]
         return tmp
 
-    def read_fields(self, times, fields, field_file, mom_file):
+    def read_fields(self, times, fields, field_file, mom_file, pars):
         """Read given fields data for the given times"""
         self.fields_read = set(fields)
-        tmp = np.empty((len(fields), times.size, self.nz, self.nx), dtype=np.cdouble)
+        if pars["PRECISION"] == "DOUBLE":
+            tmp = np.empty(
+                (len(fields), times.size, self.nz, self.nx), dtype=np.cdouble
+            )
+        else:
+            tmp = np.empty(
+                (len(fields), times.size, self.nz, self.nx), dtype=np.csingle
+            )
         for j, time in enumerate(times):
             field_file.set_time(time)
             if mom_file:
@@ -433,17 +440,18 @@ def get_input_params(directory, suffix, geom=None):
 
 def fft_nonuniform(times, f, axis=0, samplerate=2):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
+    datatype = f.dtype
     ntimes = times.size
     samples = samplerate * ntimes
     times_lin = np.linspace(times[0], times[-1], samples)
     if f.ndim > 1:
         if axis == 0:
-            f_lin = np.empty((samples, f.shape[1]), dtype=np.cdouble)
+            f_lin = np.empty((samples, f.shape[1]), dtype=datatype)
             for i, row in enumerate(f.T):
                 f_int = np.interp(times_lin, times, row)
                 f_lin[:, i] = f_int.T
         else:
-            f_lin = np.empty((f.shape[0], samples), dtype=np.cdouble)
+            f_lin = np.empty((f.shape[0], samples), dtype=datatype)
             for i, row in enumerate(f):
                 f_lin[i] = np.interp(times_lin, times, row)
     else:
@@ -546,6 +554,7 @@ def output_scales(modes, scales, varname, intype="POD"):
 
 def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     """Calculate correlation length/time for given input field"""
+    datatype = f.dtype
     if var.ndim > 2:
         fvar = get_extended_var(mode, var)
     else:
@@ -559,12 +568,12 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
         samples = samplerate * npts
         dom_lin = np.linspace(domain[0], domain[-1], samples)
         if axis == 0:
-            f_lin = np.empty((fvar.shape[1], samples), dtype=np.cdouble)
+            f_lin = np.empty((fvar.shape[1], samples), dtype=datatype)
             for i, row in enumerate(fvar.T):
                 f_int = np.interp(dom_lin, domain, row).T
                 f_lin[i] = f_int.T
         else:
-            f_lin = np.empty((fvar.shape[0], samples), dtype=np.cdouble)
+            f_lin = np.empty((fvar.shape[0], samples), dtype=datatype)
             if fvar.ndim > 1:
                 for i, row in enumerate(fvar):
                     f_lin[i] = np.interp(dom_lin, domain, row)
@@ -583,7 +592,7 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     N2 = N // 2
     norm = N - np.arange(0, N2)
     if f.ndim > 1:
-        corr = np.empty((f.shape[0], N2), dtype=np.cdouble)
+        corr = np.empty((f.shape[0], N2), dtype=datatype)
         for i, row in enumerate(f):
             f1 = row
             corr[i] = np.correlate(f1, f1, mode="same")[N2:] / norm
