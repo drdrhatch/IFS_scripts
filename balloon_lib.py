@@ -48,7 +48,7 @@ class KyMode:
         self.define_phase(pars)
         self.define_dictionary(field_file, mom_file)
         self.geometry = geom_file
-        self.read_fields(times, fields, field_file, mom_file)
+        self.read_fields(times, fields, field_file, mom_file, pars)
 
     def construct_ranges(self, pars):
         self.kxrange(pars)
@@ -682,6 +682,7 @@ def output_spec(mode, omegas, spec, varname):
         header=header,
         encoding="UTF-8",
     )
+
 
 def check_suffix(run_number):
     if re.search("dat$", run_number):
