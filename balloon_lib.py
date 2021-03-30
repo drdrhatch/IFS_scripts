@@ -14,6 +14,7 @@ import fieldlib
 import momlib
 import read_write_geometry as rwg
 import finite_differences as fd
+import re
 
 VARNAMES = {
     "phi": r"$\Phi$",
@@ -681,3 +682,14 @@ def output_spec(mode, omegas, spec, varname):
         header=header,
         encoding="UTF-8",
     )
+
+def check_suffix(run_number):
+    if re.search("dat$", run_number):
+        suffix = ".dat"
+    elif re.search("[0-9]{1,4}$", run_number):
+        match = re.search(r"([0-9]{1,4})$", run_number)
+        suffix = "_" + match.group(0).zfill(2)
+    else:
+        print("Please enter a valid run number, e.g. .dat or 0123")
+        return None
+    return suffix

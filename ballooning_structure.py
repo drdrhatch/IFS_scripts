@@ -58,7 +58,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-suffix = glib.check_suffix(args.suffix)
+suffix = bl.check_suffix(args.suffix)
 if args.eigen:
     esuffix = [glib.check_suffix(eigen) for eigen in args.eigen[1:]]
 
