@@ -555,7 +555,7 @@ def output_scales(modes, scales, varname, intype="POD"):
 
 def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     """Calculate correlation length/time for given input field"""
-    datatype = f.dtype
+    datatype = var.dtype
     if var.ndim > 2:
         fvar = get_extended_var(mode, var)
     else:
