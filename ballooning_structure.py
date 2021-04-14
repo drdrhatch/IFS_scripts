@@ -31,14 +31,6 @@ parser.add_argument(
     "--avgs", "-a", action="store_true", help="find avg omega and kz for each ky mode"
 )
 parser.add_argument(
-    "--eigen",
-    "-E",
-    action="store",
-    nargs="+",
-    metavar="EIGENVALUE_DIRECTORY RUN_NUMBER_0001 [RUN_NUMBER_0002 ...]",
-    help="eigenvalue directory, followed by a list of run numbers",
-)
-parser.add_argument(
     "--pod",
     "-P",
     action="store",
@@ -59,8 +51,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 suffix = bl.check_suffix(args.suffix)
-if args.eigen:
-    esuffix = [glib.check_suffix(eigen) for eigen in args.eigen[1:]]
 
 save_figs = args.output
 show_figs = args.noshow
