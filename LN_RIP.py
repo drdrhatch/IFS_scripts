@@ -13,11 +13,8 @@ from read_iterdb_file import read_iterdb_file
 
 from LN_tools import get_suffix
 from LN_tools import start_end_time
-from LN_tools import RIP_f_spectrum_FFT_then_sum
 from LN_tools import RIP_f_spectrum_sum_then_FFT
-from LN_tools import RIP_f_spectrum_sum_kx_then_FFT_then_sum_Z
 from LN_tools import RIP_f_spectrum_density
-from LN_tools import RIP_k_space_sum
 from LN_tools import RIP_k_space_sum_IDL
 
 #*****************************************************************
@@ -25,27 +22,25 @@ from LN_tools import RIP_k_space_sum_IDL
 Outboard_mid_plane=False  #change to True if one wants to only want to look at outboard mid-plane
 Delta_Z=0.07  #7cm as bin for Z 
 scan_all_Z=False #Change to True if one want to scan across the whole height
-max_Z0=0.21 
-min_Z0=-0.21
+max_Z0=0.035 
+min_Z0=-0.035 
 
 time_step=1     #read time with this step size
 
-frequency_all=False      #Switch to True if one wants to sum over all fequency 
+frequency_all=True      #Switch to True if one wants to sum over all fequency 
 
 frequency_max=-150.       #maximum frequency(Lab Frame) to sum over in kHz
 frequency_min=-500.       #minimum frequency(Lab Frame) in sum over in kHz
 
-run_mode=4	 			#change to 1, if one wants to sum over kx, Z and then do the FFT
-						#change to 2, if one wants to do the FFT then sum over kx, Z 
-						#change to 3, if one wants to do the sum over kx, FFT then sum over Z 
-                        #change to 4, if one wants to have the spectral density (the sum over kx,Z then periodogram)
-                        #change to 5, if one wants to sum over kx,ky,Z in k space
-                        #change to 6(IDL comparison), if one wants to sum over kx,ky,Z(all Z) in k space
+run_mode=2	 			#change to 1, if one wants to sum over kx, Z and then do the FFT
+                        #change to 2, if one wants to have the spectral density (the sum over kx,Z then periodogram)
+                        #change to 3, if one wants to sum over kx,ky,Z in k space
+                        #change to 4, (IDL comparison), if one wants to sum over kx,ky,Z(all Z) in k space
 
 pic_path='RIP_pic'        #path one want to store the picture and video in
 csv_path='RIP_csv'        #path one want to store the picture and video in
 iterdb_file_name='/global/u1/m/maxcurie/max/Cases/DIIID175823_250k/DIIID175823.iterdb'
-manual_Doppler=-8.	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
+manual_Doppler=0.	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
 
 #iterdb_file_name='DIIID164880.iterdb'
 
@@ -93,36 +88,19 @@ RIP_err=np.zeros(len(Z_list))
 
 for i_Z_list in range(len(Z_list)):
 
-    max_Z0=Z_list[i_Z_list]+Delta_Z/2.    #in the unit of meter
-    min_Z0=Z_list[i_Z_list]-Delta_Z/2.   #in the unit of meter
+    #max_Z0=Z_list[i_Z_list]+Delta_Z/2.    #in the unit of meter
+    #min_Z0=Z_list[i_Z_list]-Delta_Z/2.   #in the unit of meter
+
+    min_Z0=min(real_Z)
+    max_Z0=max(real_Z)
+
     if run_mode==1:
         f,B1_f=\
             RIP_f_spectrum_sum_then_FFT(suffix,iterdb_file_name,manual_Doppler,\
                 min_Z0,max_Z0,Outboard_mid_plane,\
                 time_step,time_start,time_end,\
                 plot,show,csv_output,pic_path,csv_path)
-    elif run_mode==2:
-        f,B1_f=\
-            RIP_f_spectrum_FFT_then_sum(suffix,iterdb_file_name,manual_Doppler,\
-                min_Z0,max_Z0,Outboard_mid_plane,\
-                time_step,time_start,time_end,\
-                plot,show,csv_output,pic_path,csv_path)
-    elif run_mode==3:
-        f,B1_f=\
-            RIP_f_spectrum_sum_kx_then_FFT_then_sum_Z(suffix,iterdb_file_name,manual_Doppler,\
-                min_Z0,max_Z0,Outboard_mid_plane,\
-                time_step,time_start,time_end,\
-                plot,show,csv_output,pic_path,csv_path)
-
-    #elif run_mode==4:
-    #    f,B1_f=\
-    #        RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,\
-    #            min_Z0,max_Z0,Outboard_mid_plane,\
-    #            time_step,time_start,time_end,\
-    #            plot,show,csv_output,pic_path,csv_path)
-    #f is 1D array with freqency
-    #B1_f is 2D array B1(ky,f) length weighted average over Z
-    elif run_mode==4: #change to 4, if one wants to have the spectral density (the sum over kx,Z then periodogram)
+    elif run_mode==2: #change to 4, if one wants to have the spectral density (the sum over kx,Z then periodogram)
         f,B1_f=\
             RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,\
                 min_Z0,max_Z0,Outboard_mid_plane,\
@@ -131,6 +109,7 @@ for i_Z_list in range(len(Z_list)):
         B1_RIP0=0.
         B1_RIP_temp=0.
         if frequency_all==True:
+            print(B1_f)
             B1_RIP0=np.sum(abs(B1_f)**2.)*abs(f[1]-f[0])
         else:
             for i_f in range(len(f)):
@@ -146,14 +125,14 @@ for i_Z_list in range(len(Z_list)):
         B1=np.sqrt(B1_RIP0)
         B1_error=0.
         
-    elif run_mode==5:
+    elif run_mode==3:
         B1,B1_error=\
-            RIP_k_space_sum(suffix,iterdb_file_name,manual_Doppler,\
+            RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
                 min_Z0,max_Z0,Outboard_mid_plane,\
                 time_step,time_start,time_end,\
                 plot,show,csv_output,pic_path,csv_path)
 
-    elif run_mode==6:
+    elif run_mode==4:
         B1,B1_error=\
             RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
                 min(real_Z),max(real_Z),Outboard_mid_plane,\
