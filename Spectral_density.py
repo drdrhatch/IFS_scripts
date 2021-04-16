@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 def sort_x_f(x_unsort,f_unsort): 
+    #x is the varible and f is function
    
     arr_unsort=[x_unsort,f_unsort]
     f_x_unsort=tuple(map(tuple, np.transpose(arr_unsort)))
@@ -16,7 +17,9 @@ def sort_x_f(x_unsort,f_unsort):
     return x_sort,f_sort
 
 #https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.periodogram.html
-def spectral_density(function,time,plot=False):
+#'boxcar' Also known as a rectangular window or Dirichlet window, this is equivalent to no window at all.
+#window types: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window
+def spectral_density(function,time,window_for_FFT='boxcar',plot=False):
 	time=np.array(time)
 	dt=time[1:]-time[:-1]
 	dt_min=np.min(dt)
@@ -33,7 +36,7 @@ def spectral_density(function,time,plot=False):
 	fs=1./np.mean(abs(uni_time[1:]-uni_time[:-1]))
 	print('avg_dt='+str(np.mean(abs(uni_time[1:]-uni_time[:-1]))))
 	print('std_dt='+str(np.std(abs(uni_time[1:]-uni_time[:-1]))))
-	f, Pxx_den = signal.periodogram(uni_function, fs) #, scaling='spectrum')
+	f, Pxx_den = signal.welch(uni_function, fs, window=window_for_FFT) #, scaling='spectrum')
 
 	#Sort frequency to monotonic increase
 	f, Pxx_den=sort_x_f(f, Pxx_den)
@@ -51,6 +54,7 @@ def spectral_density(function,time,plot=False):
 
 '''
 #*********Demo function****************
+window_input='hann'
 timestep0=0.002
 time1 = np.arange(0.,2.,timestep0)
 time2 = np.arange(2.00001,3.,timestep0*0.1)
@@ -68,7 +72,7 @@ omega = 2.*np.pi*frequency
 function=np.exp(-1.j * omega * time )+0.5*np.exp(+1.j * 2*omega * time)+2.*np.exp(+1.j * 3.*omega * time)
 
 
-f, Pxx_den=spectral_density(function,time,plot=True)
+f, Pxx_den=spectral_density(function,time,window_input,plot=True)
 
 Sum_over_t=np.mean(abs(function)**2.)**0.5
 Sum_over_f=(np.sum(Pxx_den)*np.mean(abs(f[:-1]-f[1:])))**0.5
@@ -84,7 +88,5 @@ print('Sum_over_t='+str(Sum_over_t))
 print('Sum_over_f='+str(Sum_over_f))
 
 #*********Demo function****************
-
-
-
 '''
+

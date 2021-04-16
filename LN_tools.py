@@ -286,21 +286,22 @@ def k_f_density_plot(f_ky_f,amplitude_ky_f,ky_list,n_list,pic_path,csv_path,name
 
     uni_freq = np.linspace(np.min(f_ky_f), np.max(f_ky_f),num=len(f_ky_f[0,:])*10)
     print('len of uni_freq='+str(int(len(f_ky_f[0,:])*10)))
-    #len_uni_freq=len(uni_freq)
-    #frequency_kHZ_uni=np.zeros((nky0,len_uni_freq))
-    #amplitude_frequency_uni=np.zeros((nky0,len_uni_freq))
-    #for testing, not interprolation
-    len_uni_freq=len(f_ky_f[0,:])
+    len_uni_freq=len(uni_freq)
     frequency_kHZ_uni=np.zeros((nky0,len_uni_freq))
     amplitude_frequency_uni=np.zeros((nky0,len_uni_freq))
 
+    #for testing, no interprolation
+    #len_uni_freq=len(f_ky_f[0,:])
+    #frequency_kHZ_uni=np.zeros((nky0,len_uni_freq))
+    #amplitude_frequency_uni=np.zeros((nky0,len_uni_freq))
+
     ky_plot=np.zeros((nky0,len_uni_freq))
     for i_ky in range(nky0):
-        #frequency_kHZ_uni[i_ky,:]=uni_freq
-        #amplitude_frequency_uni[i_ky,:]=np.interp(uni_freq,f_ky_f[i_ky,:],amplitude_ky_f[i_ky,:])
+        frequency_kHZ_uni[i_ky,:]=uni_freq
+        amplitude_frequency_uni[i_ky,:]=np.interp(uni_freq,f_ky_f[i_ky,:],amplitude_ky_f[i_ky,:])
         #for testing, not interprolation
-        frequency_kHZ_uni[i_ky,:]=f_ky_f[i_ky,:]
-        amplitude_frequency_uni[i_ky,:]=amplitude_ky_f[i_ky,:]
+        #frequency_kHZ_uni[i_ky,:]=f_ky_f[i_ky,:]
+        #amplitude_frequency_uni[i_ky,:]=amplitude_ky_f[i_ky,:]
         plt.clf()
         plt.xlabel(r'$f(kHz)$',fontsize=10)
         plt.ylabel(str(name),fontsize=10)
@@ -719,7 +720,7 @@ def RIP_f_spectrum_sum_then_FFT(suffix,iterdb_file_name,manual_Doppler,min_Z0,ma
 
 
 def RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,min_Z0,max_Z0,\
-    Outboard_mid_plane,time_step,time_start,time_end,\
+    Outboard_mid_plane,time_step,time_start,time_end,window_for_FFT,\
     plot,show,csv_output,pic_path,csv_path):
     #Where inz is the number of the element in nz
 
@@ -851,7 +852,8 @@ def RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,min_Z0,max_Z0,
             #*****Sum over Z************
             sum_length_TEMP=0
             if Outboard_mid_plane==True:
-                nZ_list=[0,int(len(real_Z)/2)]
+                #nZ_list=[0,int(len(real_Z)/2)]
+                nZ_list=[int(len(real_Z)/2)]
                 for nZ in nZ_list:
                     length=J[nZ]
                     sum_length_TEMP=sum_length_TEMP+length
@@ -902,7 +904,7 @@ def RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,min_Z0,max_Z0,
         print('B1_ky_t[iky,:]'+str(B1_ky_t[iky,:]))
         print('B1_inz_t'+str(B1_inz_t))
         #frequency,amplitude_frequency,amplitude_growth=window_FFT_function_time(B1_inz_t,time_list,plot=False)
-        frequency,amplitude_frequency_sq=spectral_density(B1_inz_t,time_list,plot=False)
+        frequency,amplitude_frequency_sq=spectral_density(B1_inz_t,time_list,window_for_FFT=window_for_FFT,plot=False)
         frequency_kHZ=frequency
         amplitude_frequency=abs(np.sqrt(amplitude_frequency_sq))
         if manual_Doppler==False:

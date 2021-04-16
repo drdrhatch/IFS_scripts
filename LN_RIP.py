@@ -22,12 +22,15 @@ from LN_tools import RIP_k_space_sum_IDL
 Outboard_mid_plane=False  #change to True if one wants to only want to look at outboard mid-plane
 Delta_Z=0.07  #7cm as bin for Z 
 scan_all_Z=False #Change to True if one want to scan across the whole height
-max_Z0=0.035 
-min_Z0=-0.035 
+max_Z0=0.21 
+min_Z0=-0.21
+window_for_FFT='hann'     #Default is 'hann'
+#info for window: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window
+#'boxcar' Also known as a rectangular window or Dirichlet window, this is equivalent to no window at all.
 
 time_step=1     #read time with this step size
 
-frequency_all=True      #Switch to True if one wants to sum over all fequency 
+frequency_all=False      #Switch to True if one wants to sum over all fequency 
 
 frequency_max=-150.       #maximum frequency(Lab Frame) to sum over in kHz
 frequency_min=-500.       #minimum frequency(Lab Frame) in sum over in kHz
@@ -40,7 +43,7 @@ run_mode=2	 			#change to 1, if one wants to sum over kx, Z and then do the FFT
 pic_path='RIP_pic'        #path one want to store the picture and video in
 csv_path='RIP_csv'        #path one want to store the picture and video in
 iterdb_file_name='/global/u1/m/maxcurie/max/Cases/DIIID175823_250k/DIIID175823.iterdb'
-manual_Doppler=0.	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
+manual_Doppler=4.5	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
 
 #iterdb_file_name='DIIID164880.iterdb'
 
@@ -88,11 +91,11 @@ RIP_err=np.zeros(len(Z_list))
 
 for i_Z_list in range(len(Z_list)):
 
-    #max_Z0=Z_list[i_Z_list]+Delta_Z/2.    #in the unit of meter
-    #min_Z0=Z_list[i_Z_list]-Delta_Z/2.   #in the unit of meter
+    max_Z0=Z_list[i_Z_list]+Delta_Z/2.    #in the unit of meter
+    min_Z0=Z_list[i_Z_list]-Delta_Z/2.   #in the unit of meter
 
-    min_Z0=min(real_Z)
-    max_Z0=max(real_Z)
+    #min_Z0=min(real_Z)
+    #max_Z0=max(real_Z)
 
     if run_mode==1:
         f,B1_f=\
@@ -104,7 +107,7 @@ for i_Z_list in range(len(Z_list)):
         f,B1_f=\
             RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,\
                 min_Z0,max_Z0,Outboard_mid_plane,\
-                time_step,time_start,time_end,\
+                time_step,time_start,time_end,window_for_FFT,\
                 plot,show,csv_output,pic_path,csv_path)
         B1_RIP0=0.
         B1_RIP_temp=0.
