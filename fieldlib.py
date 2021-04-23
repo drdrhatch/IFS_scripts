@@ -46,16 +46,22 @@ class fieldfile(object):
 
     # real and complex datatypes according to endianness
     def set_datatypes(self):
+        if self.pars['PRECISION'] == 'DOUBLE':
+            nprt = np.dtype(np.float64)
+            npct = np.dtype(np.complex128)
+        else:
+            nprt = np.dtype(np.float32)
+            npct = np.dtype(np.complex64)
         try:
             self.bigendian = self.pars['ENDIANNESS'] == 'BIG'
         except KeyError:
             self.bigendian = False
         if self.bigendian:
-            self.nprt = (np.dtype(np.float64)).newbyteorder()
-            self.npct = (np.dtype(np.complex128)).newbyteorder()
+            self.nprt = (nprt).newbyteorder()
+            self.npct = (npct).newbyteorder()
         else:
-            self.nprt = np.dtype(np.float64)
-            self.npct = np.dtype(np.complex128)
+            self.nprt = nprt
+            self.npct = npct
 
     def define_arrays(self):
         self.phi3d = np.empty((self.nz, self.ny, self.nx), dtype=self.npct)
