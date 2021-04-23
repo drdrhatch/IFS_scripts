@@ -108,7 +108,7 @@ for i, mode in enumerate(ky_modes):
         if save_figs:
             bl.output_pod(mode, u, sv, VH, fields, pods, times)
         if args.heat:
-            Q = bl.calc_heat_flux(ky, VH)
+            Q = bl.calc_heat_flux(mode, VH)
             bl.plot_heat_flux(mode, Q, show_figs, save_figs)
         if args.plot:
             bl.plot_time_dependence(mode, u, times, pods)
