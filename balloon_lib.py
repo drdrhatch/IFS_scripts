@@ -301,13 +301,14 @@ def plot_singular_values(mode, sv, show=True, save=False):
 
 
 def plot_heat_flux(mode, Q, show=True, save=False):
-    heat = np.real(Q.sum(axis=(1, 2)))
+    Q_x = np.sum(Q, axis=2)
+    Q_xz = np.average(Q_x, weights=mode.geometry["gjacobian"], axis=1)
     if save:
         fname = "qsum"
-        output_cum_sum(mode, heat, "q")
+        output_cum_sum(mode, Q_xz, "q")
     else:
         fname = None
-    plot_cumulative_array(mode, heat, "Heat flux", show, fname)
+    plot_cumulative_array(mode, Q_xz, "Heat flux", show, fname)
 
 
 def get_varname(var):
