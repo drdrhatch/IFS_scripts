@@ -400,7 +400,7 @@ def calc_heat_flux(mode, fields, weights=None):
     # \/ not divided by 2 because we only have half the ky modes
     temp2 = np.real_if_close(temp1 + np.conj(temp1))
     if np.any(weights):
-        heat_flux = np.expand_dims(weights, (1, 2)) * temp2
+        heat_flux = weights[:, np.newaxis, np.newaxis] * temp2
     else:
         heat_flux = temp2
     return heat_flux
