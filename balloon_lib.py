@@ -385,7 +385,7 @@ def collective_pod(mode, fields, extend=True):
     return u, sv, VH
 
 
-def calc_heat_flux(mode, fields):
+def calc_heat_flux(mode, fields, weights=None):
     phi = fields["phi"]
     tpar = fields["tpar"]
     tperp = fields["tperp"]
@@ -395,8 +395,13 @@ def calc_heat_flux(mode, fields):
         Cxy = mode.geometry["C_xy"]
     else:
         Cxy = 1
-    tmp = -1j * ky * phi / Cxy * np.conj(0.5 * tpar + tperp + 1.5 * dens)
-    heat_flux = tmp + np.conj(tmp)
+    temp1 = -1j * ky * phi / Cxy * np.conj(0.5 * tpar + tperp + 1.5 * dens)
+    # \/ not divided by 2 because we only have half the ky modes
+    temp2 = np.real_if_close(temp1 + np.conj(temp1))
+    if np.any(weights):
+        heat_flux = np.expand_dims(weights, (1, 2)) * temp2
+    else:
+        heat_flux = temp2
     return heat_flux
 
 
