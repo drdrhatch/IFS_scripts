@@ -44,6 +44,8 @@ class KyMode:
         self.ky = ky * pars["kymin"]
         self.nx = field_file.nx
         self.nz = field_file.nz
+        self.T0 = pars["temp1"]
+        self.n0 = pars["dens1"]
         self.construct_ranges(pars)
         self.define_phase(pars)
         self.define_dictionary(field_file, mom_file)
@@ -301,13 +303,14 @@ def plot_singular_values(mode, sv, show=True, save=False):
 
 
 def plot_heat_flux(mode, Q, show=True, save=False):
-    heat = np.real(Q.sum(axis=(1, 2)))
+    Q_x = np.sum(Q, axis=2)
+    Q_xz = np.average(Q_x, weights=mode.geometry["gjacobian"], axis=1)
     if save:
         fname = "qsum"
-        output_cum_sum(mode, heat, "q")
+        output_cum_sum(mode, Q_xz, "q")
     else:
         fname = None
-    plot_cumulative_array(mode, heat, "Heat flux", show, fname)
+    plot_cumulative_array(mode, Q_xz, "Heat flux", show, fname)
 
 
 def get_varname(var):
@@ -385,13 +388,25 @@ def collective_pod(mode, fields, extend=True):
     return u, sv, VH
 
 
-def calc_heat_flux(ky, fields):
+def calc_heat_flux(mode, fields, weights=None):
     phi = fields["phi"]
     tpar = fields["tpar"]
     tperp = fields["tperp"]
     dens = fields["dens"]
-    tmp = -1j * ky * phi * np.conj(0.5 * tpar + tperp + 1.5 * dens)
-    heat_flux = tmp + np.conj(tmp)
+    ky = mode.ky
+    n0 = mode.n0
+    T0 = mode.T0
+    if "C_xy" in mode.geometry:
+        Cxy = mode.geometry["C_xy"]
+    else:
+        Cxy = 1
+    temp1 = -1j * n0 * T0 * ky * phi / Cxy * np.conj(0.5 * tpar + tperp + 1.5 * dens)
+    # \/ not divided by 2 because we only have half the ky modes
+    temp2 = np.real_if_close(temp1 + np.conj(temp1))
+    if np.any(weights):
+        heat_flux = weights[:, np.newaxis, np.newaxis] * temp2
+    else:
+        heat_flux = temp2
     return heat_flux
 
 
