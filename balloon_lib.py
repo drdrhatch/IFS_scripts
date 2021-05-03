@@ -708,3 +708,27 @@ def check_suffix(run_number):
         print("Please enter a valid run number, e.g. .dat or 0123")
         return None
     return suffix
+def test_pod(mode, u, sv, vh, fields):
+    """testing that pod behaved in the expected way"""
+    npods = u.shape[0]
+    nx = mode.nx
+    nz = mode.nz
+    print("Shapes")
+    print("------------")
+    print("u : ", u.shape)
+    print("sv : ", sv.shape)
+    print("vh['phi'] : ", vh["phi"].shape)
+    for field in fields:
+        original = mode.fields[field]
+        new = np.empty(original.shape, dtype=original.dtype)
+        temp2 = np.zeros((npods, nx * nz), dtype=original.dtype)
+        for i in range(npods):
+            temp1 = vh[field].reshape((npods, -1))
+            temp2 += sv[i] * np.outer(u[:, i], temp1[i])
+        new = temp2.reshape((-1, nz, nx))
+        print("Are the arrays close?....", np.allclose(original, new, atol=1e-6))
+    Q = calc_heat_flux(mode, vh, sv ** 2)
+    Q_sum = np.mean(
+        np.average(Q.sum(axis=2), axis=1, weights=mode.geometry["gjacobian"]), axis=0
+    )
+    print("Q_sum(ky = %d) = ", mode.ky, Q_sum)
