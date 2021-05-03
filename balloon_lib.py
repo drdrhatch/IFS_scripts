@@ -101,7 +101,7 @@ class KyMode:
         self.fields = dict.fromkeys(fields, None)
 
     def read_field(self, varname):
-        """ Read field for a given time window, returning array"""
+        """Read field for a given time window, returning array"""
         var = self.field_vars[varname]()
         if var.shape[1] == 1:  # for linear scan data with single ky
             indy = 0
