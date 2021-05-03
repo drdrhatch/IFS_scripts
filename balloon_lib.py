@@ -425,8 +425,8 @@ def get_plot_variable(mode, var, extend):
         zgrid = mode.zgrid
     if norm == 0:
         norm = 1
-    pvar *= 1 / norm
-    return pvar, zgrid
+    pvar_norm = pvar / norm
+    return pvar_norm, zgrid
 
 
 def get_input_params(directory, suffix, geom=None):
