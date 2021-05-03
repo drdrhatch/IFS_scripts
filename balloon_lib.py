@@ -352,12 +352,11 @@ def sum_x(mode, varname):
     return xsum
 
 
-def pod(mode, varname):
-    var = mode.fields[varname]
+def pod(mode, var):
     ntimes = var.shape[0]
-    pvar = var[:, :, mode.kx_modes].reshape(ntimes, -1, order="F")
+    pvar = var.reshape(ntimes, -1, order="F")
     u, sv, vtmp = la.svd(pvar, full_matrices=False)
-    vh = vtmp.reshape(-1, mode.nz, mode.kx_modes.size, order="F")
+    vh = vtmp.reshape(-1, mode.nz, mode.nx, order="F")
     return u, sv, vh
 
 
