@@ -103,13 +103,14 @@ if args.avgs and not pods:
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
     if pods:
-        u, sv, VH = bl.collective_pod(mode, fields)
+        u, sv, VH = bl.collective_pod(mode, fields, extend=False)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
         if save_figs:
             bl.output_pod(mode, u, sv, VH, fields, pods, times)
         if args.heat:
-            Q = bl.calc_heat_flux(mode, VH, sv ** 2)
-            bl.plot_heat_flux(mode, Q, show_figs, save_figs)
+            weights = sv ** 2 / times.size
+            Q_pod = bl.calc_heat_flux(mode, VH, weights)
+            bl.plot_heat_flux(mode, Q_pod, show_figs, save_figs)
         if args.plot:
             bl.plot_time_dependence(mode, u, times, pods)
             if args.heat:
