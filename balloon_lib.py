@@ -44,6 +44,8 @@ class KyMode:
         self.ky = ky * pars["kymin"]
         self.nx = field_file.nx
         self.nz = field_file.nz
+        self.T0 = pars["temp1"]
+        self.n0 = pars["dens1"]
         self.construct_ranges(pars)
         self.define_phase(pars)
         self.define_dictionary(field_file, mom_file)
@@ -392,11 +394,13 @@ def calc_heat_flux(mode, fields, weights=None):
     tperp = fields["tperp"]
     dens = fields["dens"]
     ky = mode.ky
+    n0 = mode.n0
+    T0 = mode.T0
     if "C_xy" in mode.geometry:
         Cxy = mode.geometry["C_xy"]
     else:
         Cxy = 1
-    temp1 = -1j * ky * phi / Cxy * np.conj(0.5 * tpar + tperp + 1.5 * dens)
+    temp1 = -1j * n0 * T0 * ky * phi / Cxy * np.conj(0.5 * tpar + tperp + 1.5 * dens)
     # \/ not divided by 2 because we only have half the ky modes
     temp2 = np.real_if_close(temp1 + np.conj(temp1))
     if np.any(weights):
