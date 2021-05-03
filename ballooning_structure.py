@@ -114,7 +114,7 @@ for i, mode in enumerate(ky_modes):
         if args.plot:
             bl.plot_time_dependence(mode, u, times, pods)
             if args.heat:
-                bl.plot_pod(mode, Q, pods, "q", extend=False)
+                bl.plot_pod(mode, Q_pod, pods, "q", extend=False)
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)
         if args.avgs:
