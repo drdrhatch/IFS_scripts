@@ -19,12 +19,12 @@ from LN_tools import RIP_k_space_sum_IDL
 
 #*****************************************************************
 #*******************Beginning of the User block*******************
-Outboard_mid_plane=False  #change to True if one wants to only want to look at outboard mid-plane
+Outboard_mid_plane=True  #change to True if one wants to only want to look at outboard mid-plane
 Delta_Z=0.07  #7cm as bin for Z 
 scan_all_Z=False #Change to True if one want to scan across the whole height
-max_Z0=0.21 
-min_Z0=-0.21
-window_for_FFT='hann'     #Default is 'hann'
+max_Z0=0.035
+min_Z0=-0.035
+window_for_FFT='hann'     #Default is 'hann', other options
 #info for window: https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html#scipy.signal.get_window
 #'boxcar' Also known as a rectangular window or Dirichlet window, this is equivalent to no window at all.
 
@@ -35,15 +35,17 @@ frequency_all=False      #Switch to True if one wants to sum over all fequency
 frequency_max=-150.       #maximum frequency(Lab Frame) to sum over in kHz
 frequency_min=-500.       #minimum frequency(Lab Frame) in sum over in kHz
 
-run_mode=2	 			#change to 1, if one wants to sum over kx, Z and then do the FFT
+run_mode=1	 			#change to 1, if one wants to sum over kx, Z and then do the FFT
                         #change to 2, if one wants to have the spectral density (the sum over kx,Z then periodogram)
                         #change to 3, if one wants to sum over kx,ky,Z in k space
-                        #change to 4, (IDL comparison), if one wants to sum over kx,ky,Z(all Z) in k space
+                        #change to 4, (IDL comparison, B perp), if one wants to sum over kx,ky,Z(all Z) in k space
+                        #change to 5, (IDL comparison, frequency), if one wants to sum over kx,ky, in frequency
+
 
 pic_path='RIP_pic'        #path one want to store the picture and video in
 csv_path='RIP_csv'        #path one want to store the picture and video in
 iterdb_file_name='/global/u1/m/maxcurie/max/Cases/DIIID175823_250k/DIIID175823.iterdb'
-manual_Doppler=4.5	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
+manual_Doppler=0.	#if it is number, then manually put in the doppler shift in kHz for n=1, Type False if one to calculate the Doppler shift from ITERDB
 
 #iterdb_file_name='DIIID164880.iterdb'
 
@@ -103,7 +105,25 @@ for i_Z_list in range(len(Z_list)):
                 min_Z0,max_Z0,Outboard_mid_plane,\
                 time_step,time_start,time_end,\
                 plot,show,csv_output,pic_path,csv_path)
-    elif run_mode==2: #change to 4, if one wants to have the spectral density (the sum over kx,Z then periodogram)
+        B1_RIP0=0.
+        B1_RIP_temp=0.
+        if frequency_all==True:
+            print(B1_f)
+            B1_RIP0=np.sum(abs(B1_f)**2.)*abs(f[1]-f[0])
+        else:
+            for i_f in range(len(f)):
+                frequency_max=abs(frequency_max)
+                frequency_min=abs(frequency_min)
+                if frequency_max<frequency_min:
+                    temp=frequency_max
+                    frequency_max=frequency_min
+                    frequency_min=temp
+                if frequency_min<=f[i_f] and f[i_f]<=frequency_max:
+                    print(B1_f[i_f])
+                    B1_RIP0=B1_RIP0+abs(B1_f[i_f])**2.*abs(f[i_f]-f[i_f-1])
+        B1=np.sqrt(B1_RIP0)
+        B1_error=0.
+    elif run_mode==2: #change to 2, if one wants to have the spectral density (the sum over kx,Z then periodogram)
         f,B1_f=\
             RIP_f_spectrum_density(suffix,iterdb_file_name,manual_Doppler,\
                 min_Z0,max_Z0,Outboard_mid_plane,\
@@ -138,6 +158,12 @@ for i_Z_list in range(len(Z_list)):
     elif run_mode==4:
         B1,B1_error=\
             RIP_k_space_sum_IDL(suffix,iterdb_file_name,manual_Doppler,\
+                min(real_Z),max(real_Z),Outboard_mid_plane,\
+                time_step,time_start,time_end,\
+                plot,show,csv_output,pic_path,csv_path)
+    elif run_mode==5:
+        B1,B1_error=\
+            RIP_freq_IDL(suffix,iterdb_file_name,manual_Doppler,\
                 min(real_Z),max(real_Z),Outboard_mid_plane,\
                 time_step,time_start,time_end,\
                 plot,show,csv_output,pic_path,csv_path)
