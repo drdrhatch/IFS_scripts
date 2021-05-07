@@ -586,27 +586,34 @@ def autocorrelate_tz(var, domains, weights=None):
             f = var_lin
         else:
             dom = domain
+        if np.any(weights):
+            g = weights * f / weights.sum()
+        else:
+            g = f
         center = dom.size // 2
         dom -= dom[center]  # shift to zero
         new_domains.insert(i, dom)
-    norm = f.size * np.var(f)
-    corr = signal.correlate(f, f, mode="same", method="direct") / norm
+    norm = f.size * np.std(f) * np.std(g)
+    corr = signal.correlate(f, g, mode="same", method="direct") / norm
 
     return new_domains, corr
 
 
-def corr_len(x, corr, axis=-1):
+def corr_len(x, corr, axis=-1, weights=None):
     n = x.size
     n2 = n // 2
+    index = list(np.array(corr.shape) // 2)
+    index[axis] = np.arange(n2, n)
     r = x[n2:]
-    if corr.ndim > 1:
-        dims = np.arange(corr.ndim)
-        mean_axes = tuple(np.delete(dims, axis))
-        C = corr.mean(axis=mean_axes)[n2:]
+    C = np.real(corr[index])
+    if np.any(weights):
+        w = weights[n2:]
+        clen = np.average(C, weights=w) * n2
     else:
-        C = corr[n2:]
-    corr_len = np.real(np.sum(r * C))
-    return corr_len
+        clen = np.sum(C)
+    scale = r[1] - r[0]
+    clen *= scale
+    return clen
 
 
 def linear_resample(domain, data, axis, samplerate=2):
@@ -634,8 +641,8 @@ def test_corr(mode, doms, corr):
     y = doms[0]
 
     corr_time = corr_len(doms[0], corr, axis=0)
-    w2 = mode.geometry["gjacobian"][mode.nz // 2 :]
-    corr_len1 = corr_len(doms[1], corr, 1, w2)
+    w = mode.geometry["gjacobian"]
+    corr_len1 = corr_len(doms[1], corr, 1, w)
     corr_len2 = corr_len(doms[1], corr, 1)
     print("corr_time, corr_len1, corr_len2 = ", corr_time, corr_len1, corr_len2)
 
