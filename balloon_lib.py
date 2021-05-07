@@ -571,8 +571,6 @@ def output_scales(modes, scales, varname, intype="POD"):
 
 def autocorrelate_tz(var, domains, weights=None):
     """Calculate correlation time and length(z)"""
-    datatype = var.dtype
-
     # if not np.all(var.shape == [len(domain) for domain in domains]):
     #     Raise
 
@@ -807,6 +805,8 @@ def check_suffix(run_number):
         print("Please enter a valid run number, e.g. .dat or 0123")
         return None
     return suffix
+
+
 def test_pod(mode, u, sv, vh, fields):
     """testing that pod behaved in the expected way"""
     npods = u.shape[0]
