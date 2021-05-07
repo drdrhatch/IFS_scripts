@@ -629,7 +629,16 @@ def is_even(array, tol=1e-6):
     return even_dt
 
 
-def test_corr(x, y, corr):
+def test_corr(mode, doms, corr):
+    x = doms[1]
+    y = doms[0]
+
+    corr_time = corr_len(doms[0], corr, axis=0)
+    w2 = mode.geometry["gjacobian"][mode.nz // 2 :]
+    corr_len1 = corr_len(doms[1], corr, 1, w2)
+    corr_len2 = corr_len(doms[1], corr, 1)
+    print("corr_time, corr_len1, corr_len2 = ", corr_time, corr_len1, corr_len2)
+
     plt.contourf(x, y, corr)
     plt.colorbar()
     plt.show()
