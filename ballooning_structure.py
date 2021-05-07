@@ -131,12 +131,12 @@ for i, mode in enumerate(ky_modes):
     else:
         if args.avgs:
             phi = mode.fields["phi"]
-            norm_phi = bl.norm_z_field(mode, phi)
-            avg_phi = bl.avg_t_field(mode, phi)
             t, t_corr, corr_time = bl.autocorrelate(mode, norm_phi, times, axis=-1)
             r, r_corr, corr_len = bl.autocorrelate(
                 mode, avg_phi, mode.zgrid_ext * np.pi, axis=-1
             )
+            mean_phi = bl.mean_tzx(mode, phi, pars)
+            dphi = phi[:, :, 0]  # average over kx
             avg_freq = bl.avg_freq_tz(mode, times, phi)
             avg_kz = bl.avg_kz_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]

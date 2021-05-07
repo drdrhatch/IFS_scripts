@@ -622,11 +622,12 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     return r, corr, corr_len
 
 
-def norm_z_field(mode, var):
+def avg_z_field(mode, var):
     fvar = var[:, :, mode.kx_modes]
     evar = get_extended_var(mode, fvar)
-    norm_var = la.norm(evar, axis=-1)
-    return norm_var
+    jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
+    avg_var = np.average(evar, weights=jac_ext, axis=-1)
+    return avg_var
 
 
 def avg_t_field(mode, var):
@@ -650,6 +651,16 @@ def avg_freq_tz(mode, times, var):
     omega = avg_freq(times, evar)
     avg_omega = np.sqrt(np.mean(omega ** 2))
     return avg_omega
+
+
+def mean_tzx(mode, var, pars):
+    """Find mean of input field (var)"""
+    jac = mode.geometry["gjacobian"]
+    lx = pars["lx"]
+    mean_var = (
+        2 * np.pi / lx * np.mean(np.average(var[:, :, 0], weights=jac, axis=1), axis=0)
+    )
+    return mean_var
 
 
 def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
