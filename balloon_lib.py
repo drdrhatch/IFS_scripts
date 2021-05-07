@@ -8,6 +8,8 @@ try:
     import scipy.linalg as la
 except ImportError:
     import numpy.linalg as la
+from scipy import interpolate
+from scipy import signal
 import numpy as np
 import ParIO as pario
 import fieldlib
@@ -567,7 +569,77 @@ def output_scales(modes, scales, varname, intype="POD"):
     )
 
 
-def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
+def autocorrelate_tz(var, domains, weights=None):
+    """Calculate correlation time and length(z)"""
+    datatype = var.dtype
+
+    # if not np.all(var.shape == [len(domain) for domain in domains]):
+    #     Raise
+
+    even_dt = [is_even(domain) for domain in domains]
+
+    new_domains = []
+    f = var
+    for i, (even, domain) in enumerate(zip(even_dt, domains)):
+        if not even:
+            dom, var_lin = linear_resample(domain, f, axis=i)
+            f = var_lin
+        else:
+            dom = domain
+        center = dom.size // 2
+        dom -= dom[center]  # shift to zero
+        new_domains.insert(i, dom)
+    norm = f.size * np.var(f)
+    corr = signal.correlate(f, f, mode="same", method="direct") / norm
+
+    return new_domains, corr
+
+
+def corr_len(x, corr, axis=-1):
+    n = x.size
+    n2 = n // 2
+    r = x[n2:]
+    if corr.ndim > 1:
+        dims = np.arange(corr.ndim)
+        mean_axes = tuple(np.delete(dims, axis))
+        C = corr.mean(axis=mean_axes)[n2:]
+    else:
+        C = corr[n2:]
+    corr_len = np.real(np.sum(r * C))
+    return corr_len
+
+
+def linear_resample(domain, data, axis, samplerate=2):
+    """Resamples data onto spaced data onto a linear grid"""
+    npts = domain.size
+    samples = samplerate * npts
+    dom_lin = np.linspace(domain[0], domain[-1], samples)
+    # print(domain, dom_lin)
+    data_interp = interpolate.interp1d(domain, data, axis=axis)
+    data_lin = data_interp(dom_lin)
+    print(dom_lin.shape, data_lin.shape)
+    return dom_lin, data_lin
+
+
+def is_even(array, tol=1e-6):
+    # print(type(array), array.shape)
+    dt = np.diff(array)
+    test_dt = np.floor(dt / tol)
+    even_dt = np.all(test_dt == test_dt[0])
+    return even_dt
+
+
+def test_corr(x, y, corr):
+    plt.contourf(x, y, corr)
+    plt.colorbar()
+    plt.show()
+    fig = plot(x, corr[y.size // 2, :], "C(dt=0,dz)", "Phi correlation")
+    plt.show()
+    fig = plot(y, corr[:, x.size // 2], "C(dt,dz=0)", "Phi correlation")
+    plt.show()
+
+
+def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e-6):
     """Calculate correlation length/time for given input field"""
     datatype = var.dtype
     if var.ndim > 2:
