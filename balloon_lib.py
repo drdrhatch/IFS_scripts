@@ -529,16 +529,15 @@ def avg_kz(mode, var, outspect=False):
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
-    dz = np.expand_dims(np.diff(zgrid)[zstart:zend], -1)
     dfdz1 = dfielddz[zstart:zend]
     dfdz2 = dfielddz[zstart + 1 : zend + 1]
     jac = jacxBpi_ext[zstart:zend]
     f1 = field[zstart:zend]
     f2 = field[zstart + 1 : zend + 1]
 
-    ddz = 0.5 * (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) / dz * jac
+    ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
     sum_ddz = np.sum(ddz, axis=0)
-    denom = np.sum(0.5 * (abs(f1) ** 2 + abs(f2) ** 2) / dz * jac, axis=0)
+    denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
     akz = np.sqrt(sum_ddz / denom).T
     if outspect:
         return akz, ddz
