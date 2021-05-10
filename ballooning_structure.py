@@ -135,11 +135,10 @@ for i, mode in enumerate(ky_modes):
             dphi = phi[:, :, 0]  # average over kx
             w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
             w2 = mode.geometry["gjacobian"]
-            print(w1.shape, w2.shape)
             doms, corr = bl.autocorrelate_tz(dphi, (times, mode.zgrid), w1)
             corr_time = bl.corr_len(doms[0], corr, axis=0)
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
-            bl.test_corr(mode, doms, corr)
+            # bl.test_corr(mode, doms, corr)
             avg_freq = bl.avg_freq_tz(mode, times, phi)
             avg_kz = bl.avg_kz_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]

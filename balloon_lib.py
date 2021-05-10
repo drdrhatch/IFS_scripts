@@ -619,15 +619,12 @@ def linear_resample(domain, data, axis, samplerate=2):
     npts = domain.size
     samples = samplerate * npts
     dom_lin = np.linspace(domain[0], domain[-1], samples)
-    # print(domain, dom_lin)
     data_interp = interpolate.interp1d(domain, data, axis=axis)
     data_lin = data_interp(dom_lin)
-    print(dom_lin.shape, data_lin.shape)
     return dom_lin, data_lin
 
 
 def is_even(array, tol=1e-6):
-    # print(type(array), array.shape)
     dt = np.diff(array)
     test_dt = np.floor(dt / tol)
     even_dt = np.all(test_dt == test_dt[0])
