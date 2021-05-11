@@ -131,7 +131,6 @@ for i, mode in enumerate(ky_modes):
     else:
         if args.avgs:
             phi = mode.fields["phi"]
-            mean_phi = bl.mean_tzx(mode, phi, pars)
             dphi = phi[:, :, 0]  # average over kx
             w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
             w2 = mode.geometry["gjacobian"]
