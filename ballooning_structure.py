@@ -120,7 +120,11 @@ for i, mode in enumerate(ky_modes):
         if args.avgs:
             t, t_corr, corr_time = bl.autocorrelate(mode, u, times, axis=0)
             r, r_corr, corr_len = bl.autocorrelate(
-                mode, VH["phi"], mode.zgrid_ext * np.pi, axis=-1
+                mode,
+                VH["phi"],
+                mode.zgrid_ext * np.pi,
+                weights=mode.geometry["gjacobian"],
+                axis=-1,
             )
             avg_freq = bl.avg_freq(times, u)
             avg_kz = bl.avg_kz(mode, VH["phi"])

@@ -655,6 +655,7 @@ def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e
     datatype = var.dtype
     if var.ndim > 2:
         fvar = get_extended_var(mode, var)
+        weight = np.tile(weights, mode.kx_modes.size)
     else:
         fvar = var
 
@@ -693,11 +694,19 @@ def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e
         corr = np.empty((f.shape[0], N2), dtype=datatype)
         for i, row in enumerate(f):
             f1 = row
-            corr[i] = np.correlate(f1, f1, mode="same")[N2:] / norm
+            if np.any(weights):
+                g1 = weight * f1
+            else:
+                g1 = f1
+            corr[i] = np.correlate(f1, g1, mode="same")[N2:] / norm
             corr[i] /= corr[i, 0]
     else:
         f1 = f
-        corr = np.correlate(f1, f1, mode="same")[N2:] / norm
+        if np.any(weights):
+            g1 = weight * f1
+        else:
+            g1 = f1
+        corr = np.correlate(f1, g1, mode="same")[N2:] / norm
         corr /= corr[0]
     r = np.linspace(0, (dom[-1] - dom[0]) / 2, N2)
     scale = r[1] - r[0]
