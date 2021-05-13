@@ -760,8 +760,7 @@ def mean_tzx(mode, var, pars):
 
 def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
     var = mode.fields[varname]
-    fvar = var[:, :, mode.kx_modes]
-    evar = get_extended_var(mode, fvar)
+    evar = get_extended_var(mode, var)
     f = evar
     ntimes = times.size
     dt = np.diff(times)
