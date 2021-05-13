@@ -478,7 +478,7 @@ def fft_nonuniform(times, f, axis=0, samplerate=2):
     return f_hat, times_lin
 
 
-def avg_freq(times, f, axis=0, samplerate=2):
+def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     """Returns the dominant frequency from field"""
     ntimes = times.size
     dt = np.diff(times)
@@ -500,6 +500,8 @@ def avg_freq(times, f, axis=0, samplerate=2):
         weights = np.sum(omegas ** 2 * abs(f_hat) ** 2)
     norm = np.sum(abs(f_hat) ** 2, axis=axis)
     freq = np.sqrt(weights / norm)
+    if norm_out:
+        return freq, norm
     return freq
 
 
@@ -512,7 +514,7 @@ def get_extended_var(mode, var):
     return ext_var
 
 
-def avg_kz(mode, var, outspect=False):
+def avg_kz(mode, var, outspect=False, norm_out=False):
     """Calculate the average kz mode weighted by given field"""
     jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
     jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
@@ -542,6 +544,8 @@ def avg_kz(mode, var, outspect=False):
     akz = np.sqrt(sum_ddz / denom).T
     if outspect:
         return akz, ddz
+    if norm_out:
+        return akz, denom
     return akz
 
 
@@ -730,18 +734,17 @@ def avg_t_field(mode, var):
 
 
 def avg_kz_tz(mode, var):
-    fvar = var[:, :, mode.kx_modes]
-    evar = get_extended_var(mode, fvar)
-    kz = avg_kz(mode, evar)
-    mean_kz = np.sqrt(np.mean(kz ** 2))
+    evar = get_extended_var(mode, var)
+    kz, norm = avg_kz(mode, evar, norm_out=True)
+    mean_kz = np.sqrt(np.sum(kz ** 2 * norm) / np.sum(norm))
     return mean_kz
 
 
 def avg_freq_tz(mode, times, var):
-    fvar = var[:, :, mode.kx_modes]
-    evar = get_extended_var(mode, fvar)
+    evar = get_extended_var(mode, var)
     omega = avg_freq(times, evar)
-    avg_omega = np.sqrt(np.mean(omega ** 2))
+    jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
+    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_ext))
     return avg_omega
 
 
