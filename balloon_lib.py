@@ -736,7 +736,7 @@ def avg_t_field(mode, var):
 def avg_kz_tz(mode, var):
     evar = get_extended_var(mode, var)
     kz, norm = avg_kz(mode, evar, norm_out=True)
-    mean_kz = np.sqrt(np.sum(kz ** 2 * norm) / np.sum(norm))
+    mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
     return mean_kz
 
 
