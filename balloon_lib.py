@@ -742,9 +742,10 @@ def avg_kz_tz(mode, var):
 
 def avg_freq_tz(mode, times, var):
     evar = get_extended_var(mode, var)
-    omega = avg_freq(times, evar)
+    omega, norm = avg_freq(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
-    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_ext))
+    jac_norm = jac_ext * norm
+    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_norm))
     return avg_omega
 
 
