@@ -2,13 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-bin=10
+#instruction: on can put local linear simulations 
 
-n1_doppler=-0
+
+bin=100
+
+n1_doppler=-7.
 
 contour_plot_ky_max=0.25
 
-f_min=0
+f_min=00
 f_max=600
 
 n_min=0
@@ -17,9 +20,9 @@ kymin=0.03
 ky_1=0.00775536103953903
 n_step=kymin/ky_1
 print(n_step)
-path='2d_list/36_midplan_hann_no_square'
+path='./HD_36th_Z/RIP_csv'
 
-Frequency_flip=True  #change to True if one wants to look at electron direction
+Frequency_flip=True      #change to True if one wants to look at electron direction
 
 if Frequency_flip==True:
     label0='electron direction f(kHz)'
@@ -32,27 +35,27 @@ else:
 #ky_1=0.008
 
 
-plot_scale=1.5 #How much blank space one wants in y axis
+plot_scale=1.2 #How much blank space one wants in y axis
 sim_scale=1.    #the y_plot_sim=y_sim*sim_scale
 norm_to_max=True    #Ture if one wants to noralized sim and exp to their respected maximum
 
 plot_linear=False  #plot linear contour
-plot_log=False    #plot log contour
+plot_log=True      #plot log contour
 plot_subplot=True      #Plot subplot for the different ky
 total_row=3			#Total rows for the subplot
 
-#omstar=(1.2*8.77304279894492+abs(n1_doppler))
-eta=2.16596001839912
+
+eta=2.16596001839912*1.2
 omn=2.77105293432639
 
 omegastar_nor=omn*(1.+eta)
 omstar=(omegastar_nor+abs(n1_doppler))
-#omegastar_nor_120=omn*(1.+1.2*eta)
-#omstar120=(omegastar_nor_120+abs(n1_doppler))
+
 
 f_csv=pd.read_csv(path+'/0f_list.csv')  
 f=f_csv['f(kHz)']
 
+print('len(f)'+str(len(f)))
 
 LL_csv=pd.read_csv('./LL_MTM.csv')  
 LL_f_plasma=LL_csv['omega(kHz)']
@@ -114,7 +117,7 @@ print('n_list'+str(n_list))
 #print(np.min(f))
 #print(np.max(f))
 
-uni_freq=np.linspace(np.min(f), np.max(f)+np.max(n_list)*n1_doppler,num=len(f)*10)
+uni_freq=np.linspace(np.min(f), np.max(f)+np.max(n_list)*n1_doppler,num=int(len(f)*1.2))
 
 frequency_kHZ_uni=np.zeros( (len(ky), len(uni_freq)) )
 amplitude_frequency_uni=np.zeros( (len(ky), len(uni_freq)) )
@@ -149,26 +152,33 @@ ky_list=np.arange(np.min(ky_plot),np.max(ky_plot),0.0000001)
 
 print('ky_list'+str(ky_list))
 
-if plot_linear==True:
+if plot_linear==True: 
     plt.clf()
     plt.ylabel(r'$k_y \rho_s$',fontsize=10)
     plt.xlabel(r'$f(kHz)$',fontsize=10)
+    #plt.plot(omstar120*ky_list/ky_1,ky_list,label=r'line of $\omega_{*e}$ with 1.2 $\omega_{*Te}$')
     plt.plot(omstar*ky_list/ky_1,ky_list,label=r'line of $\omega_{*e}$')
-    plt.contourf(frequency_kHZ_uni,ky_plot,amplitude_frequency_uni,levels=10000,extend='both')#[100,50,50])#,cmap='RdGy')
+    for i in range(len(LL_f)):
+        if i == 1:
+            plt.plot(-LL_f[i],LL_ky[i],'o',color='orange',markersize=10.*LL_gamma[i],alpha=0.5,label=r'Local linear simulations')
+        else: 
+            plt.plot(-LL_f[i],LL_ky[i],'o',color='orange',markersize=10.*LL_gamma[i],alpha=0.5)
+    plt.contourf(frequency_kHZ_uni,ky_plot,amplitude_frequency_uni,levels=1000,extend='both')#,cmap='RdGy')
     #plt.contourf(-frequency_kHZ_uni,ky_plot,amplitude_frequency_uni)#,level=[50,50,50])#,cmap='RdGy')
-
     for i_n in range(int(np.max(n_list))):
         if i_n%5==0:
             plt.axhline(i_n*ky_1,color='red',alpha=0.5)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
         else:
             plt.axhline(i_n*ky_1,color='red',alpha=0.1)#alpha control the transparency, alpha=0 transparency, alpha=1 solid
     plt.axhline(ky[0],color='red',alpha=0.5,label='n starts from '+str(int(n_list[0])) )#alpha control the transparency, alpha=0 transparency, alpha=1 solid
-    plt.xlim(0,600)
-    plt.ylim(0,contour_plot_ky_max)
-    plt.legend()
+
+    plt.xlim(0,1000)
+    plt.ylim(0,contour_plot_ky_max*2)
     plt.colorbar()
-    plt.title(r'$B_r$ contour plot',fontsize=10)
-    plt.savefig('contour.png')
+    plt.legend(loc='upper left')
+    plt.title(r'log($B_r$) contour plot',fontsize=10)
+    #plt.title(r'$B_r$ contour plot',fontsize=10)
+    plt.savefig('contour_log.png')
     plt.show()
 
 if plot_log==True: 
@@ -179,7 +189,7 @@ if plot_log==True:
     plt.plot(omstar*ky_list/ky_1,ky_list,label=r'line of $\omega_{*e}$')
     for i in range(len(LL_f)):
         if i == 1:
-            plt.plot(-LL_f[i],LL_ky[i],'o',color='orange',markersize=10.*LL_gamma[i],alpha=0.5,label=r'Local linear simulations')
+            plt.plot(-LL_f[i],LL_ky[i],'o',color='orange',markersize=10.*LL_gamma[i],alpha=0.9,label=r'Local linear simulations')
         else: 
             plt.plot(-LL_f[i],LL_ky[i],'o',color='orange',markersize=10.*LL_gamma[i],alpha=0.5)
     plt.contourf(frequency_kHZ_uni,ky_plot,np.log10(amplitude_frequency_uni),levels=1000,extend='both')#,cmap='RdGy')
@@ -357,13 +367,13 @@ plt.clf()
 ax=df_exp.plot(kind='scatter',x='f(kHz)',xerr='f_err(kHz)',y='B_R(Gauss)',yerr='B_R_err(Gauss)',\
        ylim=(0.00,sim_max),xlim=(f_min,f_max),\
        color='red',label='Experiment',alpha=0.5)
-df.plot(kind='scatter',x='f(kHz)',y='B_R(Gauss)',\
-      ylim=(0.00,sim_max),xlim=(f_min,f_max),\
-      secondary_y=True,color='green',label='GENE simulation',ax=ax)
-
-#df.plot(kind='scatter',x='f(kHz)',xerr='f_err(kHz)',y='B_R(Gauss)',yerr='B_R_err(Gauss)',\
-#     ylim=(0.00,sim_max),xlim=(-f_max,-f_min),\
+#df.plot(kind='scatter',x='f(kHz)',y='B_R(Gauss)',\
+#      ylim=(0.00,sim_max),xlim=(f_min,f_max),\
 #      secondary_y=True,color='green',label='GENE simulation',ax=ax)
+
+df.plot(kind='scatter',x='f(kHz)',xerr='f_err(kHz)',y='B_R(Gauss)',yerr='B_R_err(Gauss)',\
+     ylim=(0.00,sim_max),xlim=(f_min,f_max),\
+      secondary_y=True,color='green',label='GENE simulation',ax=ax)
 
 
 ax.set_xlabel(r'$frequency(kHz)$',fontsize=15)
@@ -376,4 +386,4 @@ plt.show()
 
 
 #********RIP***********
-
+print('len(f)'+str(len(f)))
