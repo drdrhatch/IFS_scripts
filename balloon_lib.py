@@ -8,6 +8,8 @@ try:
     import scipy.linalg as la
 except ImportError:
     import numpy.linalg as la
+from scipy import interpolate
+from scipy import signal
 import numpy as np
 import ParIO as pario
 import fieldlib
@@ -44,6 +46,8 @@ class KyMode:
         self.ky = ky * pars["kymin"]
         self.nx = field_file.nx
         self.nz = field_file.nz
+        self.T0 = pars["temp1"]
+        self.n0 = pars["dens1"]
         self.construct_ranges(pars)
         self.define_phase(pars)
         self.define_dictionary(field_file, mom_file)
@@ -99,7 +103,7 @@ class KyMode:
         self.fields = dict.fromkeys(fields, None)
 
     def read_field(self, varname):
-        """ Read field for a given time window, returning array"""
+        """Read field for a given time window, returning array"""
         var = self.field_vars[varname]()
         if var.shape[1] == 1:  # for linear scan data with single ky
             indy = 0
@@ -301,13 +305,14 @@ def plot_singular_values(mode, sv, show=True, save=False):
 
 
 def plot_heat_flux(mode, Q, show=True, save=False):
-    heat = np.real(Q.sum(axis=(1, 2)))
+    Q_x = np.sum(Q, axis=2)
+    Q_xz = np.average(Q_x, weights=mode.geometry["gjacobian"], axis=1)
     if save:
         fname = "qsum"
-        output_cum_sum(mode, heat, "q")
+        output_cum_sum(mode, Q_xz, "q")
     else:
         fname = None
-    plot_cumulative_array(mode, heat, "Heat flux", show, fname)
+    plot_cumulative_array(mode, Q_xz, "Heat flux", show, fname)
 
 
 def get_varname(var):
@@ -349,12 +354,11 @@ def sum_x(mode, varname):
     return xsum
 
 
-def pod(mode, varname):
-    var = mode.fields[varname]
+def pod(mode, var):
     ntimes = var.shape[0]
-    pvar = var[:, :, mode.kx_modes].reshape(ntimes, -1, order="F")
+    pvar = var.reshape(ntimes, -1, order="F")
     u, sv, vtmp = la.svd(pvar, full_matrices=False)
-    vh = vtmp.reshape(-1, mode.nz, mode.kx_modes.size, order="F")
+    vh = vtmp.reshape(-1, mode.nz, mode.nx, order="F")
     return u, sv, vh
 
 
@@ -385,13 +389,25 @@ def collective_pod(mode, fields, extend=True):
     return u, sv, VH
 
 
-def calc_heat_flux(ky, fields):
+def calc_heat_flux(mode, fields, weights=None):
     phi = fields["phi"]
     tpar = fields["tpar"]
     tperp = fields["tperp"]
     dens = fields["dens"]
-    tmp = -1j * ky * phi * np.conj(0.5 * tpar + tperp + 1.5 * dens)
-    heat_flux = tmp + np.conj(tmp)
+    ky = mode.ky
+    n0 = mode.n0
+    T0 = mode.T0
+    if "C_xy" in mode.geometry:
+        Cxy = mode.geometry["C_xy"]
+    else:
+        Cxy = 1
+    temp1 = -1j * n0 * T0 * ky * phi / Cxy * np.conj(0.5 * tpar + tperp + 1.5 * dens)
+    # \/ not divided by 2 because we only have half the ky modes
+    temp2 = np.real_if_close(temp1 + np.conj(temp1))
+    if np.any(weights):
+        heat_flux = weights[:, np.newaxis, np.newaxis] * temp2
+    else:
+        heat_flux = temp2
     return heat_flux
 
 
@@ -411,8 +427,8 @@ def get_plot_variable(mode, var, extend):
         zgrid = mode.zgrid
     if norm == 0:
         norm = 1
-    pvar *= 1 / norm
-    return pvar, zgrid
+    pvar_norm = pvar / norm
+    return pvar_norm, zgrid
 
 
 def get_input_params(directory, suffix, geom=None):
@@ -462,7 +478,7 @@ def fft_nonuniform(times, f, axis=0, samplerate=2):
     return f_hat, times_lin
 
 
-def avg_freq(times, f, axis=0, samplerate=2):
+def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     """Returns the dominant frequency from field"""
     ntimes = times.size
     dt = np.diff(times)
@@ -484,18 +500,21 @@ def avg_freq(times, f, axis=0, samplerate=2):
         weights = np.sum(omegas ** 2 * abs(f_hat) ** 2)
     norm = np.sum(abs(f_hat) ** 2, axis=axis)
     freq = np.sqrt(weights / norm)
+    if norm_out:
+        return freq, norm
     return freq
 
 
 def get_extended_var(mode, var):
     """Flattens array over last two dimensions to return z-extended variable"""
+    evar = var[:, :, mode.kx_modes]
     phase = np.expand_dims(mode.phase, axis=0)
     newshape = (var.shape[0], -1)
-    ext_var = np.reshape(var * phase, newshape, order="F")
+    ext_var = np.reshape(evar * phase, newshape, order="F")
     return ext_var
 
 
-def avg_kz(mode, var, outspect=False):
+def avg_kz(mode, var, outspect=False, norm_out=False):
     """Calculate the average kz mode weighted by given field"""
     jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
     jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
@@ -513,19 +532,20 @@ def avg_kz(mode, var, outspect=False):
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
-    dz = np.expand_dims(np.diff(zgrid)[zstart:zend], -1)
     dfdz1 = dfielddz[zstart:zend]
     dfdz2 = dfielddz[zstart + 1 : zend + 1]
     jac = jacxBpi_ext[zstart:zend]
     f1 = field[zstart:zend]
     f2 = field[zstart + 1 : zend + 1]
 
-    ddz = 0.5 * (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) / dz * jac
+    ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
     sum_ddz = np.sum(ddz, axis=0)
-    denom = np.sum(0.5 * (abs(f1) ** 2 + abs(f2) ** 2) / dz * jac, axis=0)
+    denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
     akz = np.sqrt(sum_ddz / denom).T
     if outspect:
         return akz, ddz
+    if norm_out:
+        return akz, denom
     return akz
 
 
@@ -553,11 +573,93 @@ def output_scales(modes, scales, varname, intype="POD"):
     )
 
 
-def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
+def autocorrelate_tz(var, domains, weights=None):
+    """Calculate correlation time and length(z)"""
+    # if not np.all(var.shape == [len(domain) for domain in domains]):
+    #     Raise
+
+    even_dt = [is_even(domain) for domain in domains]
+
+    new_domains = []
+    f = var
+    for i, (even, domain) in enumerate(zip(even_dt, domains)):
+        if not even:
+            dom, var_lin = linear_resample(domain, f, axis=i)
+            f = var_lin
+        else:
+            dom = domain
+        if np.any(weights):
+            g = weights * f / weights.sum()
+        else:
+            g = f
+        center = dom.size // 2
+        dom -= dom[center]  # shift to zero
+        new_domains.insert(i, dom)
+    norm = f.size * np.std(f) * np.std(g)
+    corr = signal.correlate(f, g, mode="same", method="auto") / norm
+
+    return new_domains, corr
+
+
+def corr_len(x, corr, axis=-1, weights=None):
+    n = x.size
+    n2 = n // 2
+    index = list(np.array(corr.shape) // 2)
+    index[axis] = np.arange(n2, n)
+    r = x[n2:]
+    C = np.real(corr[index])
+    if np.any(weights):
+        w = weights[n2:]
+        clen = np.average(C, weights=w) * n2
+    else:
+        clen = np.sum(C)
+    scale = r[1] - r[0]
+    clen *= scale
+    return clen
+
+
+def linear_resample(domain, data, axis, samplerate=2):
+    """Resamples data onto spaced data onto a linear grid"""
+    npts = domain.size
+    samples = samplerate * npts
+    dom_lin = np.linspace(domain[0], domain[-1], samples)
+    data_interp = interpolate.interp1d(domain, data, axis=axis)
+    data_lin = data_interp(dom_lin)
+    return dom_lin, data_lin
+
+
+def is_even(array, tol=1e-6):
+    dt = np.diff(array)
+    test_dt = np.floor(dt / tol)
+    even_dt = np.all(test_dt == test_dt[0])
+    return even_dt
+
+
+def test_corr(mode, doms, corr):
+    x = doms[1]
+    y = doms[0]
+
+    corr_time = corr_len(doms[0], corr, axis=0)
+    w = mode.geometry["gjacobian"]
+    corr_len1 = corr_len(doms[1], corr, 1, w)
+    corr_len2 = corr_len(doms[1], corr, 1)
+    print("corr_time, corr_len1, corr_len2 = ", corr_time, corr_len1, corr_len2)
+
+    plt.contourf(x, y, corr)
+    plt.colorbar()
+    plt.show()
+    fig = plot(x, corr[y.size // 2, :], "C(dt=0,dz)", "Phi correlation")
+    plt.show()
+    fig = plot(y, corr[:, x.size // 2], "C(dt,dz=0)", "Phi correlation")
+    plt.show()
+
+
+def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e-6):
     """Calculate correlation length/time for given input field"""
     datatype = var.dtype
     if var.ndim > 2:
         fvar = get_extended_var(mode, var)
+        weight = np.tile(weights, mode.kx_modes.size)
     else:
         fvar = var
 
@@ -596,11 +698,19 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
         corr = np.empty((f.shape[0], N2), dtype=datatype)
         for i, row in enumerate(f):
             f1 = row
-            corr[i] = np.correlate(f1, f1, mode="same")[N2:] / norm
+            if np.any(weights):
+                g1 = weight * f1
+            else:
+                g1 = f1
+            corr[i] = np.correlate(f1, g1, mode="same")[N2:] / norm
             corr[i] /= corr[i, 0]
     else:
         f1 = f
-        corr = np.correlate(f1, f1, mode="same")[N2:] / norm
+        if np.any(weights):
+            g1 = weight * f1
+        else:
+            g1 = f1
+        corr = np.correlate(f1, g1, mode="same")[N2:] / norm
         corr /= corr[0]
     r = np.linspace(0, (dom[-1] - dom[0]) / 2, N2)
     scale = r[1] - r[0]
@@ -608,11 +718,12 @@ def autocorrelate(mode, var, domain, axis=-1, samplerate=2, tol=1e-6):
     return r, corr, corr_len
 
 
-def norm_z_field(mode, var):
+def avg_z_field(mode, var):
     fvar = var[:, :, mode.kx_modes]
     evar = get_extended_var(mode, fvar)
-    norm_var = la.norm(evar, axis=-1)
-    return norm_var
+    jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
+    avg_var = np.average(evar, weights=jac_ext, axis=-1)
+    return avg_var
 
 
 def avg_t_field(mode, var):
@@ -623,25 +734,34 @@ def avg_t_field(mode, var):
 
 
 def avg_kz_tz(mode, var):
-    fvar = var[:, :, mode.kx_modes]
-    evar = get_extended_var(mode, fvar)
-    kz = avg_kz(mode, evar)
-    mean_kz = np.sqrt(np.mean(kz ** 2))
+    evar = get_extended_var(mode, var)
+    kz, norm = avg_kz(mode, evar, norm_out=True)
+    mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
     return mean_kz
 
 
 def avg_freq_tz(mode, times, var):
-    fvar = var[:, :, mode.kx_modes]
-    evar = get_extended_var(mode, fvar)
-    omega = avg_freq(times, evar)
-    avg_omega = np.sqrt(np.mean(omega ** 2))
+    evar = get_extended_var(mode, var)
+    omega, norm = avg_freq(times, evar, norm_out=True)
+    jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
+    jac_norm = jac_ext * norm
+    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_norm))
     return avg_omega
+
+
+def mean_tzx(mode, var, pars):
+    """Find mean of input field (var)"""
+    jac = mode.geometry["gjacobian"]
+    lx = pars["lx"]
+    mean_var = (
+        2 * np.pi / lx * np.mean(np.average(var[:, :, 0], weights=jac, axis=1), axis=0)
+    )
+    return mean_var
 
 
 def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
     var = mode.fields[varname]
-    fvar = var[:, :, mode.kx_modes]
-    evar = get_extended_var(mode, fvar)
+    evar = get_extended_var(mode, var)
     f = evar
     ntimes = times.size
     dt = np.diff(times)
@@ -694,3 +814,29 @@ def check_suffix(run_number):
         print("Please enter a valid run number, e.g. .dat or 0123")
         return None
     return suffix
+
+
+def test_pod(mode, u, sv, vh, fields):
+    """testing that pod behaved in the expected way"""
+    npods = u.shape[0]
+    nx = mode.nx
+    nz = mode.nz
+    print("Shapes")
+    print("------------")
+    print("u : ", u.shape)
+    print("sv : ", sv.shape)
+    print("vh['phi'] : ", vh["phi"].shape)
+    for field in fields:
+        original = mode.fields[field]
+        new = np.empty(original.shape, dtype=original.dtype)
+        temp2 = np.zeros((npods, nx * nz), dtype=original.dtype)
+        for i in range(npods):
+            temp1 = vh[field].reshape((npods, -1))
+            temp2 += sv[i] * np.outer(u[:, i], temp1[i])
+        new = temp2.reshape((-1, nz, nx))
+        print("Are the arrays close?....", np.allclose(original, new, atol=1e-6))
+    Q = calc_heat_flux(mode, vh, sv ** 2)
+    Q_sum = np.mean(
+        np.average(Q.sum(axis=2), axis=1, weights=mode.geometry["gjacobian"]), axis=0
+    )
+    print("Q_sum(ky = %d) = ", mode.ky, Q_sum)
