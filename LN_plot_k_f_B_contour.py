@@ -5,13 +5,15 @@ import pandas as pd
 #instruction: on can put local linear simulations 
 
 
-bin=100
+bin=10
 
-n1_doppler=-7.
+quant_name='B1'  #'B1' or 'n1'
+
+n1_doppler=-8.
 
 contour_plot_ky_max=0.25
 
-f_min=00
+f_min=100
 f_max=600
 
 n_min=0
@@ -20,7 +22,7 @@ kymin=0.03
 ky_1=0.00775536103953903
 n_step=kymin/ky_1
 print(n_step)
-path='./HD_36th_Z/RIP_csv'
+path='./33rd_3spec_nky24/RIP_csv'
 
 Frequency_flip=True      #change to True if one wants to look at electron direction
 
@@ -40,12 +42,12 @@ sim_scale=1.    #the y_plot_sim=y_sim*sim_scale
 norm_to_max=True    #Ture if one wants to noralized sim and exp to their respected maximum
 
 plot_linear=False  #plot linear contour
-plot_log=True      #plot log contour
+plot_log=False      #plot log contour
 plot_subplot=True      #Plot subplot for the different ky
 total_row=3			#Total rows for the subplot
 
 
-eta=2.16596001839912*1.2
+eta=2.16596001839912
 omn=2.77105293432639
 
 omegastar_nor=omn*(1.+eta)
@@ -67,7 +69,7 @@ LL_f=LL_f_plasma+LL_ky/ky_1*n1_doppler
 ky_csv=pd.read_csv(path+'/0ky_list.csv')  
 ky=ky_csv['ky']
 
-f1=open(path+"/0B1_matrix_f_ky.csv","r")
+f1=open(path+"/0"+quant_name+"_matrix_f_ky.csv","r")
 lines=f1.readlines() 
 
 if Frequency_flip==True:
@@ -176,7 +178,7 @@ if plot_linear==True:
     plt.ylim(0,contour_plot_ky_max*2)
     plt.colorbar()
     plt.legend(loc='upper left')
-    plt.title(r'log($B_r$) contour plot',fontsize=10)
+    plt.title(r'log('+quant_name+') contour plot',fontsize=10)
     #plt.title(r'$B_r$ contour plot',fontsize=10)
     plt.savefig('contour_log.png')
     plt.show()
@@ -205,7 +207,7 @@ if plot_log==True:
     plt.ylim(0,contour_plot_ky_max*2)
     plt.colorbar()
     plt.legend(loc='upper left')
-    plt.title(r'log($B_r$) contour plot',fontsize=10)
+    plt.title(r'log('+quant_name+') contour plot',fontsize=10)
     #plt.title(r'$B_r$ contour plot',fontsize=10)
     plt.savefig('contour_log.png')
     plt.show()
