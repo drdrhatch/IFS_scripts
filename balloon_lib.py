@@ -538,10 +538,10 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
     f1 = field[zstart:zend]
     f2 = field[zstart + 1 : zend + 1]
 
-    ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
-    sum_ddz = np.sum(ddz, axis=0)
-    denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
-    akz = np.sqrt(sum_ddz / denom).T
+    ddz = dfdz1 * np.conj(f1) + dfdz2 * np.conj(f1)
+    num = np.sum(2 * np.real(ddz) * jac, axis=0)
+    denom = np.sum((abs(dfdz1) ** 2 + abs(dfdz2)) ** 2 * jac, axis=0)
+    akz = (num / denom).T
     if outspect:
         return akz, ddz
     if norm_out:
@@ -736,7 +736,7 @@ def avg_t_field(mode, var):
 def avg_kz_tz(mode, var):
     evar = get_extended_var(mode, var)
     kz, norm = avg_kz(mode, evar, norm_out=True)
-    mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
+    mean_kz = np.average(kz, weights=norm)
     return mean_kz
 
 
