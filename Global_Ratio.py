@@ -240,7 +240,7 @@ def Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,Outboard_mid_plane=Fals
     if Outboard_mid_plan==True:
         n1_mean=np.mean( (n1*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         n0_mean=np.mean( (n0*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
-        B1_mean=np.mean( (B0*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
+        B1_mean=np.mean( (B1*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         B0_mean=np.mean( (B0*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         BES_highlight_Z=real_Z[int(nz/2),:]
         BES_highlight_R=real_R[int(nz/2),:]
@@ -256,7 +256,7 @@ def Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,Outboard_mid_plane=Fals
                     #area=real_R[i,j]
                     n1_list.append(n1[i,j]*J[i,j])
                     n0_list.append(n0[i,j]*J[i,j])
-                    B1_list.append(B0[i,j]*J[i,j])
+                    B1_list.append(B1[i,j]*J[i,j])
                     B0_list.append(B0[i,j]*J[i,j])
                     J_list.append(J[i,j])
         n1_mean=np.mean(n1_list)/np.mean(J_list)
