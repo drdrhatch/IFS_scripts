@@ -779,10 +779,8 @@ def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
     saxes = dims[dims != axis]
     spectrum = np.sum(np.abs(f_hat) ** 2, axis=saxes)
 
-    om = np.array(omegas[0 : samples // 2])
-    spec = np.union1d(
-        spectrum[0], spectrum[1 : samples // 2] + spectrum[-1 : -samples // 2 : -1]
-    )
+    om = np.fft.fftshift(omegas)
+    spec = np.fft.fftshift(spectrum)
 
     if output:
         output_spec(mode, om, spec, varname)
