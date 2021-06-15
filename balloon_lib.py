@@ -474,7 +474,7 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
         samples = ntimes
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
-    omegas = np.fft.fftfreq(samples, d=timestep)
+    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
     if f.ndim > 1:
         if axis == 0:
             num = np.sum(np.expand_dims(omegas, -1) * abs(f_hat) ** 2, axis=0)
@@ -756,7 +756,7 @@ def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
         samples = ntimes
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
-    omegas = np.fft.fftfreq(samples, d=timestep)
+    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
 
     jac = mode.geometry["gjacobian"]
     kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
