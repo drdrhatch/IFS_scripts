@@ -457,23 +457,7 @@ def get_input_params(directory, suffix, geom=None):
 
 def fft_nonuniform(times, f, axis=0, samplerate=2):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
-    datatype = f.dtype
-    ntimes = times.size
-    samples = samplerate * ntimes
-    times_lin = np.linspace(times[0], times[-1], samples)
-    if f.ndim > 1:
-        if axis == 0:
-            f_lin = np.empty((samples, f.shape[1]), dtype=datatype)
-            for i, row in enumerate(f.T):
-                f_int = np.interp(times_lin, times, row)
-                f_lin[:, i] = f_int.T
-        else:
-            f_lin = np.empty((f.shape[0], samples), dtype=datatype)
-            for i, row in enumerate(f):
-                f_lin[i] = np.interp(times_lin, times, row)
-    else:
-        f_lin = np.interp(times_lin, times, f)
-        axis = 0
+    time_lin, f_lin = linear_resample(times, f, axis, samplerate)
     f_hat = np.fft.fft(f_lin, axis=axis)
     return f_hat, times_lin
 
