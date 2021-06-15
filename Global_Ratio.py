@@ -33,6 +33,9 @@ import csv
 
 #********************************************************************
 #*****************Block for the user*********************************
+run_mode==2 #run mode = 1 for outboard mid-plane
+            #run mode = 2 for the scan throught ballooning angle
+            #run mode = 3 for the scan throught height
 Outboard_mid_plane=True  #change to True if one wants to only want to look at outboard mid-plane
 Delta_Z=0.07  #7cm as bin for Z 
 scan_all_Z=False #Change to True if one want to scan across the whole height
@@ -234,16 +237,23 @@ def Read_parameter(suffix,plot=False):
 
     return J,real_R,real_Z,xgrid,zgrid,B0,B1,n0,n1,gxx,gxy,gyy,gyz,gzz
 
-def Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,Outboard_mid_plane=False):
+def Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,run_mode=1):
     (nz,nx)=np.shape(J)
 
-    if Outboard_mid_plan==True:
+    if run_mode==1:
         n1_mean=np.mean( (n1*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         n0_mean=np.mean( (n0*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         B1_mean=np.mean( (B1*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         B0_mean=np.mean( (B0*J)[int(nz/2),:] )/np.mean(J[int(nz/2),:])
         BES_highlight_Z=real_Z[int(nz/2),:]
         BES_highlight_R=real_R[int(nz/2),:]
+    elif run_mode==2:
+        n1_mean=np.mean( (n1*J), axis=1 )/np.mean(J, axis=1)
+        n0_mean=np.mean( (n0*J), axis=1 )/np.mean(J, axis=1)
+        B1_mean=np.mean( (B1*J), axis=1 )/np.mean(J, axis=1)
+        B0_mean=np.mean( (B0*J), axis=1 )/np.mean(J, axis=1)
+        BES_highlight_Z=real_Z
+        BES_highlight_R=real_R
     else:
         n1_list=[]
         n0_list=[]
@@ -288,20 +298,37 @@ with open('Ratio'+suffix+'.csv', 'w') as csvfile:     #clear all and then write 
     data.writerow(['Height(m)','n1','n0','B1','B0','(B1/B0)/(n1/n0)'])
 csvfile.close()
 
-if Outboard_mid_plane==True:
+if run_mode==1:
+    Outboard_mid_plane==True:
     n1,n0,B1,B0 =\
-         Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,Outboard_mid_plane)
+         Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,run_mode)
 
-    with open('Ratio'+suffix+'.csv', 'a') as csvfile:     #clear all and then write a row
+    with open('Ratio'+suffix+'.csv', 'w') as csvfile:     #clear all and then write a row
         data = csv.writer(csvfile, delimiter=',')
         data.writerow(['mid_plane',n1,n0,B1,B0,(B1/B0)/(n1/n0)])
     csvfile.close()
+
+elif run_mode==2:
+    n1,n0,B1,B0 =\
+         Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,run_mode)
+
+    d = {'Index':range(len(n1)),'n1':n1,'n0':n0,'B1':B1,'B0':B0,'(B1/B0)/(n1/n0)':(B1/B0)/(n1/n0)}
+    df=pd.DataFrame(d, columns=['Index','n1','n0','B1','B0','(B1/B0)/(n1/n0)'])   #construct the panda dataframe
+    df.to_csv('Ratio'+suffix+'.csv',index=False)
+
+    index_max=np.argmax(B1)
+    print('Max B1 is at nz='+str(index_max))
+    print('n1'+str(n1[index_max])+', n0'+str(n0[index_max])+\
+        ', B1'+str(B1[index_max])+', B0'+str(B0[index_max])+\
+        ', (B1/B0)/(n1/n0)'+str( ( (B1/B0)/(n1/n0) ) [index_max] ) \
+        )
+
 else:
     for i_Z_list in range(len(Z_list)):
         max_Z0=Z_list[i_Z_list]+Delta_Z/2.    #in the unit of meter
         min_Z0=Z_list[i_Z_list]-Delta_Z/2.   #in the unit of meter
         n1,n0,B1,B0 =\
-            Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,Outboard_mid_plane)
+            Ratio_calc(J,real_R,real_Z,min_Z0,max_Z0,B0,B1,n0,n1,run_mode)
 
         with open('Ratio'+suffix+'.csv', 'a') as csvfile:     #clear all and then write a row
             data = csv.writer(csvfile, delimiter=',')
