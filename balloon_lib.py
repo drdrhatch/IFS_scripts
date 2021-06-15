@@ -457,7 +457,7 @@ def get_input_params(directory, suffix, geom=None):
 
 def fft_nonuniform(times, f, axis=0, samplerate=2):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
-    time_lin, f_lin = linear_resample(times, f, axis, samplerate)
+    times_lin, f_lin = linear_resample(times, f, axis, samplerate)
     f_hat = np.fft.fft(f_lin, axis=axis)
     return f_hat, times_lin
 
