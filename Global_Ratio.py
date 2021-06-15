@@ -24,7 +24,6 @@ from SI_Gauss_GENE_unit import *
 from fieldHelper import *
 from max_profile_reader import *
 import csv
-from LN_tools import get_suffix
 
 #Developed by Max Curie on 06/30/2020
 #testing path:    /global/cscratch1/sd/maxcurie/global_scan/n0_10
@@ -42,6 +41,23 @@ min_Z0=-0.035
 #***************End of Block for the user****************************
 #********************************************************************
 
+def get_suffix():
+    parser=op.OptionParser(description='Some infrastructure for reading in, manipulating, and plotting nonlinear field data.')
+    #parser.add_option('--plot_theta','-g',action='store_const',const=False,help = 'Plot global mode structures decomposed in poloidal m number.',default=True)
+    options,args=parser.parse_args()
+    print("options",options)
+    print("args",args)
+    if len(args)!=1:
+        exit("""
+    Please include run number as argument (e.g., 0001)."
+        \n""")
+    suffix = args[0]
+    
+    if suffix in ['dat','.dat']:
+        suffix = '.dat'
+    else:
+        suffix = '_'+suffix
+    return suffix
 
 def Read_parameter(suffix,plot=False):
     #Initiate the momlib and fieldlib
