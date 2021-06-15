@@ -745,8 +745,7 @@ def mean_tzx(mode, var, pars):
 
 def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
     var = mode.fields[varname]
-    evar = get_extended_var(mode, var)
-    f = evar
+    f = var
     ntimes = times.size
     dt = np.diff(times)
     even_dt = np.all(dt == dt[0])
@@ -759,12 +758,12 @@ def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
     timestep = (times[-1] - times[0]) / samples
     omegas = np.fft.fftfreq(samples, d=timestep)
 
-    dims = tuple(range(f_hat.ndim))
-    saxes = dims[dims != axis]
-    spectrum = np.sum(np.abs(f_hat) ** 2, axis=saxes)
+    jac = mode.geometry["gjacobian"]
+    kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
+    z_avg = np.average(kx_avg, weights=jac, axis=1)
 
-    om = np.fft.fftshift(omegas)
-    spec = np.fft.fftshift(spectrum)
+    om = np.real_if_close(np.fft.fftshift(omegas))
+    spec = np.real_if_close(np.fft.fftshift(z_avg))
 
     if output:
         output_spec(mode, om, spec, varname)
