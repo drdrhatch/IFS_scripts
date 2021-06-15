@@ -493,15 +493,15 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     omegas = np.fft.fftfreq(samples, d=timestep)
     if f.ndim > 1:
         if axis == 0:
-            weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
+            num = np.sum(np.expand_dims(omegas, -1) * abs(f_hat) ** 2, axis=0)
         elif axis == 1:
-            weights = np.sum(np.expand_dims(omegas, 0) ** 2 * abs(f_hat) ** 2, axis=1)
+            num = np.sum(np.expand_dims(omegas, 0) * abs(f_hat) ** 2, axis=1)
     else:
-        weights = np.sum(omegas ** 2 * abs(f_hat) ** 2)
-    norm = np.sum(abs(f_hat) ** 2, axis=axis)
-    freq = np.sqrt(weights / norm)
+        num = np.sum(omegas * abs(f_hat) ** 2)
+    denom = np.sum(abs(f_hat) ** 2, axis=axis)
+    freq = num / denom
     if norm_out:
-        return freq, norm
+        return freq, denom
     return freq
 
 
@@ -745,7 +745,7 @@ def avg_freq_tz(mode, times, var):
     omega, norm = avg_freq(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
     jac_norm = jac_ext * norm
-    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_norm))
+    avg_omega = np.average(omega, weights=jac_norm)
     return avg_omega
 
 
