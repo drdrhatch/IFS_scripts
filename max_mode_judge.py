@@ -384,15 +384,26 @@ def federal_court(suffix):
     #***********End of the summary***********************
 
     #**********Start of report***************************
+
     with open('Court_results.csv', 'a') as csvfile:
         csv_data = csv.writer(csvfile, delimiter=',')
-        csv_data.writerow([suffix,tot_mode,\
+
+        if len(species_order(suffix))==3:
+            csv_data.writerow([suffix,tot_mode,\
                             kymin,kx,nu_ei,\
                             f_mode,omega,f_kHz,fi,fe,gamma,\
                             epar_mode,epar,\
                             D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,Qem_z/Qes_z,Q_i/Q_e,chi_i/chi_e,\
                             D_i/chi_tot,D_e/chi_tot,D_z/chi_tot,D_i/chi_e,D_e/chi_e,D_z/chi_e,\
                             D_i/chi_i,D_e/chi_i,D_z/chi_i])
+        elif len(species_order(suffix))==2:
+            csv_data.writerow([suffix,tot_mode,\
+                            kymin,kx,nu_ei,\
+                            f_mode,omega,f_kHz,fi,fe,gamma,\
+                            epar_mode,epar,\
+                            D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,'NA',Q_i/Q_e,chi_i/chi_e,\
+                            D_i/chi_tot,D_e/chi_tot,'NA',D_i/chi_e,D_e/chi_e,'NA',\
+                            D_i/chi_i,D_e/chi_i,'NA'])
     csvfile.close()
     #**********End of report***************************
 
