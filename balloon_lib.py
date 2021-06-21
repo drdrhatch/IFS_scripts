@@ -849,11 +849,33 @@ def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
 
 
 def output_spec(mode, omegas, spec, varname):
-    """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
+    """Output a frequency spectrum for a mode"""
     header = "omega " + varname + "^2"
     ky = str("{:03d}").format(int(mode.ky))
     filename = "./" + varname + "_ky" + ky + "_spec.dat"
     data = np.vstack((omegas, spec)).T
+    np.savetxt(
+        filename,
+        data,
+        fmt="% E",
+        header=header,
+        encoding="UTF-8",
+    )
+
+
+def output_spec_all(ky_list, spec, omegas, varname):
+    """Output a frequency spectrum for multiple ky"""
+    header = (
+        "omega "
+        + varname
+        + "^2"
+        + "\t"
+        + "first row is frequencies and first column  is kys"
+    )
+    ky_list.insert(0, omegas.size)
+    kys = np.array(ky_list)[np.newaxis, :].T
+    data = np.hstack((kys, np.vstack((omegas, spec))))
+    filename = "./" + varname + "_spec_all.dat"
     np.savetxt(
         filename,
         data,
