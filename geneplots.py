@@ -700,7 +700,7 @@ def my_corr_func_complex(v1,v2,time,show_plot=False,v1eqv2=True):
         i+=1
 
     if neg_loc < corr_time:
-        print "WARNING: neg_loc < corr_time"
+        print("WARNING: neg_loc < corr_time")
         corr_time = neg_loc
 
     if show_plot:
