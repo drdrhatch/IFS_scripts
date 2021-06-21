@@ -845,7 +845,7 @@ def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
 
     if output:
         output_spec(mode, om, spec, varname)
-    return omegas, spec
+    return om, spec
 
 
 def output_spec(mode, omegas, spec, varname):
