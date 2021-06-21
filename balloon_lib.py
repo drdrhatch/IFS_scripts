@@ -489,6 +489,33 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     return freq
 
 
+def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False):
+    """Returns the rms frequency from field"""
+    ntimes = times.size
+    dt = np.diff(times)
+    even_dt = np.all(dt == dt[0])
+    if not even_dt:
+        samples = samplerate * ntimes
+        f_hat, times_lin = fft_nonuniform(times, f)
+    else:
+        samples = ntimes
+        f_hat = np.fft.fft(f, axis=axis)
+    timestep = (times[-1] - times[0]) / samples
+    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
+    if f.ndim > 1:
+        if axis == 0:
+            num = np.sum(abs(np.expand_dims(omegas, -1) * f_hat) ** 2, axis=0)
+        elif axis == 1:
+            num = np.sum(abs(np.expand_dims(omegas, 0) * f_hat) ** 2, axis=1)
+    else:
+        num = np.sum(abs(omegas * f_hat) ** 2)
+    denom = np.sum(abs(f_hat) ** 2, axis=axis)
+    freq = np.sqrt(num / denom)
+    if norm_out:
+        return freq, denom
+    return freq
+
+
 def get_extended_var(mode, var):
     """Flattens array over last two dimensions to return z-extended variable"""
     evar = var[:, :, mode.kx_modes]
@@ -526,6 +553,41 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
     num = np.sum(2 * np.real(ddz) * jac, axis=0)
     denom = np.sum((abs(dfdz1) ** 2 + abs(dfdz2)) ** 2 * jac, axis=0)
     akz = (num / denom).T
+    if outspect:
+        return akz, ddz
+    if norm_out:
+        return akz, denom
+    return akz
+
+
+def avg_kz2(mode, var, outspect=False, norm_out=False):
+    """Calculate the rms kz mode weighted by given field"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
+    zgrid = mode.zgrid_ext
+    dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    dfdz1 = dfielddz[zstart:zend]
+    dfdz2 = dfielddz[zstart + 1 : zend + 1]
+    jac = jacxBpi_ext[zstart:zend]
+    f1 = field[zstart:zend]
+    f2 = field[zstart + 1 : zend + 1]
+
+    ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
+    sum_ddz = np.sum(ddz, axis=0)
+    denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
+    akz = np.sqrt(num / denom).T
     if outspect:
         return akz, ddz
     if norm_out:
@@ -724,12 +786,28 @@ def avg_kz_tz(mode, var):
     return mean_kz
 
 
+def avg_kz2_tz(mode, var):
+    evar = get_extended_var(mode, var)
+    kz, norm = avg_kz(mode, evar, norm_out=True)
+    mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
+    return mean_kz
+
+
 def avg_freq_tz(mode, times, var):
     evar = get_extended_var(mode, var)
     omega, norm = avg_freq(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
     jac_norm = jac_ext * norm
     avg_omega = np.average(omega, weights=jac_norm)
+    return avg_omega
+
+
+def avg_freq2_tz(mode, times, var):
+    evar = get_extended_var(mode, var)
+    omega, norm = avg_freq(times, evar, norm_out=True)
+    jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
+    jac_norm = jac_ext * norm
+    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_norm))
     return avg_omega
 
 
