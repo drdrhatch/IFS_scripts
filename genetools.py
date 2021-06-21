@@ -211,7 +211,10 @@ def read_parameters(paramfpath):
                          elif skey in ['magn_geometry','geomdir','geomfile','x_def','dpdx_term']:
                               geneparam[pkey][skey] = items[1].strip()[1:-1]
                          else:
-                              geneparam[pkey][skey] = float(items[1])
+                              try: #in case for the miller geometry
+                                  geneparam[pkey][skey] = float(items[1])
+                              except:
+                                  pass
                       elif type(geneparam[pkey][skey]) == list:
                          if   skey in ['norm_flux_projection','mag_prof']:
                               geneparam[pkey][skey].append(str2bool(items[1]))
