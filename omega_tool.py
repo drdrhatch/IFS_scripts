@@ -12,10 +12,8 @@ from parIOWrapper import init_read_parameters_file
 from finite_differences import *
 from fieldlib import *
 
+#updated by Max Curie 06/21/2021
 
-#Rescale test path: /global/cscratch1/sd/maxcurie/local_scan/ky_scan/rescale_test
-#shortcut name: omega_max
-#shortcut for test: omega_test
 def omega_calc(suffix,plot=False):
     percent=40.#percentage of the time to calculate the omega
 #    parser = op.OptionParser(description='')
@@ -110,16 +108,16 @@ def omega_calc(suffix,plot=False):
         print('gamma(cs/a)='+str(gamma_avg)+'+-'+str(gamma_std))
     
     
-        try:
-            from shutil import copyfile
-            copyfile('omega'+suffix, 'old_omega'+suffix)
-        except:
-            pass
+    try:
+        from shutil import copyfile
+        copyfile('omega'+suffix, 'old_omega'+suffix)
+    except:
+        pass
     
     
-        f=open('omega'+suffix,'w')
-        f.write('  '+str(pars['kymin'])+'    '+str(gamma_avg)+'  '+str(omega_avg))
-        f.close()
+    f=open('omega'+suffix,'w')
+    f.write('  '+str(pars['kymin'])+'    '+str(gamma_avg)+'  '+str(omega_avg))
+    f.close()
     
     return gamma_avg,gamma_std,omega_avg,omega_std
 

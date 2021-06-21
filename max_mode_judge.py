@@ -8,7 +8,7 @@ from genetools import *
 from omega_tool import omega_calc
 
 
-#Last edited by Max Curie 04/27/2020
+#Last edited by Max Curie 06/21/2020
 #Criteria: D_chi, typical frequency, Epar
 
 run=True
@@ -250,6 +250,7 @@ def Epar_judge(epar):
     return mode
 
 def smooth_judge(suffix):
+	return 0
 
 
 def f_judge(fe, fi, omega):  #judge from the typical frquency
