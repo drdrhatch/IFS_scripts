@@ -607,7 +607,7 @@ def corr_len(x, corr, axis=-1, weights=None):
     index = list(np.array(corr.shape) // 2)
     index[axis] = np.arange(n2, n)
     r = x[n2:]
-    C = np.real(corr[index])
+    C = np.real(corr[tuple(index)])
     if np.any(weights):
         w = weights[n2:]
         clen = np.average(C, weights=w) * n2
