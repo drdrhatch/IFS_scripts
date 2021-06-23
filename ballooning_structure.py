@@ -99,6 +99,7 @@ if args.debug:
 
 if args.avgs and not pods:
     scales = np.empty((len(ky_list), 4))
+    spec = np.empty((len(ky_list), 2 * times.size))
 
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
@@ -126,8 +127,8 @@ for i, mode in enumerate(ky_modes):
                 weights=mode.geometry["gjacobian"],
                 axis=-1,
             )
-            avg_freq = bl.avg_freq(times, u)
-            avg_kz = bl.avg_kz(mode, VH["phi"])
+            avg_freq = bl.avg_freq2(times, u)
+            avg_kz = bl.avg_kz2(mode, VH["phi"])
             bl.output_scales(mode, avg_freq, "avg_freq")
             bl.output_scales(mode, avg_kz, "avg_kz")
             bl.output_scales(mode, corr_time, "corr_time")
@@ -143,10 +144,11 @@ for i, mode in enumerate(ky_modes):
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
             if args.debug:
                 bl.test_corr(mode, doms, corr)
-            avg_freq = bl.avg_freq_tz(mode, times, phi)
-            avg_kz = bl.avg_kz_tz(mode, phi)
+            avg_freq = bl.avg_freq2_tz(mode, times, phi)
+            avg_kz = bl.avg_kz2_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
-            omegas, spec = bl.freq_spec(mode, times, "phi", output=True)
+            omegas, spec[i] = bl.freq_spec(mode, times, "phi", output=False)
 
 if args.avgs and not pods:
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
+    bl.output_spec_all(ky_list, spec, omegas, "phi")
