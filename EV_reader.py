@@ -4,6 +4,7 @@ import csv
 import os
 
 from genetools import *
+from ParIO import * 
 from max_mode_judge_tools import D_chi_3
 from max_mode_judge_tools import D_chi_3_judge
 
@@ -11,7 +12,7 @@ from max_mode_judge_tools import D_chi_3_judge
 
 #************Start of User block*********************
 scan_name='kymin'  #name of scanning quantity
-spec_num=3 #number of the specices 1 or 3
+spec_num=1         #number of the specices 1 or 3
 
 #************End of User block*********************
 
@@ -22,15 +23,23 @@ def get_omega(suffix):
     #print(evals)
     gamma_list = []
     omega_list = []
-    
+
+    par = Parameters()
+    par.Read_Pars('parameters_'+suffix)
+    pars = par.pardict
+    TJ = pars['Tref']*1000.0*1.602e-19
+    mi = pars['mref']*1.6726e-27
+    cs = np.sqrt(TJ/mi)
+    om_ref = cs/pars['Lref']
+
     if len(np.shape(evals))==2:
         print("More than 1 eigenvalue")
         for line in evals:
-            omega_list.append(line[1])
+            omega_list.append(line[1]*om_ref/1000.0/(2.0*np.pi))
             gamma_list.append(line[0])
     else: 
         print("Only 1 eigenvalue")
-        omega_list.append(evals[1])
+        omega_list.append(evals[1]*om_ref/1000.0/(2.0*np.pi))
         gamma_list.append(evals[0])
 
     
@@ -100,7 +109,7 @@ def scan_cases_e():
     csvfile_name='EV_log.csv'
     with open(csvfile_name, 'w', newline='') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['Suffix','index',scan_name,'omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e'])
+        data.writerow(['Suffix','index',scan_name,'omega(kHz)','gamma(cs/a)','mode','Qem_e/Qes_e','D_e/chi_e'])
         csvfile.close()
 
     cwd = os.getcwd()
@@ -132,7 +141,7 @@ def scan_cases_3():
     csvfile_name='EV_log.csv'
     with open(csvfile_name, 'w', newline='') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['Suffix','index',scan_name,'omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e','chi_i/chi_e','Q_i/Q_e','D_e/chi_tot'])
+        data.writerow(['Suffix','index',scan_name,'omega(kHz)','gamma(cs/a)','mode','Qem_e/Qes_e','D_e/chi_e','chi_i/chi_e','Q_i/Q_e','D_e/chi_tot'])
         csvfile.close()
 
     cwd = os.getcwd()

@@ -5,7 +5,7 @@ import numpy as np
 import math
 import csv
 from genetools import *
-from omega_tool_max import omega_calc
+from omega_tool import omega_calc
 
 #Last edited by Max Curie 04/27/2020
 #Criteria: D_chi, typical frequency, Epar
