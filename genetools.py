@@ -302,7 +302,11 @@ def read_parameters(paramfpath):
                          elif skey in ['comp_type','timescheme','coll_split_scheme','which_ev','init_cond','collision_op','coll_cons_model']:
                               geneparam[pkey][skey] = items[1].strip()[1:-1]
                          elif skey in ['lv_antenna_freq','lv_antenna_initamp','lv_antenna_amp','ev_shift']:
-                              geneparam[pkey][skey] = complex(items[1])
+                              
+                              try: 
+                                geneparam[pkey][skey] = complex(items[1])
+                              except:
+                                geneparam[pkey][skey] = 0.+0.j
                          elif skey in ['perf_vec']:
                               geneparam[pkey][skey] = tuple([int(item) for item in items[1].split()])
                          elif skey in ['lv_antenna_modes']:
