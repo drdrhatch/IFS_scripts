@@ -14,7 +14,7 @@ from fieldlib import *
 
 #updated by Max Curie 06/21/2021
 
-def omega_calc(suffix,plot=False):
+def omega_calc(suffix,plot=False,output_file=True):
     percent=40.#percentage of the time to calculate the omega
 #    parser = op.OptionParser(description='')
 #    parser.add_option('--show_plots','-p',action='store',dest='show_plots',help = 'Display the variation as a function of z',default=False)
@@ -107,17 +107,17 @@ def omega_calc(suffix,plot=False):
         print('omega(cs/a)='+str(omega_avg)+'+-'+str(omega_std))
         print('gamma(cs/a)='+str(gamma_avg)+'+-'+str(gamma_std))
     
-    
-    try:
-        from shutil import copyfile
-        copyfile('omega'+suffix, 'old_omega'+suffix)
-    except:
-        pass
-    
-    
-    f=open('omega'+suffix,'w')
-    f.write('  '+str(pars['kymin'])+'    '+str(gamma_avg)+'  '+str(omega_avg))
-    f.close()
+    if output_file==True:
+        try:
+            from shutil import copyfile
+            copyfile('omega'+suffix, 'old_omega'+suffix)
+        except:
+            pass
+        
+        
+        f=open('omega'+suffix,'w')
+        f.write('  '+str(pars['kymin'])+'    '+str(gamma_avg)+'  '+str(omega_avg))
+        f.close()
     
     return gamma_avg,gamma_std,omega_avg,omega_std
 

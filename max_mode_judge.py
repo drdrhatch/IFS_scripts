@@ -63,6 +63,8 @@ def f(suffix): #calculate the frequency
             #gamma_list,omega_list,indice_list=get_omega(suffix)
         omega=omegadata['omega'][0]
         gamma=omegadata['gamma'][0]
+        
+        gamma,gamma_std,omega,omega_std=omega_calc("_"+str(suffix),output_file=False)
     except: 
         print('No omega file, using omega scan')
         #from omega_tool
@@ -116,7 +118,7 @@ def f(suffix): #calculate the frequency
     #doppler = vrot_u*n0_global/2./np.pi/1E3 #Doppler shift in kHz
 
     #*****End of calcuation of diamagnetic frequency******
-    return fe, fi, omega, gamma, kx, kymin, f_kHz, nu_ei
+    return fe, fi, gamma, gamma_std, omega, omega_std, kx, kymin, f_kHz, nu_ei
 
 def D_chi_3(suffix,index0 = -1):
 
@@ -351,7 +353,7 @@ def federal_court(suffix):
     #************End of transport ratio case**************
 
     #************Start of typical frequency case**************
-    fe, fi, omega, gamma, kx, kymin, f_kHz, nu_ei=f(suffix)
+    fe, fi, gamma,gamma_std,omega,omega_std, kx, kymin, f_kHz, nu_ei=f(suffix)
     f_mode,f_ITG,f_ETG,f_KBM,f_MTM=f_judge(fe, fi, omega)
     print("Based on Typical frequency, the mode is: "+str(f_mode))
     print("The likelyhood of ITG is "+str(f_ITG))
@@ -391,7 +393,7 @@ def federal_court(suffix):
         if len(species_order(suffix))==3:
             csv_data.writerow([suffix,tot_mode,\
                             kymin,kx,nu_ei,\
-                            f_mode,omega,f_kHz,fi,fe,gamma,\
+                            f_mode,omega,omega_std,f_kHz,fi,fe,gamma,gamma_std,\
                             epar_mode,epar,\
                             D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,Qem_z/Qes_z,Q_i/Q_e,chi_i/chi_e,\
                             D_i/chi_tot,D_e/chi_tot,D_z/chi_tot,D_i/chi_e,D_e/chi_e,D_z/chi_e,\
@@ -399,7 +401,7 @@ def federal_court(suffix):
         elif len(species_order(suffix))==2:
             csv_data.writerow([suffix,tot_mode,\
                             kymin,kx,nu_ei,\
-                            f_mode,omega,f_kHz,fi,fe,gamma,\
+                            f_mode,omega,omega_std,f_kHz,fi,fe,gamma_std,\
                             epar_mode,epar,\
                             D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,'NA',Q_i/Q_e,chi_i/chi_e,\
                             D_i/chi_tot,D_e/chi_tot,'NA',D_i/chi_e,D_e/chi_e,'NA',\
@@ -422,7 +424,8 @@ def scan_cases():
         csv_data = csv.writer(csvfile, delimiter=',')
         csv_data.writerow(["Suffix","Total mode",\
                             "ky*rhoi","kx*rhoi","nu_ei(cs/a)",\
-                            "f mode","omega(cs/a)","f(kHz)","omega*i(cs/a)","omega*e(cs/a)","gamma(cs/a)",\
+                            "f mode","omega(cs/a)","omega_std(cs/a)","f(kHz)",\
+                            "omega*i(cs/a)","omega*e(cs/a)","gamma(cs/a)","gamma_std(cs/a)",\
                             "E_par mode","E_par",\
                             "D_chi mode","Qem_e/Qes_e","Qem_i/Qes_i","Qem_z/Qes_z","Q_i/Q_e","chi_i/chi_e",\
                             "D_i/chi_tot","D_e/chi_tot","D_z/chi_tot","D_i/chi_e","D_e/chi_e","D_z/chi_e",\
