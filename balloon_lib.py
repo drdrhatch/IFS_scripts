@@ -585,7 +585,7 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
     f2 = field[zstart + 1 : zend + 1]
 
     ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
-    sum_ddz = np.sum(ddz, axis=0)
+    num = np.sum(ddz, axis=0)
     denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
     akz = np.sqrt(num / denom).T
     if outspect:
