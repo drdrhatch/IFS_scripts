@@ -28,7 +28,12 @@ parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup
 parser.add_argument("--heat", "-q", action="store_true", help="calculate heat flux")
 parser.add_argument("--debug", "-d", action="store_true", help="debug switch")
 parser.add_argument(
-    "--avgs", "-a", action="store_true", help="find avg omega and kz for each ky mode"
+    "--avgs",
+    "-a",
+    action="store",
+    type=int,
+    metavar="METHOD",
+    help="POD analysis, plotting N modes"
 )
 parser.add_argument(
     "--pod",
@@ -127,8 +132,12 @@ for i, mode in enumerate(ky_modes):
                 weights=mode.geometry["gjacobian"],
                 axis=-1,
             )
-            avg_freq = bl.avg_freq2(times, u)
-            avg_kz = bl.avg_kz2(mode, VH["phi"])
+            if args.avgs == 1:
+                avg_freq = bl.avg_freq(times, u)
+                avg_kz = bl.avg_kz(mode, VH["phi"])
+            elif args.avgs == 2:
+                avg_freq = bl.avg_freq2(times, u)
+                avg_kz = bl.avg_kz2(mode, VH["phi"])
             bl.output_scales(mode, avg_freq, "avg_freq")
             bl.output_scales(mode, avg_kz, "avg_kz")
             bl.output_scales(mode, corr_time, "corr_time")
@@ -144,8 +153,12 @@ for i, mode in enumerate(ky_modes):
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
             if args.debug:
                 bl.test_corr(mode, doms, corr)
-            avg_freq = bl.avg_freq2_tz(mode, times, phi)
-            avg_kz = bl.avg_kz2_tz(mode, phi)
+            if args.avgs == 1:
+                avg_freq = bl.avg_freq_tz(mode, times, phi)
+                avg_kz = bl.avg_kz_tz(mode, phi)
+            elif args.avgs == 2:
+                avg_freq = bl.avg_freq2_tz(mode, times, phi)
+                avg_kz = bl.avg_kz2_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
             omegas, spec[i] = bl.freq_spec(mode, times, "phi", output=False)
 
