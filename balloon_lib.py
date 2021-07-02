@@ -821,24 +821,25 @@ def mean_tzx(mode, var, pars):
     return mean_var
 
 
-def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
-    var = mode.fields[varname]
+def freq_spec(mode, times, var, varname, axis=0, weights=None, output=False):
     f = var
     ntimes = times.size
     dt = np.diff(times)
     even_dt = np.all(dt == dt[0])
     if not even_dt:
-        samples = samplerate * ntimes
-        f_hat, times_lin = fft_nonuniform(times, f)
+        samples = ntimes
+        f_hat, times_lin = fft_nonuniform(times, f, samplerate=1)
     else:
         samples = ntimes
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
     omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
 
-    jac = mode.geometry["gjacobian"]
-    kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
-    z_avg = np.average(kx_avg, weights=jac, axis=1)
+    if var.ndim > 2:
+        kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
+        z_avg = np.average(kx_avg, weights=weights, axis=1)
+    else:
+        z_avg = np.average(np.abs(f_hat) ** 2, weights=weights, axis=1)
 
     om = np.real_if_close(np.fft.fftshift(omegas))
     spec = np.real_if_close(np.fft.fftshift(z_avg))

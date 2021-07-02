@@ -33,7 +33,7 @@ parser.add_argument(
     action="store",
     type=int,
     metavar="METHOD",
-    help="POD analysis, plotting N modes"
+    help="POD analysis, plotting N modes",
 )
 parser.add_argument(
     "--pod",
@@ -138,6 +138,10 @@ for i, mode in enumerate(ky_modes):
             elif args.avgs == 2:
                 avg_freq = bl.avg_freq2(times, u)
                 avg_kz = bl.avg_kz2(mode, VH["phi"])
+            weights = sv / np.sqrt(times.size)
+            omegas, spec = bl.freq_spec(
+                mode, times, u, "u", weights=weights, output=True
+            )
             bl.output_scales(mode, avg_freq, "avg_freq")
             bl.output_scales(mode, avg_kz, "avg_kz")
             bl.output_scales(mode, corr_time, "corr_time")
@@ -160,7 +164,7 @@ for i, mode in enumerate(ky_modes):
                 avg_freq = bl.avg_freq2_tz(mode, times, phi)
                 avg_kz = bl.avg_kz2_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
-            omegas, spec[i] = bl.freq_spec(mode, times, "phi", output=False)
+            omegas, spec[i] = bl.freq_spec(mode, times, phi, output=False)
 
 if args.avgs and not pods:
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
