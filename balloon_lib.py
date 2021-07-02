@@ -802,7 +802,7 @@ def avg_freq_tz(mode, times, var):
     return avg_omega
 
 
-def avg_freq2_tz(mode, time, var):
+def avg_freq2_tz(mode, times, var):
     evar = get_extended_var(mode, var)
     omega, norm = avg_freq2(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
