@@ -104,7 +104,7 @@ if args.debug:
 
 if args.avgs and not pods:
     scales = np.empty((len(ky_list), 4))
-    spec = np.empty((len(ky_list), 2 * times.size))
+    spec = np.empty((len(ky_list), times.size))
 
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
