@@ -164,7 +164,7 @@ for i, mode in enumerate(ky_modes):
                 avg_freq = bl.avg_freq2_tz(mode, times, phi)
                 avg_kz = bl.avg_kz2_tz(mode, phi)
             scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
-            omegas, spec[i] = bl.freq_spec(mode, times, phi, output=False)
+            omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
 
 if args.avgs and not pods:
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
