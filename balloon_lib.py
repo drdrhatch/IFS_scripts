@@ -543,15 +543,15 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
-    dfdz1 = dfielddz[zstart:zend]
-    dfdz2 = dfielddz[zstart + 1 : zend + 1]
-    jac = jacxBpi_ext[zstart:zend]
-    f1 = field[zstart:zend]
-    f2 = field[zstart + 1 : zend + 1]
+    dfdz = dfielddz[zstart:zend]
+    f = field[zstart:zend]
+    jac = np.expand_dims(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1)[
+        zstart:zend
+    ]
+    zg = zgrid[zstart:zend]
 
-    ddz = dfdz1 * np.conj(f1) + dfdz2 * np.conj(f1)
-    num = np.sum(2 * np.real(ddz) * jac, axis=0)
-    denom = np.sum((abs(dfdz1) ** 2 + abs(dfdz2)) ** 2 * jac, axis=0)
+    num = np.trapz(dfdz * jac, zg, axis=0)
+    denom = np.trapz(f * jac, zg, axis=0)
     akz = (num / denom).T
     if outspect:
         return akz, ddz
@@ -578,15 +578,15 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
-    dfdz1 = dfielddz[zstart:zend]
-    dfdz2 = dfielddz[zstart + 1 : zend + 1]
-    jac = jacxBpi_ext[zstart:zend]
-    f1 = field[zstart:zend]
-    f2 = field[zstart + 1 : zend + 1]
+    dfdz = dfielddz[zstart:zend]
+    f = field[zstart:zend]
+    jac = np.expand_dims(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1)[
+        zstart:zend
+    ]
+    zg = zgrid[zstart:zend]
 
-    ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
-    num = np.sum(ddz, axis=0)
-    denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
+    num = np.trapz(np.abs(dfdz) ** 2 * jac, zg, axis=0)
+    denom = np.trapz(np.abs(f) ** 2 * jac, zg, axis=0)
     akz = np.sqrt(num / denom).T
     if outspect:
         return akz, ddz
