@@ -534,9 +534,9 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
     else:
         var_ext = var
     if var.ndim > 1:
-        field = var_ext.T
+        field = np.abs(var_ext.T) ** 2
     else:
-        field = np.expand_dims(var, axis=-1)
+        field = np.abs(np.expand_dims(var, axis=-1)) ** 2
 
     zgrid = mode.zgrid_ext
     dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
@@ -554,7 +554,7 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
     denom = np.trapz(f * jac, zg, axis=0)
     akz = (num / denom).T
     if outspect:
-        return akz, ddz
+        return akz, dfdz
     if norm_out:
         return akz, denom
     return akz
@@ -589,7 +589,7 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
     denom = np.trapz(np.abs(f) ** 2 * jac, zg, axis=0)
     akz = np.sqrt(num / denom).T
     if outspect:
-        return akz, ddz
+        return akz, dfdz
     if norm_out:
         return akz, denom
     return akz
