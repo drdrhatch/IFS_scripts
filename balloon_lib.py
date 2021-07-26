@@ -183,6 +183,7 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
             pvar, zgrid = get_plot_variable(mode, r_vec[field][ipod], extend=True)
             if norm:
                 pvar /= pvar[mode.zero_ind]
+                pvar /= np.max(np.abs(pvar))
             data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
             np.savetxt(
                 fp,
