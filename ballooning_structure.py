@@ -22,6 +22,9 @@ parser.add_argument(
 parser.add_argument(
     "--etime", "-e", action="store", type=float, default=999, help="end time window"
 )
+parser.add_argument(
+    "--step", action="store", type=int, default=1, help="time step"
+)
 parser.add_argument("--plot", "-p", action="store_true", help="plot individual modes")
 parser.add_argument("--output", "-o", action="store_true", help="output plots to pdfs")
 parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup plots")
@@ -81,6 +84,7 @@ else:  # otherwise, default to phi
     times = ftimes
     mom_e = None
     fields = ("phi",)
+times = times[::args.step]
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
