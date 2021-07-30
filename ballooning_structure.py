@@ -88,7 +88,7 @@ else:  # otherwise, default to phi
     times = ftimes
     mom_e = None
     fields = ("phi",)
-times = times[::args.step]
+times = times[:: args.step]
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
@@ -110,9 +110,14 @@ if args.debug:
     for mode in ky_modes:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
-if args.avgs and not pods:
-    scales = np.empty((len(ky_list), 4))
+if not pods:
     spec = np.empty((len(ky_list), times.size))
+    if args.avgs and not args.corr:
+        scales = np.empty((len(ky_list), 2))
+    if not args.avgs and args.corr:
+        scales = np.empty((len(ky_list), 2))
+    if args.avgs and args.corr:
+        scales = np.empty((len(ky_list), 4))
 
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
@@ -156,6 +161,16 @@ for i, mode in enumerate(ky_modes):
             bl.output_scales(mode, corr_len, "corr_len")
     else:
         phi = mode.fields["phi"]
+        scale_list = []
+        if args.avgs:
+            if args.avgs == 1:
+                avg_freq = bl.avg_freq_tz(mode, times, phi)
+                avg_kz = bl.avg_kz_tz(mode, phi)
+            elif args.avgs == 2:
+                avg_freq = bl.avg_freq2_tz(mode, times, phi)
+                avg_kz = bl.avg_kz2_tz(mode, phi)
+            scale_list.append(avg_freq)
+            scale_list.append(avg_kz)
         if args.corr:
             dphi = phi[:, :, 0]  # average over kx
             w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
@@ -165,14 +180,9 @@ for i, mode in enumerate(ky_modes):
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
             if args.debug:
                 bl.test_corr(mode, doms, corr)
-        if args.avgs:
-            if args.avgs == 1:
-                avg_freq = bl.avg_freq_tz(mode, times, phi)
-                avg_kz = bl.avg_kz_tz(mode, phi)
-            elif args.avgs == 2:
-                avg_freq = bl.avg_freq2_tz(mode, times, phi)
-                avg_kz = bl.avg_kz2_tz(mode, phi)
-        scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
+            scale_list.append(corr_time)
+            scale_list.append(corr_len)
+        scales[i] = np.array(scale_list)
         omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
 
 if args.avgs and not pods:
