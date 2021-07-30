@@ -88,7 +88,7 @@ times = times[::args.step]
 print("Analyzing for times: ", times)
 
 if args.ky_list == 0:
-    ky_list = [range(0, field.ny)]
+    ky_list = list(range(0, field.ny))
 else:
     ky_list = args.ky_list
 print("ky modes to analyze: ", ky_list)
