@@ -36,7 +36,15 @@ parser.add_argument(
     action="store",
     type=int,
     metavar="METHOD",
-    help="POD analysis, plotting N modes",
+    help="compute averages of kz and omega",
+)
+parser.add_argument(
+    "--corr",
+    "-c",
+    action="store",
+    type=int,
+    metavar="METHOD",
+    help="compute parallel correlation length and correlation time",
 )
 parser.add_argument(
     "--pod",
@@ -151,8 +159,8 @@ for i, mode in enumerate(ky_modes):
             bl.output_scales(mode, corr_time, "corr_time")
             bl.output_scales(mode, corr_len, "corr_len")
     else:
-        if args.avgs:
-            phi = mode.fields["phi"]
+        phi = mode.fields["phi"]
+        if args.corr:
             dphi = phi[:, :, 0]  # average over kx
             w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
             w2 = mode.geometry["gjacobian"]
@@ -161,14 +169,15 @@ for i, mode in enumerate(ky_modes):
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
             if args.debug:
                 bl.test_corr(mode, doms, corr)
+        if args.avgs:
             if args.avgs == 1:
                 avg_freq = bl.avg_freq_tz(mode, times, phi)
                 avg_kz = bl.avg_kz_tz(mode, phi)
             elif args.avgs == 2:
                 avg_freq = bl.avg_freq2_tz(mode, times, phi)
                 avg_kz = bl.avg_kz2_tz(mode, phi)
-            scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
-            omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
+        scales[i] = [avg_freq, avg_kz, corr_time, corr_len]
+        omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
 
 if args.avgs and not pods:
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
