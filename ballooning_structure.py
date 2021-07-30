@@ -22,9 +22,7 @@ parser.add_argument(
 parser.add_argument(
     "--etime", "-e", action="store", type=float, default=999, help="end time window"
 )
-parser.add_argument(
-    "--step", action="store", type=int, default=1, help="time step"
-)
+parser.add_argument("--step", action="store", type=int, default=1, help="time step")
 parser.add_argument("--plot", "-p", action="store_true", help="plot individual modes")
 parser.add_argument("--output", "-o", action="store_true", help="output plots to pdfs")
 parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup plots")
@@ -41,9 +39,7 @@ parser.add_argument(
 parser.add_argument(
     "--corr",
     "-c",
-    action="store",
-    type=int,
-    metavar="METHOD",
+    action="store_true",
     help="compute parallel correlation length and correlation time",
 )
 parser.add_argument(
