@@ -199,18 +199,22 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
 def output_time_modes(mode, l_vec, pods, times):
     """Output left pod modes (time variation)"""
     filename = "./pod_time_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
-    head = ["time"]
+    fp = open(filename, "w")
     for ipod in pods:
-        head.append(str(ipod + 1))
-    header = " ".join(head)
-    data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, : pods.stop])))
-    np.savetxt(
-        filename,
-        data,
-        fmt="% E",
-        header=header,
-        encoding="UTF-8",
-    )
+        header = "time POD " + str(ipod + 1)
+        # data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
+        tdat = l_vec[:, ipod].reshape(-1, 1)
+        print(times.reshape(-1, 1).shape, tdat.shape)
+        data = np.hstack((times.reshape(-1, 1), np.real(tdat), np.imag(tdat)))
+        np.savetxt(
+            fp,
+            data,
+            fmt="% E",
+            header=header,
+            encoding="UTF-8",
+        )
+        fp.write("\n\n")
+    fp.close()
 
 
 def plot(zgrid, var, varname, title):
