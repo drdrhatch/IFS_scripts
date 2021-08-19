@@ -880,7 +880,6 @@ def freq_spec_pod_plot(ky, omegas, spec, pods, output=False):
     plt.title("POD frequency spectrum")
     plt.xlabel("POD #")
     plt.ylabel(r"$\omega$")
-    plt.show()
     if output:
         pdf_figs = PdfPages("mode_" + str(int(ky)) + "_pod_freq_spec.pdf")
         output = pdf_figs
