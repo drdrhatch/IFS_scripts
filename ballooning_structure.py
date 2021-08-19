@@ -152,12 +152,9 @@ for i, mode in enumerate(ky_modes):
                 avg_freq = bl.avg_freq(times, u)
                 avg_kz = bl.avg_kz(mode, VH["phi"])
             elif args.avgs == 2:
-                avg_freq = bl.avg_freq2(times, u)
+                avg_freq, spec, omegas = bl.avg_freq2(times, u, spec_out=True)
                 avg_kz = bl.avg_kz2(mode, VH["phi"])
-            weights = sv / np.sqrt(times.size)
-            omegas, spec = bl.freq_spec(
-                mode, times, u, "u", weights=weights, output=True
-            )
+                bl.freq_spec_pod_plot(mode.ky, omegas, spec, pods, output=True)
             bl.output_scales(mode, avg_freq, "avg_freq")
             bl.output_scales(mode, avg_kz, "avg_kz")
     else:

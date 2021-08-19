@@ -494,7 +494,7 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     return freq
 
 
-def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False):
+def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     """Returns the rms frequency from field"""
     ntimes = times.size
     dt = np.diff(times)
@@ -518,6 +518,8 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False):
     freq = np.sqrt(num / denom)
     if norm_out:
         return freq, denom
+    if spec_out:
+        return freq, f_hat, omegas
     return freq
 
 
@@ -867,6 +869,24 @@ def output_spec(mode, omegas, spec, varname):
         header=header,
         encoding="UTF-8",
     )
+
+
+def freq_spec_pod_plot(ky, omegas, spec, pods, output=False):
+
+    fig, ax = plt.subplots()
+    PODs = np.array(pods) + 1
+    plt.contourf(PODs, omegas, np.abs(spec[:, : PODs[-1]]), cmap="magma")
+    plt.colorbar(label=r"$\sigma |\hat{u}|$")
+    plt.title("POD frequency spectrum")
+    plt.xlabel("POD #")
+    plt.ylabel(r"$\omega$")
+    plt.show()
+    if output:
+        pdf_figs = PdfPages("mode_" + str(int(ky)) + "_pod_freq_spec.pdf")
+        output = pdf_figs
+        output.savefig(fig)
+        pdf_figs.close()
+    return
 
 
 def output_spec_all(ky_list, spec, omegas, varname):
