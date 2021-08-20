@@ -10,6 +10,7 @@ import momlib
 import matplotlib.pyplot as plt
 import balloon_lib as bl
 import read_write_geometry as rwg
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
@@ -104,7 +105,10 @@ else:
 
 gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 
+print("Loading data...", end="")
+start = time.time()
 ky_modes = [bl.KyMode(ky, times, fields, gene_files) for ky in ky_list]
+print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
 
 if args.debug:
     for mode in ky_modes:
@@ -119,8 +123,11 @@ if not np.any(pods):
     if args.avgs and args.corr:
         scales = np.empty((len(ky_list), 4))
 
+print("Working on :")
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
+    print("ky = ", ky, "...", end="")
+    start = time.time()
     if np.any(pods):
         u, sv, VH = bl.collective_pod(mode, fields, extend=False)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
@@ -161,6 +168,7 @@ for i, mode in enumerate(ky_modes):
                 bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
             bl.output_scales(mode, avg_freq, "avg_freq")
             bl.output_scales(mode, avg_kz, "avg_kz")
+            end = time.time()
     else:
         phi = mode.fields["phi"]
         scale_list = []
@@ -186,6 +194,7 @@ for i, mode in enumerate(ky_modes):
             scale_list.append(corr_len)
         scales[i] = np.array(scale_list)
         omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
+    print(str("{:6.3f}").format(time.time() - start), "s")
 
 if args.avgs and not np.any(pods):
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
