@@ -204,7 +204,6 @@ def output_time_modes(mode, l_vec, pods, times):
         header = "time POD " + str(ipod + 1)
         # data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
         tdat = l_vec[:, ipod].reshape(-1, 1)
-        print(times.reshape(-1, 1).shape, tdat.shape)
         data = np.hstack((times.reshape(-1, 1), np.real(tdat), np.imag(tdat)))
         np.savetxt(
             fp,
