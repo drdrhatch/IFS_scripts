@@ -888,18 +888,34 @@ def freq_spec_pod_plot(ky, omegas, spec, pods, output=False):
     return
 
 
-def output_spec_all(ky_list, spec, omegas, varname):
+def output_spec_all_ky(ky_list, omegas, spec, varname):
+    """Output a frequency spectrum for multiple ky"""
+    xvar = {"name": "ky", "vlist": np.array(ky_list)}
+    yvar = {"name": "omega", "vlist": omegas}
+    output_spec_all(xvar, yvar, spec, varname)
+
+
+def output_spec_all_pod(pods, omegas, spec, varname):
+    """Output a frequency spectrum for multiple ky"""
+    xvar = {"name": "pod #", "vlist": pods}
+    yvar = {"name": "omega", "vlist": omegas}
+    output_spec_all(xvar, yvar, spec.T, varname)
+
+
+def output_spec_all(xvar, yvar, spec, varname):
     """Output a frequency spectrum for multiple ky"""
     header = (
-        "omega "
-        + varname
-        + "^2"
+        varname
         + "\t"
-        + "first row is frequencies and first column  is kys"
+        + "first row is "
+        + yvar["name"]
+        + " and first column is "
+        + xvar["name"]
     )
-    ky_list.insert(0, omegas.size)
-    kys = np.array(ky_list)[np.newaxis, :].T
-    data = np.hstack((kys, np.vstack((omegas, spec))))
+    tmp = np.insert(xvar["vlist"], 0, yvar["vlist"].size)
+    nrows = tmp.size - 1
+    column = np.array(tmp)[np.newaxis, :].T
+    data = np.hstack((column, np.vstack((yvar["vlist"], spec[:nrows, :]))))
     filename = "./" + varname + "_spec_all.dat"
     np.savetxt(
         filename,

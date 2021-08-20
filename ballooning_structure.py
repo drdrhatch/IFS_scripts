@@ -152,9 +152,13 @@ for i, mode in enumerate(ky_modes):
                 avg_freq = bl.avg_freq(times, u)
                 avg_kz = bl.avg_kz(mode, VH["phi"])
             elif args.avgs == 2:
-                avg_freq, spec, omegas = bl.avg_freq2(times, u, spec_out=True)
+                avg_freq, spec, omegas = bl.avg_freq2(
+                    times, u, samplerate=2, spec_out=True
+                )
                 avg_kz = bl.avg_kz2(mode, VH["phi"])
                 bl.freq_spec_pod_plot(mode.ky, omegas, spec, pods, output=True)
+                varname = "phi_ky" + str(int(mode.ky)).zfill(3)
+                bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
             bl.output_scales(mode, avg_freq, "avg_freq")
             bl.output_scales(mode, avg_kz, "avg_kz")
     else:
@@ -185,4 +189,4 @@ for i, mode in enumerate(ky_modes):
 
 if args.avgs and not np.any(pods):
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
-    bl.output_spec_all(ky_list, spec, omegas, "phi")
+    bl.output_spec_all_ky(ky_list, omegas, spec, "phi2")
