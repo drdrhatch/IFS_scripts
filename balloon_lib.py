@@ -875,7 +875,7 @@ def freq_spec_pod_plot(ky, omegas, spec, pods, output=False):
 
     fig, ax = plt.subplots()
     PODs = np.array(pods) + 1
-    plt.contourf(PODs, omegas, np.abs(spec[:, : PODs[-1]]), cmap="magma")
+    plt.contourf(PODs, omegas, np.abs(spec[:, : PODs[-2]]), cmap="magma")
     plt.colorbar(label=r"$\sigma |\hat{u}|$")
     plt.title("POD frequency spectrum")
     plt.xlabel("POD #")

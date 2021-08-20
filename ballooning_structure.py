@@ -98,7 +98,7 @@ else:
 print("ky modes to analyze: ", ky_list)
 
 if args.pod:
-    pods = range(min(args.pod, times.size))
+    pods = np.arange(1, min(args.pod, times.size) + 1)
 else:
     pods = None
 
@@ -110,7 +110,7 @@ if args.debug:
     for mode in ky_modes:
         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
-if not pods:
+if not np.any(pods):
     spec = np.empty((len(ky_list), times.size))
     if args.avgs and not args.corr:
         scales = np.empty((len(ky_list), 2))
@@ -121,7 +121,7 @@ if not pods:
 
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
-    if pods:
+    if np.any(pods):
         u, sv, VH = bl.collective_pod(mode, fields, extend=False)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
         if save_figs:
@@ -183,6 +183,6 @@ for i, mode in enumerate(ky_modes):
         scales[i] = np.array(scale_list)
         omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
 
-if args.avgs and not pods:
+if args.avgs and not np.any(pods):
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
     bl.output_spec_all(ky_list, spec, omegas, "phi")
