@@ -61,6 +61,14 @@ parser.add_argument(
     type=int,
     help="list of ky modes",
 )
+parser.add_argument(
+    "--kx",
+    dest="kx_cent",
+    action="store",
+    type=int,
+    default=0,
+    help="kx center mode",
+)
 args = parser.parse_args()
 
 suffix = bl.check_suffix(args.suffix)
@@ -92,6 +100,9 @@ else:  # otherwise, default to phi
 times = times[:: args.step]
 print("Analyzing for times: ", times)
 
+kx_cent = args.kx_cent
+print("kx_cent = ", kx_cent)
+
 if args.ky_list == 0:
     ky_list = list(range(0, field.ny))
 else:
@@ -107,7 +118,7 @@ gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 
 print("Loading data...", end="")
 start = time.time()
-ky_modes = [bl.KyMode(ky, times, fields, gene_files) for ky in ky_list]
+ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in ky_list]
 print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
 
 if args.debug:
@@ -163,7 +174,7 @@ for i, mode in enumerate(ky_modes):
                     times, u, samplerate=2, spec_out=True
                 )
                 avg_kz = bl.avg_kz2(mode, VH["phi"])
-                bl.freq_spec_pod_plot(ky, omegas, spec, pods, output=True)
+                bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
                 varname = "phi_ky" + str(int(ky)).zfill(3)
                 bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
             bl.output_scales(mode, avg_freq, "avg_freq")

@@ -37,7 +37,7 @@ HEADER_NAMES = {
 class KyMode:
     """Class for organizing ballooning structure for each ky mode"""
 
-    def __init__(self, ky, times, fields, gene_files):
+    def __init__(self, ky, kx_cent, times, fields, gene_files):
         pars = gene_files["pars"]
         field_file = gene_files["field"]
         mom_file = gene_files["mom"]
@@ -45,6 +45,7 @@ class KyMode:
         self.iky = ky
         self.ky = ky * pars["kymin"]
         self.nx = field_file.nx
+        self.kx_cent = kx_cent
         self.nz = field_file.nz
         self.T0 = pars["temp1"]
         self.n0 = pars["dens1"]
@@ -65,7 +66,7 @@ class KyMode:
             step = pars["nexc"] * self.iky
         hmodes = np.arange(0, self.nx / 2, step, dtype=np.intc)
         lmodes = np.arange(0, -self.nx / 2, -step, dtype=np.intc)
-        self.kx_modes = np.union1d(lmodes, hmodes)
+        self.kx_modes = self.kx_cent + np.union1d(lmodes, hmodes)
 
     def zrange(self):
         nxmodes = self.kx_modes.size
@@ -162,7 +163,7 @@ def output_pod(mode, u, sv, vh, fields, pods, times):
 
 def output_cum_sum(mode, var, varname):
     """Output variable and its cumulative sum"""
-    filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+    filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + "_kx" + str("{:03d}").format(int(mode.kx_cent)) + ".dat"
     header = HEADER_NAMES[varname]
     var_sum = np.cumsum(var) / var.sum()
     data = np.vstack((var, var_sum)).T
@@ -172,9 +173,9 @@ def output_cum_sum(mode, var, varname):
 def output_pod_modes(mode, r_vec, fields, pods, norm):
     """Output right pod modes (spatial variation)"""
     if norm:
-        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + "_norm.dat"
+        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + "_kx" + str("{:03d}").format(int(mode.kx_cent)) + "_norm.dat"
     else:
-        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + "_kx" + str("{:03d}").format(int(mode.kx_cent)) + ".dat"
     fp = open(filename, "w")
     fp.write("# theta Re Im\n")
     for ipod in pods:
@@ -198,7 +199,7 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
 
 def output_time_modes(mode, l_vec, pods, times):
     """Output left pod modes (time variation)"""
-    filename = "./pod_time_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+    filename = "./pod_time_ky" + str("{:03d}").format(int(mode.ky)) + "_kx" + str("{:03d}").format(int(mode.kx_cent)) + ".dat"
     fp = open(filename, "w")
     for ipod in pods:
         header = "time POD " + str(ipod + 1)
@@ -247,7 +248,7 @@ def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
     shows plot
     Can also save plot"""
     if save:
-        pdf_figs = PdfPages("mode_" + str(mode.ky) + ".pdf")
+        pdf_figs = PdfPages("mode_ky" + str(mode.ky) + "_kx" + str(mode.kx_cent) + ".pdf")
         output = pdf_figs
     else:
         output = False
@@ -255,7 +256,7 @@ def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
         varlabel = get_varname(varname)
         for var, time in zip(mode.fields[varname], times):
             title = (
-                r"$k_y=" + str(mode.ky) + ", t = " + str("{:6.3f}").format(time) + "$"
+                r"$k_y=" + str(mode.ky) + "$k_x=" + str(mode.kx_cent) + ", t = " + str("{:6.3f}").format(time) + "$"
             )
             plot_var(mode, var, varlabel, title, extend, show, output)
     if save:
@@ -609,7 +610,8 @@ def output_scales(modes, scales, varname, intype="POD"):
     else:
         ky = "_all"
         header = "ky avg_omega avg_kz corr_time corr_len"
-    filename = "./" + varname + "_ky" + ky + ".dat"
+    kx = str("{:03d}").format(int(modes.kx_cent))
+    filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
     if scales.ndim == 1:
         pods = np.arange(1, scales.size + 1)
         data = np.vstack((pods, scales)).T
@@ -859,7 +861,8 @@ def output_spec(mode, omegas, spec, varname):
     """Output a frequency spectrum for a mode"""
     header = "omega " + varname + "^2"
     ky = str("{:03d}").format(int(mode.ky))
-    filename = "./" + varname + "_ky" + ky + "_spec.dat"
+    kx = str("{:03d}").format(int(mode.kx_cent))
+    filename = "./" + varname + "_ky" + ky + "_kx" + kx + "_spec.dat"
     data = np.vstack((omegas, spec)).T
     np.savetxt(
         filename,
@@ -870,7 +873,7 @@ def output_spec(mode, omegas, spec, varname):
     )
 
 
-def freq_spec_pod_plot(ky, omegas, spec, pods, output=False):
+def freq_spec_pod_plot(mode, omegas, spec, pods, output=False):
 
     fig, ax = plt.subplots()
     plt.contourf(pods, omegas, np.abs(spec[:, : pods[-1]]), cmap="magma")
@@ -882,7 +885,9 @@ def freq_spec_pod_plot(ky, omegas, spec, pods, output=False):
     ymin = -ymax
     ax.set(ylim=(ymin, ymax))
     if output:
-        pdf_figs = PdfPages("mode_" + str(int(ky)) + "_pod_freq_spec.pdf")
+        ky = mode.ky
+        kx = mode.kx_cent
+        pdf_figs = PdfPages("mode_ky" + str(int(ky)) + "_kx" + str(int(kx)) + "_pod_freq_spec.pdf")
         output = pdf_figs
         output.savefig(fig)
         pdf_figs.close()
