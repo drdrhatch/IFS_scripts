@@ -137,6 +137,7 @@ if not np.any(pods):
 print("Working on :")
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
+    kx = mode.kx_cent
     print("ky = ", ky, "...", end="")
     print("kx modes = ", mode.kx_modes)
     start = time.time()
