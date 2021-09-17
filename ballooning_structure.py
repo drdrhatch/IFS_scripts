@@ -137,8 +137,8 @@ if not np.any(pods):
 print("Working on :")
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
-    kx = mode.kx_cent
     print("ky = ", ky, "...", end="")
+    print("kx modes = ", mode.kx_modes)
     start = time.time()
     if np.any(pods):
         u, sv, VH = bl.collective_pod(mode, fields, extend=False)
@@ -177,7 +177,7 @@ for i, mode in enumerate(ky_modes):
                 avg_kz = bl.avg_kz2(mode, VH["phi"])
                 bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
                 varname = (
-                    "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(ky)).zfill(3)
+                    "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
                 )
                 bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
             bl.output_scales(mode, avg_freq, "avg_freq")
@@ -212,4 +212,5 @@ for i, mode in enumerate(ky_modes):
 
 if args.avgs and not np.any(pods):
     bl.output_scales(ky_modes, scales, "avgs", "avgs")
-    bl.output_spec_all_ky(ky_list, omegas, spec, "phi2")
+    varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
+    bl.output_spec_all_ky(ky_list, omegas, spec, varname)
