@@ -19,29 +19,43 @@ from read_iterdb import *
 from read_profiles import read_profile_file
 #from calc_omega_from_field import *
 
+#**************************************************
+#************Start of user block*******************
 
+#name list of the title
+name_list=['1','2','3','4','5','6','7']
+#list that if the mode is stable
+stable_list=[1, 1,  0,  1, 0,   0,   1]
 
-name_list=['095','096','097','098','099','100','101','102','103','104','105']
-stable_list=[1,    0,   0,    0,    1,    1,     1,    0,    0,   0,     1]
+#for testing
 #name_list=name_list[:2]
 #stable_list=stable_list[:2]
 
-plot_real_part_apar=False #change to Ture if one wants to plot the real and imagainmart part of Apar
-
-path_list=['']*len(name_list)
-for i in range(len(path_list)):
-    path_list[i]='/global/cscratch1/sd/maxcurie/D3D174819/GL_3560_q'+name_list[i]+'/'
-
-path='/global/u1/m/maxcurie/genecode/prob_00APS_GL_3560_n6/'
+path='/global/u1/m/maxcurie/genecode/prob_00APS_GL_3560_n6/'#path to the iterdb files
 profile_name_list=[path+'DIIID174864.iterdb']*len(path_list)
-profile_type='ITERDB'
-
-
+profile_type='ITERDB' #profile type
 
 suffix='_1'
 time0=-1 #-1 if plot the last time slice, float if plot the given time 
 
+#range of rhotor to highlight the rational surfaces
+x_min=0.96
+x_max=0.973
 
+#construct the list of title name
+title_name_list=['']*len(name_list)
+for i in range(len(name_list)):
+    title_name_list[i]='$n_{tor}=$'+name_list[i]
+
+plot_real_part_apar=True #change to Ture if one wants to plot the real and imagainmart part of Apar
+
+path_list=['']*len(name_list)
+for i in range(len(path_list)):
+    path_list[i]='/global/cscratch1/sd/maxcurie/D3D174819/GL_3560_n'+name_list[i]+'/'
+
+
+#************End of user block**********************
+#****************************************************
 
 if plot_real_part_apar==True:
     fig, ax=plt.subplots(nrows=4,ncols=len(path_list),sharex=True)
@@ -197,10 +211,7 @@ for i in range(len(path_list)):
     apar = field.apar()[:,0,:]
     apar_theta = np.zeros((nm,field.nx),dtype = 'complex128')     
     apar_m = np.zeros((nm,field.nx),dtype = 'complex128')     
-
-    #10%
-    x_min=0.96
-    x_max=0.973
+    
     
 
     ax[0,i].plot(xgrid,(geometry['q']-np.min(geometry['q'])*0.7)/np.max(geometry['q']-np.min(geometry['q'])*0.7),color='orange',label='safety factor')
@@ -242,7 +253,7 @@ for i in range(len(path_list)):
             ax[3,i].axvline(xgrid[ix],color='white')
 
     
-    ax[0,i].set_title(r'$q=$'+name_list[i][0]+'.'+name_list[i][1:]+r'$q_0$')
+    ax[0,i].set_title(r''+title_name_list[i])
 
 plt.subplots_adjust(wspace=0, hspace=0)
 #plt.tight_layout()
