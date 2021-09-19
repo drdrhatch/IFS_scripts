@@ -73,3 +73,6 @@ Nonloal nonlinear radial magnetic fluctruation for Sythetic diagnostic for RIP (
 k_f_B_contour:
 Reads the csv files from the output of LN_RIP.py to replot or add the desired Doppler shift 
 
+remove_edge_opt:
+output the array that is the evenly distributed without the effort of edge opt
+
