@@ -137,7 +137,7 @@ class KyMode:
 def plot_pod(mode, var, pods, varn, extend=True):
     varname = get_varname(varn)
     for ipod in pods:
-        title = "$k_y=$" + str(mode.ky) + ", POD mode # " + str(ipod + 1)
+        title = "$k_y=$" + str(mode.ky) + ", POD mode # " + str(ipod)
         pvar, zgrid = get_plot_variable(mode, var[ipod], extend)
         plot(zgrid, np.conj(pvar), varname, title)
         plt.show()
@@ -148,7 +148,7 @@ def plot_time_dependence(mode, u, times, pods):
     plt.xlabel("Time")
     plt.ylabel(r"$|\Phi_s|$")
     for ipod in pods:
-        plt.plot(times, np.abs(u[:, ipod]), label=r"$s_" + str(ipod + 1) + "$")
+        plt.plot(times, np.abs(u[:, ipod]), label=r"$s_" + str(ipod) + "$")
     plt.grid(True)
     plt.legend()
     plt.show()
@@ -200,7 +200,7 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
     fp.write("# theta Re Im\n")
     for ipod in pods:
         for field in fields:
-            header = field + " POD " + str(ipod + 1)
+            header = field + " POD " + str(ipod)
             pvar, zgrid = get_plot_variable(mode, r_vec[field][ipod], extend=True)
             if norm:
                 pvar /= pvar[mode.zero_ind]
@@ -228,7 +228,7 @@ def output_time_modes(mode, l_vec, pods, times):
     )
     fp = open(filename, "w")
     for ipod in pods:
-        header = "time POD " + str(ipod + 1)
+        header = "time POD " + str(ipod)
         # data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
         tdat = l_vec[:, ipod].reshape(-1, 1)
         data = np.hstack((times.reshape(-1, 1), np.real(tdat), np.imag(tdat)))
