@@ -142,7 +142,7 @@ for i, mode in enumerate(ky_modes):
     print("kx modes = ", mode.kx_modes)
     start = time.time()
     if np.any(pods):
-        u, sv, VH = bl.collective_pod(mode, fields, extend=False)
+        u, sv, VH = bl.collective_pod(mode, fields, extend=True)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
         if save_figs:
             bl.output_pod(mode, u, sv, VH, fields, pods, times)

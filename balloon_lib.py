@@ -879,7 +879,8 @@ def freq_spec(mode, times, var, varname, axis=0, weights=None, output=False):
     omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
 
     if var.ndim > 2:
-        kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
+        # average over only connected modes
+        kx_avg = np.mean(np.abs(f_hat[:, mode.kx_modes, :]) ** 2, axis=2)
         z_avg = np.average(kx_avg, weights=weights, axis=1)
     else:
         z_avg = np.average(np.abs(f_hat) ** 2, weights=weights, axis=1)
