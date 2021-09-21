@@ -559,7 +559,11 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
 
 def get_extended_var(mode, var):
     """Flattens array over last two dimensions to return z-extended variable"""
-    evar = var[:, :, mode.kx_modes]
+    if var.shape[2] < mode.nx:
+        # we have previously selected the modes
+        evar = var
+    else:
+        evar = var[:, :, mode.kx_modes]
     phase = np.expand_dims(mode.phase, axis=0)
     newshape = (var.shape[0], -1)
     ext_var = np.reshape(evar * phase, newshape, order="F")
