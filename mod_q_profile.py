@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from read_write_geometry import *
 
-geomfile = 'tracer_efit'   #name of the geometry file output from GENE
+geomfile = 'gene_0001_qmult0.958_hager_78697_nx0320_nz060'   #name of the geometry file output from GENE
 plot_change = True         #change to True if one wants to plot(global) or see the info(local)
-local=True     #Change to True if one wants to write local tracer efit file
-qmult = 1.05   #multiply q profile by this factor
+local=False     #Change to True if one wants to write local tracer efit file
+qmult = 1.04384133611691   #multiply q profile by this factor
 qoff = 0.0     #offset q profile by this amount
 
 if local==True:
@@ -24,8 +24,9 @@ if local==True:
 else: 
    parameters, geometry  = read_geometry_global(geomfile)
 
-   geometry['q0'] = geometry['q0']*qmult
-   geometry['q0'] = geometry['q0'][:] + qoff
+   q_original =  geometry['q']
+   geometry['q'] = geometry['q']*qmult
+   geometry['q'] = geometry['q'][:] + qoff
    
    parameters['q0'] = parameters['q0']*qmult
    parameters['q0'] = parameters['q0'] + qoff
@@ -35,12 +36,15 @@ else:
    if plot_change:
       #pfile = input('Enter profile file name:\n')
       #prof = np.genfromtxt(pfile)
-      plt.plot(geometry['q'],label='new')
-      plt.plot(q_original,label='original')
+      #plt.plot(prof[:,0], geometry['q'],label='new')
+      #plt.plot(prof[:,0], q_original,label='original')
       #ax = plt.axis()
       #plt.axis((ax[0],ax[1],0.0,ax[3]))
+      #plt.xlabel('rhot')
+
+      plt.plot(geometry['q'],label='new')
+      plt.plot(q_original,label='original')
       plt.legend(loc='lower right')
-      plt.xlabel('rhot')
       plt.title('q')
       plt.show()
 
