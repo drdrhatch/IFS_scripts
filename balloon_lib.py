@@ -538,9 +538,9 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
         f_hat, times_lin = fft_nonuniform(times, f)
     else:
         samples = ntimes
-        f_hat = np.fft.fft(f, axis=axis)
+        f_hat = np.fft.fftshift(np.fft.fft(f, axis=axis), axis=axis)
     timestep = (times[-1] - times[0]) / samples
-    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
+    omegas = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(samples, d=timestep))
     if f.ndim > 1:
         if axis == 0:
             num = np.sum(abs(np.expand_dims(omegas, -1) * f_hat) ** 2, axis=0)
