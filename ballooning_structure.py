@@ -207,7 +207,8 @@ for i, mode in enumerate(ky_modes):
                 bl.test_corr(mode, doms, corr)
             scale_list.append(corr_time)
             scale_list.append(corr_len)
-        scales[i] = np.array(scale_list)
+            if(args.avgs or args.corr):
+                scales[i] = np.array(scale_list)
         omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
     print(str("{:6.3f}").format(time.time() - start), "s")
 
