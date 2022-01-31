@@ -29,6 +29,7 @@ parser.add_argument("--output", "-o", action="store_true", help="output plots to
 parser.add_argument("--noshow", "-n", action="store_false", help="suppress popup plots")
 parser.add_argument("--heat", "-q", action="store_true", help="calculate heat flux")
 parser.add_argument("--debug", "-d", action="store_true", help="debug switch")
+parser.add_argument("--notimeavg", "-N", action="store_false", help="Time average")
 parser.add_argument(
     "--avgs",
     "-a",
@@ -75,6 +76,7 @@ suffix = bl.check_suffix(args.suffix)
 
 save_figs = args.output
 show_figs = args.noshow
+time_avg = args.notimeavg
 
 par = pario.Parameters()
 par.Read_Pars("parameters" + suffix)
@@ -189,12 +191,20 @@ for i, mode in enumerate(ky_modes):
         scale_list = []
         if args.avgs:
             if args.avgs == 1:
-                avg_freq = bl.avg_freq_tz(mode, times, phi)
-                avg_kz = bl.avg_kz_tz(mode, phi)
+                if time_avg:
+                    avg_freq = bl.avg_freq_tz(mode, times, phi)
+                    avg_kz = bl.avg_kz_tz(mode, phi)
+                else:
+                    avg_freq = bl.avg_freq(times, phi)
+                    avg_kz = bl.avg_kz(mode, phi)
             elif args.avgs == 2:
-                avg_freq = bl.avg_freq2_tz(mode, times, phi)
-                avg_kz = bl.avg_kz2_tz(mode, phi)
-            scale_list.append(avg_freq)
+                if time_avg:
+                    avg_freq = bl.avg_freq2_tz(mode, times, phi)
+                    avg_kz = bl.avg_kz2_tz(mode, phi)
+                else:
+                    # avg_freq = bl.avg_freq2(times, phi)
+                    avg_kz = bl.avg_kz2(mode, phi)
+            # scale_list.append(avg_freq)
             scale_list.append(avg_kz)
         if args.corr:
             dphi = phi[:, :, 0]  # average over kx
@@ -207,12 +217,17 @@ for i, mode in enumerate(ky_modes):
                 bl.test_corr(mode, doms, corr)
             scale_list.append(corr_time)
             scale_list.append(corr_len)
-            if(args.avgs or args.corr):
+        if args.avgs or args.corr:
+            if time_avg:
                 scales[i] = np.array(scale_list)
-        omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
+            else:
+                scales = np.array(scale_list)
+                bl.output_scales(ky_modes, scales, "phi" + suffix, "ev")
+        # omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
     print(str("{:6.3f}").format(time.time() - start), "s")
 
 if args.avgs and not np.any(pods):
-    bl.output_scales(ky_modes, scales, "avgs", "avgs")
-    varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
-    bl.output_spec_all_ky(ky_list, omegas, spec, varname)
+    if time_avg:
+        bl.output_scales(ky_modes, scales, "avgs", "avgs")
+        varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
+        bl.output_spec_all_ky(ky_list, omegas, spec, varname)

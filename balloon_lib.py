@@ -646,11 +646,16 @@ def output_scales(modes, scales, varname, intype="POD"):
         ky = str("{:03d}").format(int(modes.ky)) + "_pod"
         header = "POD # " + varname
         kx = str("{:03d}").format(int(modes.kx_cent))
+        filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
+    elif intype == "ev":
+        header = "EV # " + varname
+        filename = "./" + varname + "_ev.dat"
     else:
         ky = "_all"
         header = "ky avg_omega avg_kz corr_time corr_len"
         kx = str("{:03d}").format(int(modes[0].kx_cent))
-    filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
+        filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
+
     if scales.ndim == 1:
         pods = np.arange(1, scales.size + 1)
         data = np.vstack((pods, scales)).T
