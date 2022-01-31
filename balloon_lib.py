@@ -640,6 +640,57 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
     return akz
 
 
+def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
+    """Calculate the rms kz mode weighted by given field for POD
+    modes constructed for orthoganality w.r.t. a jacobian weight"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
+    # setup fields
+    field2 = np.abs(field) ** 2
+    zgrid = mode.zgrid_ext
+    jacobian = np.expand_dims(
+        np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1
+    )
+
+    # differentiate
+    dfield_dz = fd.fd_d1_o4(field, zgrid)
+    dfield2_dz = fd.fd_d1_o4(field2, zgrid)
+    djacobian_dz = fd.fd_d1_o4(jacobian, zgrid)
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    f = field[zstart:zend]
+    f2 = field2[zstart:zend]
+    df_dz = dfield_dz[zstart:zend]
+    df2_dz = dfield2_dz[zstart:zend]
+    jac = jacobian[zstart:zend]
+    djac_dz = djacobian_dz[zstart:zend]
+    jacBpi = jacxBpi_ext[zstart:zend]
+    zg = zgrid[zstart:zend]
+
+    integrand = (
+        np.abs(df_dz) ** 2 + djac_dz / jac * df2_dz + (djac_dz / jac) ** 2 * f2
+    ) / jacBpi ** 2
+
+    num = np.trapz(integrand * jac, zg, axis=0)
+    denom = np.trapz(f2 * jac, zg, axis=0)
+    akz = np.sqrt(num).T
+    if outspect:
+        return akz, integrand
+    if norm_out:
+        return akz, denom
+    return akz
+
+
 def output_scales(modes, scales, varname, intype="POD"):
     """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
     if intype == "POD":

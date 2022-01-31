@@ -177,7 +177,7 @@ for i, mode in enumerate(ky_modes):
                 avg_freq, spec, omegas = bl.avg_freq2(
                     times, u, samplerate=2, spec_out=True
                 )
-                avg_kz = bl.avg_kz2(mode, VH["phi"])
+                avg_kz = bl.avg_kz2_pod(mode, VH["phi"])
                 bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
                 varname = (
                     "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
