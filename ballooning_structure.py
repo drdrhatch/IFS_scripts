@@ -118,7 +118,7 @@ else:
 
 gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 
-print("Loading data...", end="")
+print("Loading data for fields" + str(fields) + "...", end="")
 start = time.time()
 ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in ky_list]
 print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
@@ -146,6 +146,8 @@ for i, mode in enumerate(ky_modes):
     if np.any(pods):
         u, sv, VH = bl.collective_pod(mode, fields, extend=True)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
+        if args.debug:
+            bl.test_pod(mode, u, sv, VH, fields)
         if save_figs:
             bl.output_pod(mode, u, sv, VH, fields, pods, times)
         if args.heat:
@@ -177,8 +179,10 @@ for i, mode in enumerate(ky_modes):
                 avg_freq, spec, omegas = bl.avg_freq2(
                     times, u, samplerate=2, spec_out=True
                 )
+                # bl.pod_kz_test(mode, u, sv, VH)
+                avg_kz = bl.avg_kz2(mode, VH["phi"])
                 avg_kz = bl.avg_kz2_pod(mode, VH["phi"])
-                bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
+                # bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
                 varname = (
                     "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
                 )
@@ -202,9 +206,10 @@ for i, mode in enumerate(ky_modes):
                     avg_freq = bl.avg_freq2_tz(mode, times, phi)
                     avg_kz = bl.avg_kz2_tz(mode, phi)
                 else:
-                    # avg_freq = bl.avg_freq2(times, phi)
+                    avg_freq = bl.avg_freq2(times, phi)
                     avg_kz = bl.avg_kz2(mode, phi)
-            # scale_list.append(avg_freq)
+            print("avg_kz = ", avg_kz)
+            scale_list.append(avg_freq)
             scale_list.append(avg_kz)
         if args.corr:
             dphi = phi[:, :, 0]  # average over kx
@@ -223,7 +228,7 @@ for i, mode in enumerate(ky_modes):
             else:
                 scales = np.array(scale_list)
                 bl.output_scales(ky_modes, scales, "phi" + suffix, "ev")
-        # omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
+        omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
     print(str("{:6.3f}").format(time.time() - start), "s")
 
 if args.avgs and not np.any(pods):

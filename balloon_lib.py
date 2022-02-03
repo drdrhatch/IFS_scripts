@@ -406,15 +406,18 @@ def collective_pod(mode, fields, extend=True):
     ntimes = mode.fields[fields[0]].shape[0]
     if extend:
         nx = len(mode.kx_modes)
-        all_fields = np.concatenate(
-            (
-                [
-                    mode.fields[field][:, :, mode.kx_modes].reshape(ntimes, -1)
-                    for field in fields
-                ]
-            ),
-            axis=1,
-        )
+        sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
+        print(sqrjac.shape)
+        print(mode.fields["phi"].shape)
+        tmp = [
+            (mode.fields[field][:, :, mode.kx_modes] * sqrjac).reshape(ntimes, -1)
+            for field in fields
+        ]
+        # all_fields = np.concatenate(
+        #     ([tmp.reshape(ntimes, -1) for field in fields]),
+        #     axis=1,
+        # )
+        all_fields = np.concatenate(tmp, axis=1)
     else:
         nx = mode.nx
         all_fields = np.concatenate(
@@ -549,6 +552,8 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     else:
         num = np.sum(abs(omegas * f_hat) ** 2)
     denom = np.sum(abs(f_hat) ** 2, axis=axis)
+    print("avg_freq2 :: denom = ", denom)
+    print("avg_freq2 :: sum(denom) = ", np.sum(denom))
     freq = np.sqrt(num / denom)
     if norm_out:
         return freq, denom
@@ -632,6 +637,9 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
 
     num = np.trapz(np.abs(dfdz) ** 2 * jac, zg, axis=0)
     denom = np.trapz(np.abs(f) ** 2 * jac, zg, axis=0)
+    print("num = ", num)
+    print("denom = ", denom)
+    print("avg_kz2 :: sum(denom) = ", np.sum(denom))
     akz = np.sqrt(num / denom).T
     if outspect:
         return akz, dfdz
@@ -678,12 +686,21 @@ def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
     zg = zgrid[zstart:zend]
 
     integrand = (
-        np.abs(df_dz) ** 2 + djac_dz / jac * df2_dz + (djac_dz / jac) ** 2 * f2
+        np.abs(df_dz) ** 2
+        - 0.5 * djac_dz / jac * df2_dz
+        + 0.25 * (djac_dz / jac) ** 2 * f2
     ) / jacBpi ** 2
 
-    num = np.trapz(integrand * jac, zg, axis=0)
-    denom = np.trapz(f2 * jac, zg, axis=0)
-    akz = np.sqrt(num).T
+    term1 = np.trapz(np.abs(df_dz) ** 2 / jacBpi ** 2, zg, axis=0)
+    term2 = np.trapz(-0.5 * djac_dz / jac * df2_dz / jacBpi ** 2, zg, axis=0)
+    term3 = np.trapz(0.25 * (djac_dz / jac) ** 2 * f2 / jacBpi ** 2, zg, axis=0)
+    print([term1, term2, term3])
+
+    num = np.trapz(integrand, zg, axis=0)
+    denom = np.trapz(f2, zg, axis=0)
+    print("denom = ", denom)
+    print("avg_kz2_pod :: sum(denom) = ", np.sum(denom))
+    akz = np.sqrt(num / denom).T
     if outspect:
         return akz, integrand
     if norm_out:
@@ -890,8 +907,9 @@ def avg_kz_tz(mode, var):
 
 
 def avg_kz2_tz(mode, var):
-    evar = get_extended_var(mode, var)
-    kz, norm = avg_kz2(mode, evar, norm_out=True)
+    # evar = get_extended_var(mode, var)
+    # kz, norm = avg_kz2(mode, evar, norm_out=True)
+    kz, norm = avg_kz2(mode, var, norm_out=True)
     mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
     return mean_kz
 
@@ -971,6 +989,7 @@ def output_spec(mode, omegas, spec, varname):
 
 def freq_spec_pod_plot(mode, omegas, spec, pods, output=False):
 
+    print(omegas.shape, spec.shape, pods.shape)
     fig, ax = plt.subplots()
     plt.contourf(pods, omegas, np.abs(spec[:, : pods[-1]]), cmap="magma")
     plt.colorbar(label=r"$\sigma |\hat{u}|$")
@@ -1042,27 +1061,60 @@ def check_suffix(run_number):
     return suffix
 
 
+def rebuild_from_pod(mode, u, sv, vh, field):
+    npods = u.shape[0]
+    nx = mode.kx_modes.size
+    nz = mode.nz
+    # print("Shapes")
+    # print("------------")
+    # print("u : ", u.shape)
+    # print("sv : ", sv.shape)
+    # print("vh['phi'] : ", vh["phi"].shape)
+    # for field in fields:
+    temp1 = vh[field].reshape((npods, -1))
+    temp2 = np.zeros((npods, nx * nz), dtype=np.complex128)
+    print(sv.shape, u.shape, temp1.shape, temp2.shape)
+    for i in range(npods):
+        temp2 += sv[i] * np.outer(u[:, i], temp1[i])
+    sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
+    new = temp2.reshape((-1, nz, nx)) / sqrjac
+    return new
+
+
 def test_pod(mode, u, sv, vh, fields):
     """testing that pod behaved in the expected way"""
-    npods = u.shape[0]
-    nx = mode.nx
-    nz = mode.nz
+    nx = mode.kx_modes.size
     print("Shapes")
     print("------------")
     print("u : ", u.shape)
     print("sv : ", sv.shape)
     print("vh['phi'] : ", vh["phi"].shape)
     for field in fields:
-        original = mode.fields[field]
-        new = np.empty(original.shape, dtype=original.dtype)
-        temp2 = np.zeros((npods, nx * nz), dtype=original.dtype)
-        for i in range(npods):
-            temp1 = vh[field].reshape((npods, -1))
-            temp2 += sv[i] * np.outer(u[:, i], temp1[i])
-        new = temp2.reshape((-1, nz, nx))
+        if nx == mode.nx:
+            original = mode.fields[field]
+        else:
+            original = mode.fields[field][:, :, mode.kx_modes]
+        new = rebuild_from_pod(mode, u, sv, vh, field)
         print("Are the arrays close?....", np.allclose(original, new, atol=1e-6))
+        if field == "phi":
+            phi = new
     Q = calc_heat_flux(mode, vh, sv ** 2)
     Q_sum = np.mean(
         np.average(Q.sum(axis=2), axis=1, weights=mode.geometry["gjacobian"]), axis=0
     )
     print("Q_sum(ky = %d) = ", mode.ky, Q_sum)
+
+    # pod_kz_test(mode, phi)
+
+
+# def pod_kz_test(mode, field):
+#     avg_kz = avg_kz2_tz(mode, field)
+#     print("pod_kz_test :: avg_kz = ", avg_kz)
+#     pass
+
+
+def pod_kz_test(mode, u, sv, vh):
+    phi = rebuild_from_pod(mode, u, sv, vh, "phi")
+    avg_kz = avg_kz2_tz(mode, phi)
+    print("pod_kz_test :: avg_kz = ", avg_kz)
+    return avg_kz
