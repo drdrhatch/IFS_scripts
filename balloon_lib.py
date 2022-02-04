@@ -407,16 +407,10 @@ def collective_pod(mode, fields, extend=True):
     if extend:
         nx = len(mode.kx_modes)
         sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
-        print(sqrjac.shape)
-        print(mode.fields["phi"].shape)
         tmp = [
             (mode.fields[field][:, :, mode.kx_modes] * sqrjac).reshape(ntimes, -1)
             for field in fields
         ]
-        # all_fields = np.concatenate(
-        #     ([tmp.reshape(ntimes, -1) for field in fields]),
-        #     axis=1,
-        # )
         all_fields = np.concatenate(tmp, axis=1)
     else:
         nx = mode.nx
@@ -538,10 +532,11 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     even_dt = np.all(dt == dt[0])
     if not even_dt:
         samples = samplerate * ntimes
-        f_hat, times_lin = fft_nonuniform(times, f)
+        f_hat_tmp, times_lin = fft_nonuniform(times, f)
     else:
         samples = ntimes
-        f_hat = np.fft.fftshift(np.fft.fft(f, axis=axis), axis=axis)
+        f_hat_tmp = np.fft.fft(f, axis=axis)
+    f_hat = np.fft.fftshift(f_hat_tmp, axis)
     timestep = (times[-1] - times[0]) / samples
     omegas = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(samples, d=timestep))
     if f.ndim > 1:
@@ -552,8 +547,6 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     else:
         num = np.sum(abs(omegas * f_hat) ** 2)
     denom = np.sum(abs(f_hat) ** 2, axis=axis)
-    print("avg_freq2 :: denom = ", denom)
-    print("avg_freq2 :: sum(denom) = ", np.sum(denom))
     freq = np.sqrt(num / denom)
     if norm_out:
         return freq, denom
@@ -637,9 +630,6 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
 
     num = np.trapz(np.abs(dfdz) ** 2 * jac, zg, axis=0)
     denom = np.trapz(np.abs(f) ** 2 * jac, zg, axis=0)
-    print("num = ", num)
-    print("denom = ", denom)
-    print("avg_kz2 :: sum(denom) = ", np.sum(denom))
     akz = np.sqrt(num / denom).T
     if outspect:
         return akz, dfdz
@@ -691,15 +681,8 @@ def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
         + 0.25 * (djac_dz / jac) ** 2 * f2
     ) / jacBpi ** 2
 
-    term1 = np.trapz(np.abs(df_dz) ** 2 / jacBpi ** 2, zg, axis=0)
-    term2 = np.trapz(-0.5 * djac_dz / jac * df2_dz / jacBpi ** 2, zg, axis=0)
-    term3 = np.trapz(0.25 * (djac_dz / jac) ** 2 * f2 / jacBpi ** 2, zg, axis=0)
-    print([term1, term2, term3])
-
     num = np.trapz(integrand, zg, axis=0)
     denom = np.trapz(f2, zg, axis=0)
-    print("denom = ", denom)
-    print("avg_kz2_pod :: sum(denom) = ", np.sum(denom))
     akz = np.sqrt(num / denom).T
     if outspect:
         return akz, integrand
