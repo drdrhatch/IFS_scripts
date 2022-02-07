@@ -196,16 +196,29 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
             + str("{:03d}").format(int(mode.kx_cent))
             + ".dat"
         )
+    sqrjac = np.sqrt(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size))
     fp = open(filename, "w")
     fp.write("# theta Re Im\n")
     for ipod in pods:
         for field in fields:
             header = field + " POD " + str(ipod)
             pvar, zgrid = get_plot_variable(mode, r_vec[field][ipod], extend=True)
+            print(pvar.shape, sqrjac.shape)
+            pvar_sqrjac = pvar / sqrjac
             if norm:
                 pvar /= pvar[mode.zero_ind]
                 pvar /= np.max(np.abs(pvar))
-            data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
+                pvar_sqrjac /= pvar_sqrjac[mode.zero_ind]
+                pvar_sqrjac /= np.max(np.abs(pvar_sqrjac))
+            data = np.vstack(
+                (
+                    mode.zgrid_ext,
+                    np.real(pvar),
+                    np.imag(pvar),
+                    np.real(pvar_sqrjac),
+                    np.imag(pvar_sqrjac),
+                )
+            ).T
             np.savetxt(
                 fp,
                 data,
