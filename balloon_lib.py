@@ -203,7 +203,6 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
         for field in fields:
             header = field + " POD " + str(ipod)
             pvar, zgrid = get_plot_variable(mode, r_vec[field][ipod], extend=True)
-            print(pvar.shape, sqrjac.shape)
             pvar_sqrjac = pvar / sqrjac
             if norm:
                 pvar /= pvar[mode.zero_ind]
