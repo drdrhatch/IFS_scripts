@@ -147,6 +147,7 @@ for i, mode in enumerate(ky_modes):
         u, sv, VH = bl.collective_pod(mode, fields, extend=True)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
         if args.debug:
+            bl.pod_orthog_test(mode, u, VH)
             bl.test_pod(mode, u, sv, VH, fields)
         if save_figs:
             bl.output_pod(mode, u, sv, VH, fields, pods, times)

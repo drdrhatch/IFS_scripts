@@ -1101,3 +1101,17 @@ def pod_kz_test(mode, u, sv, vh):
     avg_kz = avg_kz2_tz(mode, phi)
     print("pod_kz_test :: avg_kz = ", avg_kz)
     return avg_kz
+
+
+def pod_orthog_test(mode, u, vh):
+    u2 = np.abs(u) ** 2
+    v2 = np.abs(vh["phi"]) ** 2
+
+    su2 = np.sum(u2, axis=0)
+    sv2 = np.sum(v2, axis=1)
+
+    print("u modes integrated over t :")
+    print(su2)
+    print("phi modes integrated over z :")
+    print(sv2)
+    pass
