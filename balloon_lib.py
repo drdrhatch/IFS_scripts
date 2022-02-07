@@ -1048,15 +1048,8 @@ def rebuild_from_pod(mode, u, sv, vh, field):
     npods = u.shape[0]
     nx = mode.kx_modes.size
     nz = mode.nz
-    # print("Shapes")
-    # print("------------")
-    # print("u : ", u.shape)
-    # print("sv : ", sv.shape)
-    # print("vh['phi'] : ", vh["phi"].shape)
-    # for field in fields:
     temp1 = vh[field].reshape((npods, -1))
     temp2 = np.zeros((npods, nx * nz), dtype=np.complex128)
-    print(sv.shape, u.shape, temp1.shape, temp2.shape)
     for i in range(npods):
         temp2 += sv[i] * np.outer(u[:, i], temp1[i])
     sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
@@ -1086,14 +1079,6 @@ def test_pod(mode, u, sv, vh, fields):
         np.average(Q.sum(axis=2), axis=1, weights=mode.geometry["gjacobian"]), axis=0
     )
     print("Q_sum(ky = %d) = ", mode.ky, Q_sum)
-
-    # pod_kz_test(mode, phi)
-
-
-# def pod_kz_test(mode, field):
-#     avg_kz = avg_kz2_tz(mode, field)
-#     print("pod_kz_test :: avg_kz = ", avg_kz)
-#     pass
 
 
 def pod_kz_test(mode, u, sv, vh):
