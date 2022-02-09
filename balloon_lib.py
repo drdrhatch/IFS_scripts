@@ -707,7 +707,7 @@ def output_scales(modes, scale_dict, varname, intype="POD"):
     """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
     if intype == "POD":
         ky = str("{:03d}").format(int(modes.ky))
-        header = "(" + varname + ") POD "
+        header = "POD".ljust(13, " ")
         kx = str("{:03d}").format(int(modes.kx_cent))
         filename = "./" + varname + "_ky" + ky + "_kx" + kx + "_pod" + ".dat"
 
@@ -719,22 +719,19 @@ def output_scales(modes, scale_dict, varname, intype="POD"):
         header = "EV #" + varname
         filename = "./" + varname + "_ev.dat"
     else:
-        ky = "_all"
-        # header = "ky avg_omega avg_kz corr_time corr_len"
-        header = "ky"
+        header = "ky".ljust(13, " ")
         kx = str("{:03d}").format(int(modes[0].kx_cent))
-        filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
-    var_list = list(scale_dict.keys())
-    for var in var_list:
-        header += " " + var
+        filename = "./" + varname + "_ky_all_kx" + kx + ".dat"
 
-    # if intype == "POD":
-    #     # pods = np.arange(1, scales.size + 1)
-    #     # data = np.vstack((pods, scales)).T
-    # else:
-    if not (intype == "POD") and not (intype == "ev"):
-        kylist = np.expand_dims(np.array([mode.ky for mode in modes]).T, -1)
-        data = np.hstack((kylist, scales))
+        ky_list = [mode.ky for mode in modes]
+        kys = np.expand_dims(np.array(ky_list), 0)
+        scales = np.array(list(scale_dict.values()))
+        data = np.vstack((kys, scales)).T
+
+    var_list = list(scale_dict.keys())  # build header
+    for var in var_list:
+        header += var.ljust(14, " ")
+
     np.savetxt(
         filename,
         data,
@@ -994,7 +991,6 @@ def output_spec(mode, omegas, spec, varname):
 
 def freq_spec_pod_plot(mode, omegas, spec, pods, output=False):
 
-    print(omegas.shape, spec.shape, pods.shape)
     fig, ax = plt.subplots()
     plt.contourf(pods, omegas, np.abs(spec[:, : pods[-1]]), cmap="magma")
     plt.colorbar(label=r"$\sigma |\hat{u}|$")

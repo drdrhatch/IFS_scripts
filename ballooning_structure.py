@@ -129,21 +129,16 @@ if args.debug:
 
 if not np.any(pods):
     spec = np.empty((len(ky_list), times.size))
-    if args.avgs and not args.corr:
-        scales = np.empty((len(ky_list), 2))
-    if not args.avgs and args.corr:
-        scales = np.empty((len(ky_list), 2))
-    if args.avgs and args.corr:
-        scales = np.empty((len(ky_list), 4))
+
+scale_dict = {}
 
 print("Working on :")
 for i, mode in enumerate(ky_modes):
     ky = mode.ky
     kx = mode.kx_cent
     print("ky = ", ky, "...", end="")
-    print("kx modes = ", mode.kx_modes)
+    print("connected kx modes = ", mode.kx_modes)
     start = time.time()
-    scale_dict = {}
     if np.any(pods):
         u, sv, VH = bl.collective_pod(mode, fields, extend=True)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
@@ -171,8 +166,8 @@ for i, mode in enumerate(ky_modes):
                 weights=mode.geometry["gjacobian"],
                 axis=-1,
             )
-            bl.output_scales(mode, corr_time, "corr_time")
-            bl.output_scales(mode, corr_len, "corr_len")
+            scale_dict["corr_len"] = corr_len
+            scale_dict["corr_time"] = corr_time
         if args.avgs:
             avg_freq = bl.avg_freq(times, u)
             avg_kz = bl.avg_kz(mode, VH["phi"])
@@ -185,34 +180,15 @@ for i, mode in enumerate(ky_modes):
             varname = "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
             bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
             scale_dict["avg_freq"] = avg_freq
-            scale_dict["avg_freq2"] = avg_freq2
+            scale_dict["avg_freq_rms"] = avg_freq2
             scale_dict["avg_kz"] = avg_kz
-            scale_dict["avg_kz2"] = avg_kz2
-            bl.output_scales(mode, scale_dict, "phi", "POD")
+            scale_dict["avg_kz_rms"] = avg_kz2
+        bl.output_scales(mode, scale_dict, "phi", "POD")
         end = time.time()
     else:
         phi = mode.fields["phi"]
-        scale_list = []
-        if args.avgs:
-            if args.avgs == 1:
-                if time_avg:
-                    avg_freq = bl.avg_freq_tz(mode, times, phi)
-                    avg_kz = bl.avg_kz_tz(mode, phi)
-                else:
-                    avg_freq = bl.avg_freq(times, phi)
-                    avg_kz = bl.avg_kz(mode, phi)
-            elif args.avgs == 2:
-                if time_avg:
-                    avg_freq = bl.avg_freq2_tz(mode, times, phi)
-                    avg_kz = bl.avg_kz2_tz(mode, phi)
-                else:
-                    avg_freq = bl.avg_freq2(times, phi)
-                    avg_kz = bl.avg_kz2(mode, phi)
-            print("avg_kz = ", avg_kz)
-            scale_list.append(avg_freq)
-            scale_list.append(avg_kz)
         if args.corr:
-            dphi = phi[:, :, 0]  # average over kx
+            dphi = phi[:, :, 0]  # average over x
             w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
             w2 = mode.geometry["gjacobian"]
             doms, corr = bl.autocorrelate_tz(dphi, (times, mode.zgrid), w1)
@@ -220,19 +196,34 @@ for i, mode in enumerate(ky_modes):
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
             if args.debug:
                 bl.test_corr(mode, doms, corr)
-            scale_list.append(corr_time)
-            scale_list.append(corr_len)
-        if args.avgs or args.corr:
+            if i == 0:
+                scale_dict.update({"corr_len": [], "corr_time": []})
+            scale_dict["corr_len"].append(corr_len)
+            scale_dict["corr_time"].append(corr_time)
+        if args.avgs:
             if time_avg:
-                scales[i] = np.array(scale_list)
+                avg_freq = bl.avg_freq_tz(mode, times, phi)
+                avg_kz = bl.avg_kz_tz(mode, phi)
+                avg_freq2 = bl.avg_freq2_tz(mode, times, phi)
+                avg_kz2 = bl.avg_kz2_tz(mode, phi)
             else:
-                scales = np.array(scale_list)
-                bl.output_scales(ky_modes, scales, "phi" + suffix, "ev")
+                avg_freq = bl.avg_freq(times, phi)
+                avg_kz = bl.avg_kz(mode, phi)
+                avg_freq2 = bl.avg_freq2(times, phi)
+                avg_kz2 = bl.avg_kz2(mode, phi)
+            if i == 0:
+                scale_dict.update(
+                    {"avg_freq": [], "avg_freq_rms": [], "avg_kz": [], "avg_kz_rms": []}
+                )
+            scale_dict["avg_freq"].append(avg_freq)
+            scale_dict["avg_freq_rms"].append(avg_freq2)
+            scale_dict["avg_kz"].append(avg_kz)
+            scale_dict["avg_kz_rms"].append(avg_kz2)
         omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
     print(str("{:6.3f}").format(time.time() - start), "s")
 
 if args.avgs and not np.any(pods):
     if time_avg:
-        bl.output_scales(ky_modes, scales, "avgs", "avgs")
+        bl.output_scales(ky_modes, scale_dict, "avgs_phi", "avgs")
         varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
         bl.output_spec_all_ky(ky_list, omegas, spec, varname)
