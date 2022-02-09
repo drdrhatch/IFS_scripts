@@ -589,25 +589,27 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
     else:
         var_ext = var
     if var.ndim > 1:
-        field = np.abs(var_ext.T) ** 2
+        field = var_ext.T
     else:
-        field = np.abs(np.expand_dims(var, axis=-1)) ** 2
+        field = np.expand_dims(var, axis=-1)
 
     zgrid = mode.zgrid_ext
-    dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
+    field2 = np.abs(field) ** 2
+    dfielddz = -1j * fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
     dfdz = dfielddz[zstart:zend]
     f = field[zstart:zend]
+    f2 = field2[zstart:zend]
     jac = np.expand_dims(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1)[
         zstart:zend
     ]
     zg = zgrid[zstart:zend]
 
-    num = np.trapz(dfdz * jac, zg, axis=0)
-    denom = np.trapz(f * jac, zg, axis=0)
-    akz = (num / denom).T
+    num = np.trapz(dfdz * f2 * jac, zg, axis=0)
+    denom = np.trapz(f2 * jac, zg, axis=0)
+    akz = np.real(num / denom).T
     if outspect:
         return akz, dfdz
     if norm_out:
