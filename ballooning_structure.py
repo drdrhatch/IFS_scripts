@@ -170,7 +170,7 @@ for i, mode in enumerate(ky_modes):
             scale_dict["corr_time"] = corr_time
         if args.avgs:
             avg_freq = bl.avg_freq(times, u)
-            avg_kz = bl.avg_kz(mode, VH["phi"])
+            avg_kz = bl.avg_kz_pod(mode, VH["phi"])
             avg_freq2, spec, omegas = bl.avg_freq2(
                 times, u, samplerate=2, spec_out=True
             )

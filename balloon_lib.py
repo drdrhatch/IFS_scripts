@@ -652,6 +652,53 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
     return akz
 
 
+def avg_kz_pod(mode, var, outspect=False, norm_out=False):
+    """Calculate the kz mode weighted by given field for POD
+    modes constructed for orthoganality w.r.t. a jacobian weight"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
+    # setup fields
+    field2 = np.abs(field) ** 2
+    zgrid = mode.zgrid_ext
+    jacobian = np.expand_dims(
+        np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1
+    )
+
+    # differentiate
+    dfield_dz = -1j * fd.fd_d1_o4(field, zgrid)
+    djacobian_dz = fd.fd_d1_o4(jacobian, zgrid)
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    f = field[zstart:zend]
+    f2 = field2[zstart:zend]
+    df_dz = dfield_dz[zstart:zend]
+    jac = jacobian[zstart:zend]
+    djac_dz = djacobian_dz[zstart:zend]
+    jacBpi = jacxBpi_ext[zstart:zend]
+    zg = zgrid[zstart:zend]
+
+    integrand = np.conj(f) * (df_dz - 0.5 * djac_dz / jac * f) / jacBpi
+
+    num = np.trapz(integrand, zg, axis=0)
+    denom = np.trapz(f2, zg, axis=0)
+    akz = np.imag(num / denom).T
+    if outspect:
+        return akz, integrand
+    if norm_out:
+        return akz, denom
+    return akz
+
+
 def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
     """Calculate the rms kz mode weighted by given field for POD
     modes constructed for orthoganality w.r.t. a jacobian weight"""
