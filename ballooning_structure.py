@@ -143,6 +143,7 @@ for i, mode in enumerate(ky_modes):
     print("ky = ", ky, "...", end="")
     print("kx modes = ", mode.kx_modes)
     start = time.time()
+    scale_dict = {}
     if np.any(pods):
         u, sv, VH = bl.collective_pod(mode, fields, extend=True)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
@@ -173,23 +174,22 @@ for i, mode in enumerate(ky_modes):
             bl.output_scales(mode, corr_time, "corr_time")
             bl.output_scales(mode, corr_len, "corr_len")
         if args.avgs:
-            if args.avgs == 1:
-                avg_freq = bl.avg_freq(times, u)
-                avg_kz = bl.avg_kz(mode, VH["phi"])
-            elif args.avgs == 2:
-                avg_freq, spec, omegas = bl.avg_freq2(
-                    times, u, samplerate=2, spec_out=True
-                )
-                avg_kz = bl.avg_kz2_pod(mode, VH["phi"])
-                if save_figs:
-                    bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
-                varname = (
-                    "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
-                )
-                bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
-            bl.output_scales(mode, avg_freq, "avg_freq")
-            bl.output_scales(mode, avg_kz, "avg_kz")
-            end = time.time()
+            avg_freq = bl.avg_freq(times, u)
+            avg_kz = bl.avg_kz(mode, VH["phi"])
+            avg_freq2, spec, omegas = bl.avg_freq2(
+                times, u, samplerate=2, spec_out=True
+            )
+            avg_kz2 = bl.avg_kz2_pod(mode, VH["phi"])
+            if save_figs:
+                bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
+            varname = "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
+            bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
+            scale_dict["avg_freq"] = avg_freq
+            scale_dict["avg_freq2"] = avg_freq2
+            scale_dict["avg_kz"] = avg_kz
+            scale_dict["avg_kz2"] = avg_kz2
+            bl.output_scales(mode, scale_dict, "phi", "POD")
+        end = time.time()
     else:
         phi = mode.fields["phi"]
         scale_list = []

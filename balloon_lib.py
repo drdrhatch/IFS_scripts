@@ -703,26 +703,36 @@ def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
     return akz
 
 
-def output_scales(modes, scales, varname, intype="POD"):
+def output_scales(modes, scale_dict, varname, intype="POD"):
     """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
     if intype == "POD":
-        ky = str("{:03d}").format(int(modes.ky)) + "_pod"
-        header = "POD # " + varname
+        ky = str("{:03d}").format(int(modes.ky))
+        header = "(" + varname + ") POD "
         kx = str("{:03d}").format(int(modes.kx_cent))
-        filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
+        filename = "./" + varname + "_ky" + ky + "_kx" + kx + "_pod" + ".dat"
+
+        scales = np.array(list(scale_dict.values()))
+        key = list(scale_dict.keys())[0]
+        pods = np.arange(1, scale_dict[key].size + 1)
+        data = np.vstack((pods, scales)).T
     elif intype == "ev":
-        header = "EV # " + varname
+        header = "EV #" + varname
         filename = "./" + varname + "_ev.dat"
     else:
         ky = "_all"
-        header = "ky avg_omega avg_kz corr_time corr_len"
+        # header = "ky avg_omega avg_kz corr_time corr_len"
+        header = "ky"
         kx = str("{:03d}").format(int(modes[0].kx_cent))
         filename = "./" + varname + "_ky" + ky + "_kx" + kx + ".dat"
+    var_list = list(scale_dict.keys())
+    for var in var_list:
+        header += " " + var
 
-    if scales.ndim == 1:
-        pods = np.arange(1, scales.size + 1)
-        data = np.vstack((pods, scales)).T
-    else:
+    # if intype == "POD":
+    #     # pods = np.arange(1, scales.size + 1)
+    #     # data = np.vstack((pods, scales)).T
+    # else:
+    if not (intype == "POD") and not (intype == "ev"):
         kylist = np.expand_dims(np.array([mode.ky for mode in modes]).T, -1)
         data = np.hstack((kylist, scales))
     np.savetxt(
