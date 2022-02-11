@@ -140,7 +140,8 @@ for i, mode in enumerate(ky_modes):
     print("connected kx modes = ", mode.kx_modes)
     start = time.time()
     if np.any(pods):
-        u, sv, VH = bl.collective_pod(mode, fields, extend=True)
+        ltimes, ldata = bl.resample_time(mode, fields, times)
+        u, sv, VH = bl.collective_pod(mode, ldata, fields, extend=True)
         bl.plot_singular_values(mode, sv, show_figs, save_figs)
         if args.debug:
             bl.pod_orthog_test(mode, u, VH)
@@ -158,7 +159,7 @@ for i, mode in enumerate(ky_modes):
             for var in fields:
                 bl.plot_pod(mode, VH[var], pods, var)
         if args.corr:
-            t, t_corr, corr_time = bl.autocorrelate(mode, u, times, axis=0)
+            t, t_corr, corr_time = bl.autocorrelate(mode, u, ltimes, axis=0)
             r, r_corr, corr_len = bl.autocorrelate(
                 mode,
                 VH["phi"],
@@ -169,10 +170,10 @@ for i, mode in enumerate(ky_modes):
             scale_dict["corr_len"] = corr_len
             scale_dict["corr_time"] = corr_time
         if args.avgs:
-            avg_freq = bl.avg_freq(times, u)
+            avg_freq = bl.avg_freq(ltimes, u)
             avg_kz = bl.avg_kz_pod(mode, VH["phi"], sv)
             avg_freq2, spec, omegas = bl.avg_freq2(
-                times, u, samplerate=2, spec_out=True
+                ltimes, u, samplerate=2, spec_out=True
             )
             avg_kz2 = bl.avg_kz2_pod(mode, VH["phi"], sv)
             if save_figs:

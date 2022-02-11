@@ -414,20 +414,20 @@ def pod(mode, var):
 
 
 # collective is (slightly, usually) different because it includes all kx modes
-def collective_pod(mode, fields, extend=True):
+def collective_pod(mode, ldata, fields, extend=True):
     ntimes = mode.fields[fields[0]].shape[0]
     if extend:
         nx = len(mode.kx_modes)
         sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
         tmp = [
-            (mode.fields[field][:, :, mode.kx_modes] * sqrjac).reshape(ntimes, -1)
+            (ldata[field][:, :, mode.kx_modes] * sqrjac).reshape(ntimes, -1)
             for field in fields
         ]
         all_fields = np.concatenate(tmp, axis=1)
     else:
         nx = mode.nx
         all_fields = np.concatenate(
-            ([mode.fields[field].reshape(ntimes, -1) for field in fields]), axis=1
+            ([ldata[field].reshape(ntimes, -1) for field in fields]), axis=1
         )
     nxnz = nx * mode.nz
     u, sv, vh = la.svd(all_fields, full_matrices=False)
@@ -435,6 +435,13 @@ def collective_pod(mode, fields, extend=True):
     for i, field in enumerate(fields):
         VH[field] = vh[:, i * nxnz : (i + 1) * nxnz].reshape((-1, mode.nz, nx))
     return u, sv, VH
+
+
+def resample_time(mode, fields, times):
+    ldata = {}
+    for i, field in enumerate(fields):
+        ltime, ldata[field] = linear_resample(times, mode.fields[field], 0)
+    return ltime, ldata
 
 
 def calc_heat_flux(mode, fields, weights=None):
@@ -525,9 +532,7 @@ def test_energy(f, f_lin, f_hat, axis):
 def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     """Returns the dominant frequency from field"""
     ntimes = times.size
-    dt = np.diff(times)
-    even_dt = np.all(dt == dt[0])
-    if not even_dt:
+    if not is_even(times):
         samples = samplerate * ntimes
         f_hat, times_lin = fft_nonuniform(times, f)
     else:
@@ -552,9 +557,7 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
 def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     """Returns the rms frequency from field"""
     ntimes = times.size
-    dt = np.diff(times)
-    even_dt = np.all(dt == dt[0])
-    if not even_dt:
+    if not is_even(times):
         samples = samplerate * ntimes
         f_hat_tmp, times_lin = fft_nonuniform(times, f)
     else:
@@ -851,12 +854,12 @@ def corr_len(x, corr, axis=-1, weights=None):
     return clen
 
 
-def linear_resample(domain, data, axis, samplerate=2):
+def linear_resample(domain, data, axis, samplerate=1):
     """Resamples data onto spaced data onto a linear grid"""
     npts = domain.size
     samples = samplerate * npts
     dom_lin = np.linspace(domain[0], domain[-1], samples)
-    data_interp = interpolate.interp1d(domain, data, axis=axis)
+    data_interp = interpolate.interp1d(domain, data, kind="cubic", axis=axis)
     data_lin = data_interp(dom_lin)
     return dom_lin, data_lin
 
