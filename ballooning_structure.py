@@ -170,11 +170,11 @@ for i, mode in enumerate(ky_modes):
             scale_dict["corr_time"] = corr_time
         if args.avgs:
             avg_freq = bl.avg_freq(times, u)
-            avg_kz = bl.avg_kz_pod(mode, VH["phi"])
+            avg_kz = bl.avg_kz_pod(mode, VH["phi"], sv)
             avg_freq2, spec, omegas = bl.avg_freq2(
                 times, u, samplerate=2, spec_out=True
             )
-            avg_kz2 = bl.avg_kz2_pod(mode, VH["phi"])
+            avg_kz2 = bl.avg_kz2_pod(mode, VH["phi"], sv)
             if save_figs:
                 bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
             varname = "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)

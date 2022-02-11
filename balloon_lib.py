@@ -507,7 +507,19 @@ def fft_nonuniform(times, f, axis=0, samplerate=2):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
     times_lin, f_lin = linear_resample(times, f, axis, samplerate)
     f_hat = np.fft.fft(f_lin, axis=axis)
+    test_energy(f, f_lin, f_hat, axis)
     return f_hat, times_lin
+
+
+def test_energy(f, f_lin, f_hat, axis):
+    N = f_lin.shape[axis]
+    print("Terms in series, N = ", N)
+    f_sum = np.sum(np.abs(f) ** 2, axis=axis)
+    flin_sum = np.sum(np.abs(f_lin) ** 2, axis=axis)
+    fhat_sum = np.sum(np.abs(f_hat) ** 2, axis=axis) / N
+    print("test_energy :: f_sum = ", f_sum)
+    print("test_energy :: flin_sum  = ", flin_sum)
+    print("test_energy :: fhat_sum  = ", fhat_sum)
 
 
 def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
@@ -652,7 +664,7 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
     return akz
 
 
-def avg_kz_pod(mode, var, outspect=False, norm_out=False):
+def avg_kz_pod(mode, var, sv, outspect=False, norm_out=False):
     """Calculate the kz mode weighted by given field for POD
     modes constructed for orthoganality w.r.t. a jacobian weight"""
     jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
@@ -689,8 +701,8 @@ def avg_kz_pod(mode, var, outspect=False, norm_out=False):
 
     integrand = np.conj(f) * (df_dz - 0.5 * djac_dz / jac * f) / jacBpi
 
-    num = np.trapz(integrand, zg, axis=0)
-    denom = np.trapz(f2, zg, axis=0)
+    num = sv ** 2 * np.trapz(integrand, zg, axis=0)
+    denom = np.sum(sv ** 2 * np.trapz(f2, zg, axis=0))
     akz = np.imag(num / denom).T
     if outspect:
         return akz, integrand
@@ -699,7 +711,7 @@ def avg_kz_pod(mode, var, outspect=False, norm_out=False):
     return akz
 
 
-def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
+def avg_kz2_pod(mode, var, sv, outspect=False, norm_out=False):
     """Calculate the rms kz mode weighted by given field for POD
     modes constructed for orthoganality w.r.t. a jacobian weight"""
     jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
@@ -735,6 +747,7 @@ def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
     djac_dz = djacobian_dz[zstart:zend]
     jacBpi = jacxBpi_ext[zstart:zend]
     zg = zgrid[zstart:zend]
+    sv2 = sv[zstart:zend] ** 2
 
     integrand = (
         np.abs(df_dz) ** 2
@@ -742,8 +755,11 @@ def avg_kz2_pod(mode, var, outspect=False, norm_out=False):
         + 0.25 * (djac_dz / jac) ** 2 * f2
     ) / jacBpi ** 2
 
-    num = np.trapz(integrand, zg, axis=0)
-    denom = np.trapz(f2, zg, axis=0)
+    num = sv ** 2 * np.trapz(integrand, zg, axis=0)
+    # denom = np.trapz(f2, zg, axis=0)
+    print(np.trapz(f2, zg, axis=0))
+    print(np.sum(field2, axis=0))
+    denom = np.sum(sv ** 2 * np.trapz(f2, zg, axis=0))
     akz = np.sqrt(num / denom).T
     if outspect:
         return akz, integrand
