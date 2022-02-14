@@ -704,8 +704,14 @@ def avg_kz_pod(mode, var, sv, outspect=False, norm_out=False):
 
     integrand = np.conj(f) * (df_dz - 0.5 * djac_dz / jac * f) / jacBpi
 
-    num = sv ** 2 * np.trapz(integrand, zg, axis=0)
-    denom = np.sum(sv ** 2 * np.trapz(f2, zg, axis=0))
+    if is_even(zg):
+        # zg is just a scale to factored out, and I don't know if trapz is worth it
+        num = np.sum(integrand, axis=0)
+        denom = np.sum(f2, axis=0)
+    else:
+        num = np.trapz(integrand, zg, axis=0)
+        denom = np.trapz(f2, zg, axis=0)
+
     akz = np.imag(num / denom).T
     if outspect:
         return akz, integrand
@@ -758,11 +764,14 @@ def avg_kz2_pod(mode, var, sv, outspect=False, norm_out=False):
         + 0.25 * (djac_dz / jac) ** 2 * f2
     ) / jacBpi ** 2
 
-    num = sv ** 2 * np.trapz(integrand, zg, axis=0)
-    # denom = np.trapz(f2, zg, axis=0)
-    print(np.trapz(f2, zg, axis=0))
-    print(np.sum(field2, axis=0))
-    denom = np.sum(sv ** 2 * np.trapz(f2, zg, axis=0))
+    if is_even(zg):
+        # zg is just a scale to factored out, and I don't know if trapz is worth it
+        num = np.sum(integrand, axis=0)
+        denom = np.sum(f2, axis=0)
+    else:
+        num = np.trapz(integrand, zg, axis=0)
+        denom = np.trapz(f2, zg, axis=0)
+
     akz = np.sqrt(num / denom).T
     if outspect:
         return akz, integrand
