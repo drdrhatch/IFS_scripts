@@ -890,7 +890,7 @@ def test_corr(mode, doms, corr):
     plt.show()
 
 
-def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e-6):
+def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2):
     """Calculate correlation length/time for given input field"""
     datatype = var.dtype
     if var.ndim > 2:
@@ -899,10 +899,7 @@ def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e
     else:
         fvar = var
 
-    dt = np.diff(domain)
-    test_dt = np.floor(dt / tol)
-    even_dt = np.all(test_dt == test_dt[0])
-    if not even_dt:
+    if not is_even(dt):
         npts = domain.size
         samples = samplerate * npts
         dom_lin = np.linspace(domain[0], domain[-1], samples)
@@ -1015,9 +1012,7 @@ def mean_tzx(mode, var, pars):
 def freq_spec(mode, times, var, varname, axis=0, weights=None, output=False):
     f = var
     ntimes = times.size
-    dt = np.diff(times)
-    even_dt = np.all(dt == dt[0])
-    if not even_dt:
+    if not is_even(dt):
         samples = ntimes
         f_hat, times_lin = fft_nonuniform(times, f, samplerate=1)
     else:
