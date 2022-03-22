@@ -1,3 +1,5 @@
+#INPUT: python filepath/of/make_ierdb.py g000000 p000000
+
 from read_pfile import *
 from read_EFIT import *
 from finite_differences_x import *
@@ -5,6 +7,7 @@ import matplotlib.pyplot as plt
 from write_iterdb import *
 import sys
 import math
+import os
 
 def comparePlot(x1, y1, x2, y2, label1, label2, xl, yl, lc = 1):
     plt.plot(x1, y1, label = label1)
@@ -135,38 +138,44 @@ R_u = interp(EFITdict['rhotn'],EFITdict['R'],uni_rhot)
 Bpol_u = interp(EFITdict['rhotn'],EFITdict['Bpol'],uni_rhot)
 vtor_out_u = interp(psi0,vtor_out,uni_rhot)
 
-# add minus sign for consistency
-omega_tor_Er = - Er_Vm / (R_u * Bpol_u)
+
+omega_tor_Er = Er_Vm / (R_u * Bpol_u)
 #print(R_u[0])
 omega_tor_Vor = vtor_out_u*1000. / (R_u)
 
-if case==1:
-    omega_tor=omega_tor_Vor
-if case==2:
-    omega_tor=omega_tor_Er
-if case==3:
-    if sum(abs((omega_tor_Er-omega_tor_Vor)/omega_tor_Vor))>0.05*float(len(omega_tor_Vor)):
-        print("Too much difference between omega_tor calculated from Er and vtor")
-        plt.clf()
-        plt.plot(uni_rhot,omega_tor_Er,label='omega_tor_Er')
-        plt.plot(uni_rhot,omega_tor_Vor,label='omega_tor_Vor')
-        plt.xlabel('rhot')
-        plt.legend()
-        plt.show()
 
-        decide=int(input("omega_tor_Er or omega_tor_Vor, 1. omega_tor_Er, 2. omega_tor_Vor:      "))
+# if case==1:
+#     omega_tor=omega_tor_Vor
+# if case==2:
+#     omega_tor=omega_tor_Er
+# if case==3:
+#     if sum(abs((omega_tor_Er-omega_tor_Vor)/omega_tor_Vor))>0.05*float(len(omega_tor_Vor)):
+#         print("Too much difference between omega_tor calculated from Er and vtor")
+#         plt.clf()
+#         plt.plot(uni_rhot,omega_tor_Er,label='omega_tor_Er')
+#         plt.plot(uni_rhot,omega_tor_Vor,label='omega_tor_Vor')
+#         plt.xlabel('rhot')
+#         plt.legend()
+#         plt.show()
 
-        if decide==1:
-            omega_tor=omega_tor_Er
-        elif decide==2:
-            omega_tor=omega_tor_Vor
-        else:
-            print("please input 1 or 2")
-    else:
-        omega_tor=omega_tor_Vor
-if case==4:
-    print('Both Er and vtor are empty, cannot calculate Shear')
-    omega_tor=omega_tor_Er
+#         decide=int(input("omega_tor_Er or omega_tor_Vor, 1. omega_tor_Er, 2. omega_tor_Vor:      "))
+
+#         if decide==1:
+#             omega_tor=omega_tor_Er
+#         elif decide==2:
+#             omega_tor=omega_tor_Vor
+#         else:
+#             print("please input 1 or 2")
+#     else:
+#         omega_tor=omega_tor_Vor
+# if case==4:
+#     print('Both Er and vtor are empty, cannot calculate Shear')
+#     omega_tor=omega_tor_Er
+
+
+# GENE requires Er for the shear in the pedestal
+omega_tor=omega_tor_Er
+
 
 ####################################### outputs ###########################################
 
@@ -192,9 +201,14 @@ if 1 == 1:
 # ITERDB file has profiles and vrot for ExB angular velocity
 if 1 == 1:
     ############################ modify ############################
-    file_out_base = 'DIIID' 
-    base_number = '174864'
-    time_str = '05170'
+    print("")
+    print("Current filepath:", os.getcwd()) #print current working directory to help in naming file
+    print("Current g-file:", efit_file_name) #print current working directory to help in naming file
+    print("Current p-file:", p_file_name) #print current working directory to help in naming file
+    
+    file_out_base = input("Choose a base filename: ")
+    base_number = input("Choose a base number: ")
+    time_str = input("Choose a time string for the base: ")
     ################################################################
     rhop=np.sqrt(psi0)
     psi_u = interp(rhot0,psi0,uni_rhot)
