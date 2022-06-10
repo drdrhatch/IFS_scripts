@@ -1,4 +1,4 @@
-#INPUT: python filepath/of/make_ierdb.py g000000 p000000
+#INPUT: python filepath/of/make_iterdb.py g000000 p000000
 
 from read_pfile import *
 from read_EFIT import *
@@ -206,8 +206,8 @@ if 1 == 1:
     print("Current g-file:", efit_file_name) #print current working directory to help in naming file
     print("Current p-file:", p_file_name) #print current working directory to help in naming file
     
-    file_out_base = input("Choose a base filename: ")
-    base_number = input("Choose a base number: ")
+    file_out_base = input("Choose a base filename (usually tokamak model like NSTXU/DIIID/JET/etc.): ")
+    base_number = input("Choose a base number (discharge number): ")
     time_str = input("Choose a time string for the base: ")
     ################################################################
     rhop=np.sqrt(psi0)
