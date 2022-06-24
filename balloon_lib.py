@@ -762,7 +762,7 @@ def avg_kz2_pod(mode, var, sv, outspect=False, norm_out=False):
         np.abs(df_dz) ** 2
         - 0.5 * djac_dz / jac * df2_dz
         + 0.25 * (djac_dz / jac) ** 2 * f2
-    ) / jacBpi ** 2
+    ) / jacBpi**2
 
     if is_even(zg):
         # zg is just a scale to factored out, and I don't know if trapz is worth it
@@ -908,7 +908,7 @@ def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2):
     else:
         fvar = var
 
-    if not is_even(dt):
+    if not is_even(domain):
         npts = domain.size
         samples = samplerate * npts
         dom_lin = np.linspace(domain[0], domain[-1], samples)
@@ -986,7 +986,7 @@ def avg_kz2_tz(mode, var):
     # evar = get_extended_var(mode, var)
     # kz, norm = avg_kz2(mode, evar, norm_out=True)
     kz, norm = avg_kz2(mode, var, norm_out=True)
-    mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
+    mean_kz = np.sqrt(np.average(kz**2, weights=norm))
     return mean_kz
 
 
@@ -1004,7 +1004,7 @@ def avg_freq2_tz(mode, times, var):
     omega, norm = avg_freq2(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
     jac_norm = jac_ext * norm
-    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_norm))
+    avg_omega = np.sqrt(np.average(omega**2, weights=jac_norm))
     return avg_omega
 
 
@@ -1021,7 +1021,7 @@ def mean_tzx(mode, var, pars):
 def freq_spec(mode, times, var, varname, axis=0, weights=None, output=False):
     f = var
     ntimes = times.size
-    if not is_even(dt):
+    if not is_even(times):
         samples = ntimes
         f_hat, times_lin = fft_nonuniform(times, f, samplerate=1)
     else:
@@ -1164,7 +1164,7 @@ def test_pod(mode, u, sv, vh, fields):
         print("Are the arrays close?....", np.allclose(original, new, atol=1e-6))
         if field == "phi":
             phi = new
-    Q = calc_heat_flux(mode, vh, sv ** 2)
+    Q = calc_heat_flux(mode, vh, sv**2)
     Q_sum = np.mean(
         np.average(Q.sum(axis=2), axis=1, weights=mode.geometry["gjacobian"]), axis=0
     )

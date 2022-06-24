@@ -147,7 +147,7 @@ for i, mode in enumerate(ky_modes):
         if save_figs:
             bl.output_pod(mode, u, sv, VH, fields, pods, times)
         if args.heat:
-            weights = sv ** 2 / times.size
+            weights = sv**2 / times.size
             Q_pod = bl.calc_heat_flux(mode, VH, weights)
             bl.plot_heat_flux(mode, Q_pod, show_figs, save_figs)
         if args.plot:
