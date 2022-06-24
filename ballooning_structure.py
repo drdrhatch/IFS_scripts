@@ -31,11 +31,9 @@ parser.add_argument("--heat", "-q", action="store_true", help="calculate heat fl
 parser.add_argument("--debug", "-d", action="store_true", help="debug switch")
 parser.add_argument("--notimeavg", "-N", action="store_false", help="Time average")
 parser.add_argument(
-    "--avgs",
+    "--avg",
     "-a",
-    action="store",
-    type=int,
-    metavar="METHOD",
+    action="store_true",
     help="compute averages of kz and omega",
 )
 parser.add_argument(
@@ -169,7 +167,7 @@ for i, mode in enumerate(ky_modes):
             )
             scale_dict["corr_len"] = corr_len
             scale_dict["corr_time"] = corr_time
-        if args.avgs:
+        if args.avg:
             avg_freq = bl.avg_freq(ltimes, u)
             avg_kz = bl.avg_kz_pod(mode, VH["phi"], sv)
             avg_freq2, spec, omegas = bl.avg_freq2(
@@ -201,7 +199,7 @@ for i, mode in enumerate(ky_modes):
                 scale_dict.update({"corr_len": [], "corr_time": []})
             scale_dict["corr_len"].append(corr_len)
             scale_dict["corr_time"].append(corr_time)
-        if args.avgs:
+        if args.avg:
             if time_avg:
                 avg_freq = bl.avg_freq_tz(mode, times, phi)
                 avg_kz = bl.avg_kz_tz(mode, phi)
@@ -223,7 +221,7 @@ for i, mode in enumerate(ky_modes):
         omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
     print(str("{:6.3f}").format(time.time() - start), "s")
 
-if args.avgs and not np.any(pods):
+if args.avg and not np.any(pods):
     if time_avg:
         bl.output_scales(ky_modes, scale_dict, "avgs_phi", "avgs")
         varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
