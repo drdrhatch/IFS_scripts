@@ -177,7 +177,7 @@ for i, mode in enumerate(ky_modes):
             if save_figs:
                 bl.freq_spec_pod_plot(mode, omegas, spec, pods, output=True)
             varname = "pod_ky" + str(int(ky)).zfill(3) + "_kx" + str(int(kx)).zfill(3)
-            bl.output_spec_all_pod(pods, omegas, np.abs(spec), varname)
+            bl.output_spec_all_pod(pods, omegas, spec, varname)
             scale_dict["avg_freq"] = avg_freq
             scale_dict["avg_freq_rms"] = avg_freq2
             scale_dict["avg_kz"] = avg_kz

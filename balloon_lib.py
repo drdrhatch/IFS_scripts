@@ -575,7 +575,8 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     if norm_out:
         return freq, denom
     if spec_out:
-        return freq, f_hat, omegas
+        spec = np.abs(f_hat) ** 2
+        return freq, spec, omegas
     return freq
 
 
