@@ -224,5 +224,6 @@ for i, mode in enumerate(ky_modes):
 if args.avg and not np.any(pods):
     if time_avg:
         bl.output_scales(ky_modes, scale_dict, "avgs_phi", "avgs")
-        varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
-        bl.output_spec_all_ky(ky_list, omegas, spec, varname)
+if not np.any(pods):
+    varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
+    bl.output_spec_all_ky(ky_list, omegas, spec, varname)
