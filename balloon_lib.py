@@ -524,9 +524,6 @@ def test_energy(f, f_lin, f_hat, axis):
     f_sum = np.sum(np.abs(f) ** 2, axis=axis)
     flin_sum = np.sum(np.abs(f_lin) ** 2, axis=axis)
     fhat_sum = np.sum(np.abs(f_hat) ** 2, axis=axis) / N
-    print("test_energy :: f_sum = ", f_sum)
-    print("test_energy :: flin_sum  = ", flin_sum)
-    print("test_energy :: fhat_sum  = ", fhat_sum)
 
 
 def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
