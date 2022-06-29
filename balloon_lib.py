@@ -778,12 +778,12 @@ def avg_kz2_pod(mode, var, sv, outspect=False, norm_out=False):
     return akz
 
 
-def output_scales(modes, scale_dict, varname, intype="POD"):
+def output_scales(ky_list, kx_cent, scale_dict, varname, intype="POD"):
     """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
     if intype == "POD":
-        ky = str("{:03d}").format(int(modes.ky))
+        ky = str("{:03d}").format(int(ky_list))
         header = "POD".ljust(13, " ")
-        kx = str("{:03d}").format(int(modes.kx_cent))
+        kx = str("{:03d}").format(int(kx_cent))
         filename = "./" + varname + "_ky" + ky + "_kx" + kx + "_pod" + ".dat"
 
         scales = np.array(list(scale_dict.values()))
@@ -795,10 +795,9 @@ def output_scales(modes, scale_dict, varname, intype="POD"):
         filename = "./" + varname + "_ev.dat"
     else:
         header = "ky".ljust(13, " ")
-        kx = str("{:03d}").format(int(modes[0].kx_cent))
+        kx = str("{:03d}").format(int(kx_cent))
         filename = "./" + varname + "_ky_all_kx" + kx + ".dat"
 
-        ky_list = [mode.ky for mode in modes]
         kys = np.expand_dims(np.array(ky_list), 0)
         scales = np.array(list(scale_dict.values()))
         data = np.vstack((kys, scales)).T

@@ -116,24 +116,29 @@ else:
 
 gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 
-print("Loading data for fields" + str(fields) + "...", end="")
-start = time.time()
-ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in ky_list]
-print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
+# print("Loading data for fields" + str(fields) + "...", end="")
+# ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in ky_list]
+# print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
 
-if args.debug:
-    for mode in ky_modes:
-        bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
+# if args.debug:
+#     for mode in ky_modes:
+#         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
 if not np.any(pods):
     spec = np.empty((len(ky_list), times.size))
 
 scale_dict = {}
 
-print("Working on :")
-for i, mode in enumerate(ky_modes):
+for i, iky in enumerate(ky_list):
+    print(
+        "Loading data for ky=" + str(iky) + " and fields" + str(fields) + "...", end=""
+    )
+    start = time.time()
+    mode = bl.KyMode(iky, kx_cent, times, fields, gene_files)
+    print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
     ky = mode.ky
     kx = mode.kx_cent
+    print("Working on :")
     print("ky = ", ky, "...", end="")
     print("connected kx modes = ", mode.kx_modes)
     start = time.time()
@@ -183,7 +188,7 @@ for i, mode in enumerate(ky_modes):
             scale_dict["avg_freq_rms"] = avg_freq2
             scale_dict["avg_kz"] = avg_kz
             scale_dict["avg_kz_rms"] = avg_kz2
-        bl.output_scales(mode, scale_dict, "phi", "POD")
+        bl.output_scales(ky, kx_cent, scale_dict, "phi", "POD")
         end = time.time()
     else:
         phi = mode.fields["phi"]
@@ -224,7 +229,7 @@ for i, mode in enumerate(ky_modes):
 
 if args.avg and not np.any(pods):
     if time_avg:
-        bl.output_scales(ky_modes, scale_dict, "avgs_phi", "avgs")
+        bl.output_scales(ky_list, kx_cent, scale_dict, "avgs_phi", "avgs")
 if not np.any(pods):
     varname = "phi2_kx" + str(int(kx_cent)).zfill(3)
     bl.output_spec_all_ky(ky_list, omegas, spec, varname)
