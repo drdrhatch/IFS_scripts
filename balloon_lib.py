@@ -520,7 +520,6 @@ def fft_nonuniform(times, f, axis=0, samplerate=2):
 
 def test_energy(f, f_lin, f_hat, axis):
     N = f_lin.shape[axis]
-    print("Terms in series, N = ", N)
     f_sum = np.sum(np.abs(f) ** 2, axis=axis)
     flin_sum = np.sum(np.abs(f_lin) ** 2, axis=axis)
     fhat_sum = np.sum(np.abs(f_hat) ** 2, axis=axis) / N
