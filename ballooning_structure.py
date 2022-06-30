@@ -178,7 +178,7 @@ for i, iky in enumerate(ky_list):
             avg_freq2, spec, omegas = bl.avg_freq2(
                 ltimes, u, samplerate=2, spec_out=True
             )
-            wspec = sv**2 * spec
+            wspec = sv**2 / np.sum(sv**2) * spec
             avg_kz2 = bl.avg_kz2_pod(mode, VH["phi"], sv)
             if save_figs:
                 bl.freq_spec_pod_plot(mode, omegas, wspec, pods, output=True)
@@ -192,10 +192,10 @@ for i, iky in enumerate(ky_list):
         end = time.time()
     else:
         phi = mode.fields["phi"]
+        w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
+        w2 = mode.geometry["gjacobian"]
         if args.corr:
             dphi = phi[:, :, 0]  # average over x
-            w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
-            w2 = mode.geometry["gjacobian"]
             doms, corr = bl.autocorrelate_tz(dphi, (times, mode.zgrid), w1)
             corr_time = bl.corr_len(doms[0], corr, axis=0)
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
@@ -224,7 +224,9 @@ for i, iky in enumerate(ky_list):
             scale_dict["avg_freq_rms"].append(avg_freq2)
             scale_dict["avg_kz"].append(avg_kz)
             scale_dict["avg_kz_rms"].append(avg_kz2)
-        omegas, spec[i] = bl.freq_spec(mode, times, phi, "phi", output=False)
+        omegas, spec[i] = bl.freq_spec(
+            mode, times, phi, "phi", weights=w2, output=False
+        )
     print(str("{:6.3f}").format(time.time() - start), "s")
 
 if args.avg and not np.any(pods):
