@@ -177,7 +177,7 @@ def read_parameters(paramfpath):
                          if   skey in ['omn','omt','mass','temp','dens']:
                               geneparam[pkey][skey] = float(items[1])
                          elif skey in ['charge','prof_type']:
-                              geneparam[pkey][skey] = int(items[1])
+                              geneparam[pkey][skey] = int(float(items[1]))
                          elif skey in ['passive']:
                               geneparam[pkey][skey] = str2bool(items[1])
                          elif skey in ['name']:
