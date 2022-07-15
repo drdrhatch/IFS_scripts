@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_nrg0(suffix,nspec=2,ncols=10):
+def get_nrg0(suffix,nspec=2,ncols=10,path=''):
     #if nspec < 1 or nspec > 2:
     #    stop
 
@@ -19,7 +19,7 @@ def get_nrg0(suffix,nspec=2,ncols=10):
     #qies=np.empty((0,10),dtype='float')
     #qees=np.empty((0,10),dtype='float')
     #qeem=np.empty((0,10),dtype='float')
-    f=open('nrg'+suffix,'r')
+    f=open(path+'nrg'+suffix,'r')
     nrg_in=f.read()
     nrg0=np.empty((1,ncols))
     #print nrg_in
