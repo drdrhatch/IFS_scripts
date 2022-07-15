@@ -629,9 +629,9 @@ else:  #x_local = False
        #print "np.shape(field.apar())",np.shape(field.apar())
        if 'ExBrate' in pars and pars['ExBrate'] == -1111: 
            if idb_file == 'empty':
-               idb_file = raw_input("Enter ITERDB file name:\n")
+               idb_file = input("Enter ITERDB file name:\n")
            if prof_file == 'empty':
-               prof_file = raw_input("Enter gene output profiles file name:\n")
+               prof_file = input("Enter gene output profiles file name:\n")
            rhot_idb,profs_idb,units_idb = read_iterdb(idb_file)
            profs = np.genfromtxt(prof_file)
            omegator0 = interp(rhot_idb['VROT'],profs_idb['VROT'],profs[:,0])
