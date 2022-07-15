@@ -51,7 +51,9 @@ def get_next(data_linesplit,lnum,num):
         lnum=lnum+1
     
     rhot=np.empty(0)
+    lnum = int(lnum)
     lnum0 = lnum
+    sec_num_lines = int(sec_num_lines)
     for j in range(lnum0,lnum0+sec_num_lines):
         for k in range(6):
             str_temp=data_linesplit[j][1+k*13:1+(k+1)*13]
