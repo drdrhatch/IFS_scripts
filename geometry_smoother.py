@@ -94,15 +94,15 @@ if x_local:
         smooth = False
         dBdx_smooth = gdBdx.copy()
         while not smooth:
-            selection = int(raw_input\
+            selection = int(input\
                 ('Smoothed?\n1.True\n2.False\n'))
             if selection == 1:
                 smooth = True
                 break
             elif selection == 2:
-                smoothRate = float(raw_input\
+                smoothRate = float(input\
                     ('Enter smoothing rate (< 0.5): '))
-                numIteration = float(raw_input\
+                numIteration = float(input\
                     ('Enter number of iteration (>= 1): '))
     
             dBdx_smooth = smoothWdiff(gdBdx,smoothRate,numIteration)
@@ -124,15 +124,15 @@ if x_local:
         smooth = False
         dBdz_smooth = gdBdz.copy()
         while not smooth:
-            selection = int(raw_input\
+            selection = int(input\
                 ('Smoothed?\n1.True\n2.False\n'))
             if selection == 1:
                 smooth = True
                 break
             elif selection == 2:
-                smoothRate = float(raw_input\
+                smoothRate = float(input\
                     ('Enter smoothing rate (< 0.5): '))
-                numIteration = float(raw_input\
+                numIteration = float(input\
                     ('Enter number of iteration (>= 1): '))
 
             dBdz_smooth = smoothWdiff(gdBdz,smoothRate,numIteration)
@@ -147,7 +147,8 @@ if x_local:
         geom_coeff['gdBdz'] = dBdz_smooth
 
     file_name = 'smooth_'+geom_type+suffix
-    write_tracer_efit_file_local(geom_pars,geom_coeff,file_name)
+    #write_tracer_efit_file_local(geom_pars,geom_coeff,file_name)
+    write_tracer_efit_file(geom_pars,geom_coeff,file_name)
 
     if 1 == 1:
         plt.plot(geom_coeff['gdBdx'])
@@ -171,15 +172,15 @@ elif lilo:
         smooth = False
         dBdx_smooth = dBdx[:,0].copy()
         while not smooth:
-            selection = int(raw_input\
+            selection = int(input\
                 ('Smoothed?\n1.True\n2.False\n'))
             if selection == 1:
                 smooth = True
                 break
             elif selection == 2:
-                smoothRate = float(raw_input\
+                smoothRate = float(input\
                     ('Enter smoothing rate (< 0.5): '))
-                numIteration = float(raw_input\
+                numIteration = float(input\
                     ('Enter number of iteration (>= 1): '))
 
             dBdx_smooth = smoothWdiff\
@@ -204,15 +205,15 @@ elif lilo:
         smooth = False
         dBdz_smooth = dBdz[:,0].copy()
         while not smooth:
-            selection = int(raw_input\
+            selection = int(input\
                 ('Smoothed?\n1.True\n2.False\n'))
             if selection == 1:
                 smooth = True
                 break
             elif selection == 2:
-                smoothRate = float(raw_input\
+                smoothRate = float(input\
                     ('Enter smoothing rate (< 0.5): '))
-                numIteration = float(raw_input\
+                numIteration = float(input\
                     ('Enter number of iteration (>= 1): '))
 
             dBdz_smooth = smoothWdiff(dBdz[:,0],smoothRate,numIteration)
@@ -256,15 +257,15 @@ else:
 
         smooth = False
         while not smooth:
-            selection = int(raw_input\
+            selection = int(input\
                ('Smoothed?\n1.True\n2.False\n'))
             if selection == 1:
                 smooth = True
                 break
             elif selection == 2:
-                smoothRate = float(raw_input\
+                smoothRate = float(input\
                     ('Enter smoothing rate (< 0.5): '))
-                numIteration = float(raw_input\
+                numIteration = float(input\
                     ('Enter number of iteration (>= 1): '))
             for i in range(pars['nx0']):
                 dBdx = geom_coeff['dBdx'][:,i].copy()
@@ -290,15 +291,15 @@ else:
 
         smooth = False
         while not smooth:
-            selection = int(raw_input\
+            selection = int(input\
                 ('Smoothed?\n1.True\n2.False\n'))
             if selection == 1:
                 smooth = True
                 break
             elif selection == 2:
-                smoothRate = float(raw_input\
+                smoothRate = float(input\
                     ('Enter smoothing rate (< 0.5): '))
-                numIteration = float(raw_input\
+                numIteration = float(input\
                     ('Enter number of iteration (>= 1): '))
 
             for i in range(pars['nx0']):
