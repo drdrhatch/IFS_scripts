@@ -130,43 +130,43 @@ def full_interp(func_xin,xin,xconv,yconv,yout):
     return func_yout
 
 eqdsk=file.readlines()
-print 'Header: %s' %eqdsk[0]
+print('Header: %s' %eqdsk[0])
 #set resolutions
 nw=int(eqdsk[0].split()[-2]);nh=int(eqdsk[0].split()[-1])
 pw=(nw/8/2)*2 #psi-width, number of flux surfaces around position of interest
-print 'Resolution: %d x %d' %(nw,nh)
+print('Resolution: %d x %d' %(nw,nh))
 
 entrylength=16
 #note: here rmin is rleft from EFIT
 try:
-    rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])/entrylength)]
+    rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])//entrylength)]
 except:
     entrylength=15
     try:
-        rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])/entrylength)]
+        rdim,zdim,rctr,rmin,zmid=[float(eqdsk[1][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[1])//entrylength)]
     except:
         exit('Error reading EQDSK file, please check format!')
 
-rmag,zmag,psiax,psisep,Bctr=[float(eqdsk[2][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[2])/entrylength)]
-dum,psiax2,dum,rmag2,dum=[float(eqdsk[3][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[3])/entrylength)]
-zmag2,dum,psisep2,dum,dum=[float(eqdsk[4][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[4])/entrylength)]
+rmag,zmag,psiax,psisep,Bctr=[float(eqdsk[2][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[2])//entrylength)]
+dum,psiax2,dum,rmag2,dum=[float(eqdsk[3][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[3])//entrylength)]
+zmag2,dum,psisep2,dum,dum=[float(eqdsk[4][j*entrylength:(j+1)*entrylength]) for j in range(len(eqdsk[4])//entrylength)]
 if rmag!=rmag2: sys.exit('Inconsistent rmag: %7.4g, %7.4g' %(rmag,rmag2))
 if psiax2!=psiax: sys.exit('Inconsistent psiax: %7.4g, %7.4g' %(psiax,psiax2))
 if zmag!=zmag2: sys.exit('Inconsistent zmag: %7.4g, %7.4g' %(zmag,zmag2) )
 if psisep2!=psisep: sys.exit('Inconsistent psisep: %7.4g, %7.4g' %(psisep,psisep2))
 
-print "rmag", rmag
-print "zmag", zmag
-print "psiax", psiax
-print "psisep", psisep
-print "Bctr", Bctr
+print("rmag", rmag)
+print("zmag", zmag)
+print("psiax", psiax)
+print("psisep", psisep)
+print("Bctr", Bctr)
 Rgrid = np.arange(nw)/float(nw-1)*rdim+rmin
-print "rdim",rdim
-print "rmin",rmin
+print("rdim",rdim)
+print("rmin",rmin)
 #print "Rgrid",Rgrid
 Zgrid = np.arange(nh)/float(nh-1)*zdim+(zmid-zdim/2.0)
-print "zdim",zdim
-print "zmid",zmid
+print("zdim",zdim)
+print("zmid",zmid)
 #print "Zgrid",Zgrid
 
 F=empty(nw,dtype=float)
@@ -176,38 +176,38 @@ pprime=empty(nw,dtype=float)
 qpsi=empty(nw,dtype=float)
 psirz_1d=empty(nw*nh,dtype=float)
 start_line=5
-lines=range(nw/5)
-if nw%5!=0: lines=range(nw/5+1)
+lines=range(nw//5)
+if nw%5!=0: lines=range(nw//5+1)
 for i in lines:
-    n_entries=len(eqdsk[i+start_line])/entrylength
+    n_entries=len(eqdsk[i+start_line])//entrylength
     F[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 
 for i in lines:
-    n_entries=len(eqdsk[i+start_line])/entrylength
+    n_entries=len(eqdsk[i+start_line])//entrylength
     p[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 
 for i in lines:
-    n_entries=len(eqdsk[i+start_line])/entrylength
+    n_entries=len(eqdsk[i+start_line])//entrylength
     ffprime[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 
 for i in lines:
-    n_entries=len(eqdsk[i+start_line])/entrylength
+    n_entries=len(eqdsk[i+start_line])//entrylength
     pprime[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 
-lines_twod=range(nw*nh/5)
-if nw*nh%5!=0: lines_twod=range(nw*nh/5+1)
+lines_twod=range(nw*nh//5)
+if nw*nh%5!=0: lines_twod=range(nw*nh//5+1)
 for i in lines_twod:
-    n_entries=len(eqdsk[i+start_line])/entrylength
+    n_entries=len(eqdsk[i+start_line])//entrylength
     psirz_1d[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 psirz=psirz_1d.reshape(nh,nw)
 
 for i in lines:
-    n_entries=len(eqdsk[i+start_line])/entrylength
+    n_entries=len(eqdsk[i+start_line])//entrylength
     qpsi[i*5:i*5+n_entries]=[float(eqdsk[i+start_line][j*entrylength:(j+1)*entrylength]) for j in range(n_entries)]
 start_line=i+start_line+1
 
@@ -298,21 +298,22 @@ if write_binfo:
     psi_norm_out = (psi_midplane-psiax)/(psisep-psiax)
     F_out = interp(psi/(psisep-psiax),F,psi_norm_out)
     q_out = interp(psi/(psisep-psiax),qpsi,psi_norm_out)
+    p_out = interp(psi/(psisep-psiax),p,psi_norm_out)
     f=open('Binfo_'+filename,'w')
     f.write('# Outer Midplane')
-    f.write('# 1.R(m) 2.psi_norm 3.B_pol(T) 4.B_tor(T) 5.q\n')
+    f.write('# 1.R(m) 2.psi_norm 3.B_pol(T) 4.B_tor(T) 5.q 6. P\n')
     f.write('# R at magnetic axis = '+str(rmag)+'\n')
     f.write('# psisep - psiax = '+str(psisep-psiax)+'\n')
     Rmag_ind = np.argmin(abs(Rgrid - rmag))
-    print "rmag",rmag
-    print "Rmag_ind",Rmag_ind
-    print "Rgrid[Rmag_ind]",Rgrid[Rmag_ind]
+    print("rmag",rmag)
+    print("Rmag_ind",Rmag_ind)
+    print("Rgrid[Rmag_ind]",Rgrid[Rmag_ind])
     temp = psi_norm_out
     temp[0:Rmag_ind] = 0
     psi_ind_sep = np.argmin(abs(temp-1.05))
-    print "psi_ind_sep",psi_ind_sep
+    print("psi_ind_sep",psi_ind_sep)
     B_tor = F_out / Rgrid
-    np.savetxt(f,np.column_stack((Rgrid[Rmag_ind:psi_ind_sep],psi_norm_out[Rmag_ind:psi_ind_sep],B_pol[Rmag_ind:psi_ind_sep],B_tor[Rmag_ind:psi_ind_sep],q_out[Rmag_ind:psi_ind_sep])))
+    np.savetxt(f,np.column_stack((Rgrid[Rmag_ind:psi_ind_sep],psi_norm_out[Rmag_ind:psi_ind_sep],B_pol[Rmag_ind:psi_ind_sep],B_tor[Rmag_ind:psi_ind_sep],q_out[Rmag_ind:psi_ind_sep],p_out[Rmag_ind:psi_ind_sep])))
     f.close()
     #plt.plot(psi_norm_out[Rmag_ind:psi_ind_sep],q_out[Rmag_ind:psi_ind_sep])
     #plt.plot(psi/(psisep-psiax),qpsi)
