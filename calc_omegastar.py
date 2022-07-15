@@ -34,7 +34,8 @@ Lref, Bref, R_major, q0 = get_dimpar_pars(efit_file_name,0.9)
 profe = np.genfromtxt(gene_profiles_e)
 profi = np.genfromtxt(gene_profiles_i)
 
-call(['my_efit_tools.py',efit_file_name,'-n','-p','-c'])
+call(['my_efit_tools.py',efit_file_name,'-n','-c'])
+call(['my_efit_tools.py',efit_file_name,'-n','-p'])
 Binfo = np.genfromtxt('Binfo_'+efit_file_name)
 rtrp = np.genfromtxt('rt_rp_'+efit_file_name)
 q0 = Binfo[:,4]
@@ -87,7 +88,6 @@ plt.xlabel('rhot')
 plt.ylabel('omegastar (kHz)')
 plt.title('omegastar for n=1')
 plt.show()
-
 
 print(len(rhote))
 print(len(omegastarkHz))
