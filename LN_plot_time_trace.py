@@ -10,8 +10,11 @@ from LN_tools import get_suffix
 from nrgWrapper import read_from_nrg_files
 
 
-suffix_list=[1,2]
-average_transport=2.3
+suffix_list=[1,2,3,6,7]
+#average_transport=1.67
+average_transport_EM=1.67
+average_transport_ES=0.48
+average_transport=average_transport_ES+average_transport_EM
 mark_size=5
 
 for i in range(len(suffix_list)):
@@ -77,17 +80,35 @@ def plot_trace(nrge_es,nrge_em):
 
     Q_em=np.mean(nrge_em[time_start_index:time_end_index-1])
 
+
     plt.clf()
-    plt.plot(time,nrge_es/Q_em*average_transport,'.',ms=mark_size,label=r"$Q_{es}$ of electron")
-    plt.plot(time,nrge_em/Q_em*average_transport,'.',ms=mark_size,label=r"$Q_{em}$ of electron")
+    plt.plot(time,nrge_es/Q_em*average_transport_EM,'.',ms=mark_size,label=r"$Q_{es}$ of electron")
+    plt.plot(time,nrge_em/Q_em*average_transport_EM,'.',ms=mark_size,label=r"$Q_{em}$ of electron")
     plt.title('Heat Transport of electron')
-    plt.axhline(average_transport,color='green',label="Average Heat Transport",alpha=1)
+    plt.axhline(average_transport_EM,color='green',label=r"Average Heat Transport $Q_{em}$",alpha=1)
+    plt.axhline(average_transport_ES,color='orange',label=r"Average Heat Transport $Q_{es}$",alpha=1)
     plt.axvline(time_start,color='red',label="time start",alpha=1)
     plt.axvline(time_end,color='blue',label="time end",alpha=1)
     plt.xlabel('time(a/cs)')
     plt.ylabel('Transport(MW)')
     plt.legend()
     plt.show()
+
+    print('np.mean(nrge_es),np.std(nrge_es)'\
+    	+str(np.mean(nrge_es[time_start_index:time_end_index-1]))+', '\
+    	+str(np.std(nrge_es[time_start_index:time_end_index-1])) )
+
+    print('np.mean(nrge_em),np.std(nrge_em)'\
+    	+str(np.mean(nrge_em[time_start_index:time_end_index-1]))+', '\
+    	+str(np.std(nrge_em[time_start_index:time_end_index-1])) )
+
+    print('Q_es='\
+    	+str(np.mean(nrge_es[time_start_index:time_end_index-1])/Q_em*average_transport_EM)+'+-'\
+    	+str(np.std(nrge_es[time_start_index:time_end_index-1])/Q_em*average_transport_EM) )
+
+    print('Q_em='\
+    	+str(np.mean(nrge_em[time_start_index:time_end_index-1])/Q_em*average_transport_EM)+'+-'\
+    	+str(np.std(nrge_em[time_start_index:time_end_index-1])/Q_em*average_transport_EM) )
 
     return time_start,time_end
 

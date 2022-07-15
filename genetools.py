@@ -186,7 +186,7 @@ def read_parameters(paramfpath):
                          if   skey in ['omn','omt','mass','temp','dens']:
                               geneparam[pkey][skey].append(float(items[1]))
                          elif skey in ['charge','prof_type']:
-                              geneparam[pkey][skey].append(int(items[1]))
+                              geneparam[pkey][skey].append(int(float(items[1])))
                          elif skey in ['passive']:
                               geneparam[pkey][skey].append(str2bool(items[1]))
                          elif skey in ['name']:
@@ -196,7 +196,7 @@ def read_parameters(paramfpath):
                               if geneparam[pkey][skey] != float(items[1]):
                                  geneparam[pkey][skey] = [geneparam[pkey][skey],float(items[1])]
                          elif skey in ['charge','prof_type']:
-                              if geneparam[pkey][skey] != int(items[1]):
+                              if geneparam[pkey][skey] != int(float(items[1])):
                                  geneparam[pkey][skey] = [geneparam[pkey][skey],int(items[1])]
                          elif skey in ['passive']:
                               if geneparam[pkey][skey] != str2bool(items[1]):
@@ -211,7 +211,10 @@ def read_parameters(paramfpath):
                          elif skey in ['magn_geometry','geomdir','geomfile','x_def','dpdx_term']:
                               geneparam[pkey][skey] = items[1].strip()[1:-1]
                          else:
-                              geneparam[pkey][skey] = float(items[1])
+                              try: #in case for the miller geometry
+                                  geneparam[pkey][skey] = float(items[1])
+                              except:
+                                  pass
                       elif type(geneparam[pkey][skey]) == list:
                          if   skey in ['norm_flux_projection','mag_prof']:
                               geneparam[pkey][skey].append(str2bool(items[1]))
@@ -299,7 +302,11 @@ def read_parameters(paramfpath):
                          elif skey in ['comp_type','timescheme','coll_split_scheme','which_ev','init_cond','collision_op','coll_cons_model']:
                               geneparam[pkey][skey] = items[1].strip()[1:-1]
                          elif skey in ['lv_antenna_freq','lv_antenna_initamp','lv_antenna_amp','ev_shift']:
-                              geneparam[pkey][skey] = complex(items[1])
+                              
+                              try: 
+                                geneparam[pkey][skey] = complex(items[1])
+                              except:
+                                geneparam[pkey][skey] = 0.+0.j
                          elif skey in ['perf_vec']:
                               geneparam[pkey][skey] = tuple([int(item) for item in items[1].split()])
                          elif skey in ['lv_antenna_modes']:

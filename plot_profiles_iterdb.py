@@ -1,6 +1,9 @@
+#INPUT: python filepath/of/plot_profiles_iterdb.py iterdb_filename.iterdb profiles_e.dat profiles_i.dat
+
 import numpy as np
 import matplotlib.pyplot as plt
 import re
+import sys
 
 ######################modify######################3
 ######################modify######################3
@@ -8,12 +11,11 @@ import re
 #file_name='profiles_nshift0.02_t3.25.iterdb'
 #file_name='profiles_3.25.iterdb'
 #file_name = 'profiles_t3.035_nshift0.02.iterdb'
-file_name = 'JET92174.iterdb'
-#file_name = 'efit_Dial_Nmod1_Zp2_48_new.iterdb'
-gene_e = 'gene_profiles_92174_e.dat'
-gene_i = 'gene_profiles_92174_i.dat'
-#file_name='profiles_3.5.iterdb'
-#file_name='iterdb.NSTX_129016A03_460'
+
+file_name = sys.argv[1]
+gene_e = sys.argv[2]
+gene_i = sys.argv[3]
+
 #If you want to compare with gene profile files:
 gene_plots=True    #set to 0 for no gene plots
 plot_impurity = False

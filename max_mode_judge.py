@@ -5,9 +5,10 @@ import numpy as np
 import math
 import csv
 from genetools import *
-from omega_tool_max import omega_calc
+from omega_tool import omega_calc
 
-#Last edited by Max Curie 04/27/2020
+
+#Last edited by Max Curie 06/21/2020
 #Criteria: D_chi, typical frequency, Epar
 
 run=True
@@ -46,25 +47,31 @@ def f(suffix): #calculate the frequency
     #from genetools.py
     #momfpath_e=
     #momdata_e=read_mom(momfpath)
-#******start of reading omega*******
+    #******start of reading omega*******
     omegafpath="omega_"+str(suffix)
-    if not os.path.isfile(omegafpath):
-        print('No omega file, using omega scan')
-        #from omega_tool_max2
-        omega_calc("_"+str(suffix))
-        #from genetools.py
-        gamma_list,omega_list,indice_list=get_omega(suffix)
-    else:
+    paramfpath="parameters_"+str(suffix)
+    geneparam=read_parameters(paramfpath)
+    kymin=geneparam['box']['kymin']
+    #if not os.path.isfile(omegafpath):
+    #else:
+    try:
         omegadata = read_omega(omegafpath)
-        if abs(omegadata['omega'][0])<0.0000001:
+        if abs(omegadata['omega'][0])<0.00000001:
             omega_calc("_"+str(suffix))
             #from genetools.py
             omegadata = read_omega(omegafpath)
             #gamma_list,omega_list,indice_list=get_omega(suffix)
-    
-    omega=omegadata['omega'][0]
-    gamma=omegadata['gamma'][0]
-    kymin=omegadata['kymin'][0]
+        omega=omegadata['omega'][0]
+        gamma=omegadata['gamma'][0]
+        
+        gamma,gamma_std,omega,omega_std=omega_calc("_"+str(suffix),output_file=False)
+    except: 
+        print('No omega file, using omega scan')
+        #from omega_tool
+        gamma,gamma_std,omega,omega_std=omega_calc("_"+str(suffix))
+        
+        
+
     '''
     if 1==1: #this is for EV_reader
         from EV_reader import get_omega
@@ -76,9 +83,9 @@ def f(suffix): #calculate the frequency
         kymin=omegadata['kymin'][0]
     '''
 
-#******End of reading omega*******
+    #******End of reading omega*******
 
-#*****Start of calcuation of diamagnetic frequency******
+    #*****Start of calcuation of diamagnetic frequency******
     paramfpath="parameters_"+str(suffix)
     geneparam=read_parameters(paramfpath)
 
@@ -111,7 +118,7 @@ def f(suffix): #calculate the frequency
     #doppler = vrot_u*n0_global/2./np.pi/1E3 #Doppler shift in kHz
 
     #*****End of calcuation of diamagnetic frequency******
-    return fe, fi, omega, gamma, kx, kymin, f_kHz, nu_ei
+    return fe, fi, gamma, gamma_std, omega, omega_std, kx, kymin, f_kHz, nu_ei
 
 def D_chi_3(suffix,index0 = -1):
 
@@ -244,6 +251,8 @@ def Epar_judge(epar):
         mode="other"
     return mode
 
+def smooth_judge(suffix):
+	return 0
 
 
 def f_judge(fe, fi, omega):  #judge from the typical frquency
@@ -331,7 +340,7 @@ def D_chi_3_judge(Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,ch
 
 def federal_court(suffix):
     print("************"+str(suffix)+"*************")
-#************Start of transport ratio case**************
+    #************Start of transport ratio case**************
     if len(species_order(suffix))==3:
         Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z=D_chi_3(suffix,index0=-1)
         D_chi_mode=D_chi_3_judge(Qes_e,Qes_i,Qes_z,Qem_e,Qem_i,Qem_z,Q_e,Q_i,Q_z,D_e,D_i,D_z,chi_e,chi_i,chi_z)
@@ -341,26 +350,26 @@ def federal_court(suffix):
         D_chi_mode=D_chi_2_judge(Qes_e,Qes_i,Qem_e,Qem_i,Q_e,Q_i,D_e,D_i,chi_e,chi_i)
         chi_tot=chi_i+chi_e
     print("Based on Transport ratio, the mode is: "+str(D_chi_mode))
-#************End of transport ratio case**************
+    #************End of transport ratio case**************
 
-#************Start of typical frequency case**************
-    fe, fi, omega, gamma, kx, kymin, f_kHz, nu_ei=f(suffix)
+    #************Start of typical frequency case**************
+    fe, fi, gamma,gamma_std,omega,omega_std, kx, kymin, f_kHz, nu_ei=f(suffix)
     f_mode,f_ITG,f_ETG,f_KBM,f_MTM=f_judge(fe, fi, omega)
     print("Based on Typical frequency, the mode is: "+str(f_mode))
     print("The likelyhood of ITG is "+str(f_ITG))
     print("The likelyhood of ETG is "+str(f_ETG))
     print("The likelyhood of KBM is "+str(f_KBM))
     print("The likelyhood of MTM is "+str(f_MTM))
-#************End of typical frequency case**************
+    #************End of typical frequency case**************
 
-#***********Start of E paraelle case*******************
+    #***********Start of E paraelle case*******************
     epar=Epar(suffix)
     epar_mode=Epar_judge(epar)
     print("Based on E_par Cancellation, the mode is: "+str(epar_mode))
     print("The e parelle is "+str(epar))
-#***********End of E paraelle case*******************
+    #***********End of E paraelle case*******************
 
-#***********Start of the summary***********************
+    #***********Start of the summary***********************
     if D_chi_mode=="KBM" and epar_mode=="KBM":
         tot_mode="KBM"
     elif D_chi_mode=="MTM" and f_mode=="MTM":
@@ -374,28 +383,32 @@ def federal_court(suffix):
     print("Based on all the factors, the mode is: "+str(tot_mode))
     if tot_mode=="other":
         print("Please check the result manually")
-#***********End of the summary***********************
+    #***********End of the summary***********************
 
-#**********Start of report***************************
+    #**********Start of report***************************
+
     with open('Court_results.csv', 'a') as csvfile:
         csv_data = csv.writer(csvfile, delimiter=',')
-        csv_data.writerow([suffix,tot_mode,\
+
+        if len(species_order(suffix))==3:
+            csv_data.writerow([suffix,tot_mode,\
                             kymin,kx,nu_ei,\
-                            f_mode,omega,f_kHz,fi,fe,gamma,\
+                            f_mode,omega,omega_std,f_kHz,fi,fe,gamma,gamma_std,\
                             epar_mode,epar,\
                             D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,Qem_z/Qes_z,Q_i/Q_e,chi_i/chi_e,\
                             D_i/chi_tot,D_e/chi_tot,D_z/chi_tot,D_i/chi_e,D_e/chi_e,D_z/chi_e,\
                             D_i/chi_i,D_e/chi_i,D_z/chi_i])
+        elif len(species_order(suffix))==2:
+            csv_data.writerow([suffix,tot_mode,\
+                            kymin,kx,nu_ei,\
+                            f_mode,omega,omega_std,f_kHz,fi,fe,gamma_std,\
+                            epar_mode,epar,\
+                            D_chi_mode,Qem_e/Qes_e,Qem_i/Qes_i,'NA',Q_i/Q_e,chi_i/chi_e,\
+                            D_i/chi_tot,D_e/chi_tot,'NA',D_i/chi_e,D_e/chi_e,'NA',\
+                            D_i/chi_i,D_e/chi_i,'NA'])
     csvfile.close()
-#**********End of report***************************
+    #**********End of report***************************
 
-#if report==1:
-#    with open('mode_number_finder_report.csv','w') as csvfile:
-#        data = csv.writer(csvfile, delimiter=',')
-#        data.writerow(['n ','m ','kymin          ','frequency(kHz)           ','location(r/a)            ','omega_GENE    ','Drive'])
-#       for i in range(len(n0_range)):
-#            data.writerow([n0_range[i],m0_range[i],ky_range[i],f_range[i],x_range[i],f_GENE_range[i],drive_range[i]])
-#    csvfile.close()
 
 def scan_cases():
     cwd = os.getcwd()
@@ -411,7 +424,8 @@ def scan_cases():
         csv_data = csv.writer(csvfile, delimiter=',')
         csv_data.writerow(["Suffix","Total mode",\
                             "ky*rhoi","kx*rhoi","nu_ei(cs/a)",\
-                            "f mode","omega(cs/a)","f(kHz)","omega*i(cs/a)","omega*e(cs/a)","gamma(cs/a)",\
+                            "f mode","omega(cs/a)","omega_std(cs/a)","f(kHz)",\
+                            "omega*i(cs/a)","omega*e(cs/a)","gamma(cs/a)","gamma_std(cs/a)",\
                             "E_par mode","E_par",\
                             "D_chi mode","Qem_e/Qes_e","Qem_i/Qes_i","Qem_z/Qes_z","Q_i/Q_e","chi_i/chi_e",\
                             "D_i/chi_tot","D_e/chi_tot","D_z/chi_tot","D_i/chi_e","D_e/chi_e","D_z/chi_e",\

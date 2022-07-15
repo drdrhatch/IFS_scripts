@@ -457,23 +457,7 @@ def get_input_params(directory, suffix, geom=None):
 
 def fft_nonuniform(times, f, axis=0, samplerate=2):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
-    datatype = f.dtype
-    ntimes = times.size
-    samples = samplerate * ntimes
-    times_lin = np.linspace(times[0], times[-1], samples)
-    if f.ndim > 1:
-        if axis == 0:
-            f_lin = np.empty((samples, f.shape[1]), dtype=datatype)
-            for i, row in enumerate(f.T):
-                f_int = np.interp(times_lin, times, row)
-                f_lin[:, i] = f_int.T
-        else:
-            f_lin = np.empty((f.shape[0], samples), dtype=datatype)
-            for i, row in enumerate(f):
-                f_lin[i] = np.interp(times_lin, times, row)
-    else:
-        f_lin = np.interp(times_lin, times, f)
-        axis = 0
+    times_lin, f_lin = linear_resample(times, f, axis, samplerate)
     f_hat = np.fft.fft(f_lin, axis=axis)
     return f_hat, times_lin
 
@@ -490,18 +474,45 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
         samples = ntimes
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
-    omegas = np.fft.fftfreq(samples, d=timestep)
+    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
     if f.ndim > 1:
         if axis == 0:
-            weights = np.sum(np.expand_dims(omegas, -1) ** 2 * abs(f_hat) ** 2, axis=0)
+            num = np.sum(np.expand_dims(omegas, -1) * abs(f_hat) ** 2, axis=0)
         elif axis == 1:
-            weights = np.sum(np.expand_dims(omegas, 0) ** 2 * abs(f_hat) ** 2, axis=1)
+            num = np.sum(np.expand_dims(omegas, 0) * abs(f_hat) ** 2, axis=1)
     else:
-        weights = np.sum(omegas ** 2 * abs(f_hat) ** 2)
-    norm = np.sum(abs(f_hat) ** 2, axis=axis)
-    freq = np.sqrt(weights / norm)
+        num = np.sum(omegas * abs(f_hat) ** 2)
+    denom = np.sum(abs(f_hat) ** 2, axis=axis)
+    freq = num / denom
     if norm_out:
-        return freq, norm
+        return freq, denom
+    return freq
+
+
+def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False):
+    """Returns the rms frequency from field"""
+    ntimes = times.size
+    dt = np.diff(times)
+    even_dt = np.all(dt == dt[0])
+    if not even_dt:
+        samples = samplerate * ntimes
+        f_hat, times_lin = fft_nonuniform(times, f)
+    else:
+        samples = ntimes
+        f_hat = np.fft.fft(f, axis=axis)
+    timestep = (times[-1] - times[0]) / samples
+    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
+    if f.ndim > 1:
+        if axis == 0:
+            num = np.sum(abs(np.expand_dims(omegas, -1) * f_hat) ** 2, axis=0)
+        elif axis == 1:
+            num = np.sum(abs(np.expand_dims(omegas, 0) * f_hat) ** 2, axis=1)
+    else:
+        num = np.sum(abs(omegas * f_hat) ** 2)
+    denom = np.sum(abs(f_hat) ** 2, axis=axis)
+    freq = np.sqrt(num / denom)
+    if norm_out:
+        return freq, denom
     return freq
 
 
@@ -538,10 +549,45 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
     f1 = field[zstart:zend]
     f2 = field[zstart + 1 : zend + 1]
 
+    ddz = dfdz1 * np.conj(f1) + dfdz2 * np.conj(f1)
+    num = np.sum(2 * np.real(ddz) * jac, axis=0)
+    denom = np.sum((abs(dfdz1) ** 2 + abs(dfdz2)) ** 2 * jac, axis=0)
+    akz = (num / denom).T
+    if outspect:
+        return akz, ddz
+    if norm_out:
+        return akz, denom
+    return akz
+
+
+def avg_kz2(mode, var, outspect=False, norm_out=False):
+    """Calculate the rms kz mode weighted by given field"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
+    zgrid = mode.zgrid_ext
+    dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    dfdz1 = dfielddz[zstart:zend]
+    dfdz2 = dfielddz[zstart + 1 : zend + 1]
+    jac = jacxBpi_ext[zstart:zend]
+    f1 = field[zstart:zend]
+    f2 = field[zstart + 1 : zend + 1]
+
     ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
     sum_ddz = np.sum(ddz, axis=0)
     denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
-    akz = np.sqrt(sum_ddz / denom).T
+    akz = np.sqrt(num / denom).T
     if outspect:
         return akz, ddz
     if norm_out:
@@ -607,7 +653,7 @@ def corr_len(x, corr, axis=-1, weights=None):
     index = list(np.array(corr.shape) // 2)
     index[axis] = np.arange(n2, n)
     r = x[n2:]
-    C = np.real(corr[index])
+    C = np.real(corr[tuple(index)])
     if np.any(weights):
         w = weights[n2:]
         clen = np.average(C, weights=w) * n2
@@ -736,11 +782,27 @@ def avg_t_field(mode, var):
 def avg_kz_tz(mode, var):
     evar = get_extended_var(mode, var)
     kz, norm = avg_kz(mode, evar, norm_out=True)
+    mean_kz = np.average(kz, weights=norm)
+    return mean_kz
+
+
+def avg_kz2_tz(mode, var):
+    evar = get_extended_var(mode, var)
+    kz, norm = avg_kz(mode, evar, norm_out=True)
     mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
     return mean_kz
 
 
 def avg_freq_tz(mode, times, var):
+    evar = get_extended_var(mode, var)
+    omega, norm = avg_freq(times, evar, norm_out=True)
+    jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
+    jac_norm = jac_ext * norm
+    avg_omega = np.average(omega, weights=jac_norm)
+    return avg_omega
+
+
+def avg_freq2_tz(mode, times, var):
     evar = get_extended_var(mode, var)
     omega, norm = avg_freq(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
@@ -761,8 +823,7 @@ def mean_tzx(mode, var, pars):
 
 def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
     var = mode.fields[varname]
-    evar = get_extended_var(mode, var)
-    f = evar
+    f = var
     ntimes = times.size
     dt = np.diff(times)
     even_dt = np.all(dt == dt[0])
@@ -773,28 +834,48 @@ def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
         samples = ntimes
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
-    omegas = np.fft.fftfreq(samples, d=timestep)
+    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
 
-    dims = tuple(range(f_hat.ndim))
-    saxes = dims[dims != axis]
-    spectrum = np.sum(np.abs(f_hat) ** 2, axis=saxes)
+    jac = mode.geometry["gjacobian"]
+    kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
+    z_avg = np.average(kx_avg, weights=jac, axis=1)
 
-    om = np.array(omegas[0 : samples // 2])
-    spec = np.union1d(
-        spectrum[0], spectrum[1 : samples // 2] + spectrum[-1 : -samples // 2 : -1]
-    )
+    om = np.real_if_close(np.fft.fftshift(omegas))
+    spec = np.real_if_close(np.fft.fftshift(z_avg))
 
     if output:
         output_spec(mode, om, spec, varname)
-    return omegas, spec
+    return om, spec
 
 
 def output_spec(mode, omegas, spec, varname):
-    """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
+    """Output a frequency spectrum for a mode"""
     header = "omega " + varname + "^2"
     ky = str("{:03d}").format(int(mode.ky))
     filename = "./" + varname + "_ky" + ky + "_spec.dat"
     data = np.vstack((omegas, spec)).T
+    np.savetxt(
+        filename,
+        data,
+        fmt="% E",
+        header=header,
+        encoding="UTF-8",
+    )
+
+
+def output_spec_all(ky_list, spec, omegas, varname):
+    """Output a frequency spectrum for multiple ky"""
+    header = (
+        "omega "
+        + varname
+        + "^2"
+        + "\t"
+        + "first row is frequencies and first column  is kys"
+    )
+    ky_list.insert(0, omegas.size)
+    kys = np.array(ky_list)[np.newaxis, :].T
+    data = np.hstack((kys, np.vstack((omegas, spec))))
+    filename = "./" + varname + "_spec_all.dat"
     np.savetxt(
         filename,
         data,

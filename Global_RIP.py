@@ -37,6 +37,7 @@ r_BES=0.98    #x/a of the location of BES
 z_BES=0.       #Height of the location of BES, Z=0 being the outboard midplan
 BES_radius=0.02  #BES measurement radius in m
 #Choose a location to 
+Outboard_mid_plan=True
 RIP_Z_location=0. #mid-plan
 beam_width=0.02 #2cm for the laser beam width
 
@@ -311,31 +312,53 @@ def g_RIP_single_location(RIP_Z_location,beam_width,real_R,real_Z,gxx,gxy,gyy,gy
     RIP_highlight_Z=[]
     area_list=[]
     area_tot=0
-    
-    for n in range(nz):
+    if Outboard_mid_plan==True:
+        n=int(nz/2)
         for m in range(nx):
-            if real_Z[n,m]>=RIP_Z_location-0.5*beam_width and real_Z[n,m]<=RIP_Z_location+0.5*beam_width:
-                n_temp=n
-                m_temp=m
-                if n >= nz-1:
-                    n_temp=nz-2
-                if m >= nx-1:
-                    m_temp=nx-2
-                corners=[(real_R[n_temp,m_temp], real_Z[n_temp,m_temp]),\
-                         (real_R[n_temp+1,m_temp], real_Z[n_temp+1,m_temp]),\
-                         (real_R[n_temp+1,m_temp+1], real_Z[n_temp+1,m_temp+1]),\
-                         (real_R[n_temp,m_temp+1], real_Z[n_temp,m_temp+1])]
-                area=PolygonArea(corners)
-
-                print("("+str(real_R[n,m])+", "+str(real_Z[n,m])+")")
-                print("area="+str(area))
-
-                area_tot=area_tot+area
-                integrate_B1_n0_dR=integrate_B1_n0_dR+B1[n,m]*n0[n,m]*area
-                integrate_n0_dR=integrate_n0_dR+n0[n,m]*area
-                RIP_highlight_Z.append(real_Z[n,m])
-                RIP_highlight_R.append(real_R[n,m])
-                area_list.append(area)
+            n_temp=n
+            m_temp=m
+            if n >= nz-1:
+                n_temp=nz-2
+            if m >= nx-1:
+                m_temp=nx-2
+            corners=[(real_R[n_temp,m_temp], real_Z[n_temp,m_temp]),\
+                     (real_R[n_temp+1,m_temp], real_Z[n_temp+1,m_temp]),\
+                     (real_R[n_temp+1,m_temp+1], real_Z[n_temp+1,m_temp+1]),\
+                     (real_R[n_temp,m_temp+1], real_Z[n_temp,m_temp+1])]
+            area=PolygonArea(corners)
+            print("("+str(real_R[n,m])+", "+str(real_Z[n,m])+")")
+            print("area="+str(area))
+            area_tot=area_tot+area
+            integrate_B1_n0_dR=integrate_B1_n0_dR+B1[n,m]*n0[n,m]*area
+            integrate_n0_dR=integrate_n0_dR+n0[n,m]*area
+            RIP_highlight_Z.append(real_Z[n,m])
+            RIP_highlight_R.append(real_R[n,m])
+            area_list.append(area)
+    else:
+        for n in range(nz):
+            for m in range(nx):
+                if real_Z[n,m]>=RIP_Z_location-0.5*beam_width and real_Z[n,m]<=RIP_Z_location+0.5*beam_width:
+                    n_temp=n
+                    m_temp=m
+                    if n >= nz-1:
+                        n_temp=nz-2
+                    if m >= nx-1:
+                        m_temp=nx-2
+                    corners=[(real_R[n_temp,m_temp], real_Z[n_temp,m_temp]),\
+                             (real_R[n_temp+1,m_temp], real_Z[n_temp+1,m_temp]),\
+                             (real_R[n_temp+1,m_temp+1], real_Z[n_temp+1,m_temp+1]),\
+                             (real_R[n_temp,m_temp+1], real_Z[n_temp,m_temp+1])]
+                    area=PolygonArea(corners)
+    
+                    print("("+str(real_R[n,m])+", "+str(real_Z[n,m])+")")
+                    print("area="+str(area))
+    
+                    area_tot=area_tot+area
+                    integrate_B1_n0_dR=integrate_B1_n0_dR+B1[n,m]*n0[n,m]*area
+                    integrate_n0_dR=integrate_n0_dR+n0[n,m]*area
+                    RIP_highlight_Z.append(real_Z[n,m])
+                    RIP_highlight_R.append(real_R[n,m])
+                    area_list.append(area)
 
     integrate_B1_n0_dR=integrate_B1_n0_dR/area_tot
     integrate_n0_dR=integrate_n0_dR/area_tot

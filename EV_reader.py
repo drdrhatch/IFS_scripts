@@ -4,6 +4,7 @@ import csv
 import os
 
 from genetools import *
+from ParIO import * 
 from max_mode_judge_tools import D_chi_3
 from max_mode_judge_tools import D_chi_3_judge
 
@@ -11,7 +12,7 @@ from max_mode_judge_tools import D_chi_3_judge
 
 #************Start of User block*********************
 scan_name='kymin'  #name of scanning quantity
-spec_num=3 #number of the specices 1 or 3
+spec_num=1         #number of the specices 1 or 3
 
 #************End of User block*********************
 
@@ -22,22 +23,33 @@ def get_omega(suffix):
     #print(evals)
     gamma_list = []
     omega_list = []
-    
+    omega_kHz_list=[]
+
+    par = Parameters()
+    par.Read_Pars('parameters_'+suffix)
+    pars = par.pardict
+    TJ = pars['Tref']*1000.0*1.602e-19
+    mi = pars['mref']*1.6726e-27
+    cs = np.sqrt(TJ/mi)
+    om_ref = cs/pars['Lref']
+
     if len(np.shape(evals))==2:
         print("More than 1 eigenvalue")
         for line in evals:
             omega_list.append(line[1])
+            omega_kHz_list.append(line[1]*om_ref/1000.0/(2.0*np.pi))
             gamma_list.append(line[0])
     else: 
         print("Only 1 eigenvalue")
-        omega_list.append(evals[1])
+        omega_list.append(line[1])
+        omega_kHz_list.append(line[1]*om_ref/1000.0/(2.0*np.pi))
         gamma_list.append(evals[0])
 
     
 
     indice_list = np.arange(len(omega_list))
 
-    return gamma_list,omega_list,indice_list
+    return gamma_list,omega_list,omega_kHz_list,indice_list
 
 
 def D_chi_e(suffix,index0):
@@ -100,7 +112,7 @@ def scan_cases_e():
     csvfile_name='EV_log.csv'
     with open(csvfile_name, 'w', newline='') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['Suffix','index',scan_name,'omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e'])
+        data.writerow(['Suffix','index',scan_name,'omega(kHz)','omega(cs/a)','gamma(cs/a)','mode','Qem_e/Qes_e','D_e/chi_e'])
         csvfile.close()
 
     cwd = os.getcwd()
@@ -111,7 +123,7 @@ def scan_cases_e():
     filelist.sort()
     for suffix in filelist:
         print('*************reading'+suffix+'*************')
-        gamma_list,omega_list,indice_list=get_omega(suffix)
+        gamma_list,omega_list,omega_kHz_list,indice_list=get_omega(suffix)
         for index0 in indice_list:
             print('****'+str(index0)+'*****')
             Qes_e,Qem_e,Q_e,D_e,chi_e=D_chi_e(suffix,index0)
@@ -125,14 +137,14 @@ def scan_cases_e():
 
             with open(csvfile_name, 'a+', newline='') as csvfile:
                 data = csv.writer(csvfile, delimiter=',')
-                data.writerow([suffix,index0,scan_quant,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e,])
+                data.writerow([suffix,index0,scan_quant,omega_kHz_list[index0],omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e,])
                 csvfile.close()
 
 def scan_cases_3():
     csvfile_name='EV_log.csv'
     with open(csvfile_name, 'w', newline='') as csvfile:
         data = csv.writer(csvfile, delimiter=',')
-        data.writerow(['Suffix','index',scan_name,'omega','gamma','mode','Qem_e/Qes_e','D_e/chi_e','chi_i/chi_e','Q_i/Q_e','D_e/chi_tot'])
+        data.writerow(['Suffix','index',scan_name,'omega(kHz)','omega(cs/a)','gamma(cs/a)','mode','Qem_e/Qes_e','D_e/chi_e','chi_i/chi_e','Q_i/Q_e','D_e/chi_tot'])
         csvfile.close()
 
     cwd = os.getcwd()
@@ -157,7 +169,7 @@ def scan_cases_3():
 
             with open(csvfile_name, 'a+', newline='') as csvfile:
                 data = csv.writer(csvfile, delimiter=',')
-                data.writerow([suffix,index0,scan_quant,omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e,chi_i/chi_e,Q_i/Q_e,D_e/(chi_e+chi_i+chi_z)])
+                data.writerow([suffix,index0,scan_quant,omega_kHz_list[index0],omega_list[index0],gamma_list[index0],mode,Qem_e/Qes_e,D_e/chi_e,chi_i/chi_e,Q_i/Q_e,D_e/(chi_e+chi_i+chi_z)])
                 csvfile.close()
     
 
