@@ -315,3 +315,49 @@ def p_to_iterdb_format(p_file_name,geomfile_name):
     rhop_u = np.sqrt(np.array(psi_u))
 
     return uni_rhot, rhop_u, 1000.0*te_u, 1000.0*ti_u, 1.0e19*ne_u*10., 1.0e19*ni_u*10., omega_tor
+
+def read_pfile_direct(file_name):
+    '''
+    This function reads in the pfile with no modification and takes names directly from the file
+    '''
+    f = open(file_name,'r')
+    data = f.read()
+    f.close()
+    lines = data.split('\n')
+    entry_length = int(float(lines[0].split()[0]))
+    print('Entry length',entry_length)
+
+    pfile_dict = {}
+    count = 0
+    for i in range(len(lines)):
+        this_line = lines[i]
+        ltemp = this_line.split()
+        if int(float(ltemp[0])) == entry_length:
+            print(count)
+            count += 1
+            this_psinorm = ltemp[1]+'_'+ltemp[2]
+            this_name1 = ltemp[2]
+            this_name2 = ltemp[3]
+            pfile_dict[this_psinorm] = np.empty(entry_length) 
+            pfile_dict[this_name1] = np.empty(entry_length)
+            pfile_dict[this_name2] = np.empty(entry_length)
+            if count == 1:
+                psiname = ltemp[1]
+                pfile_dict[psiname] = np.empty(entry_length)
+        elif 'SPECIES' in this_line:
+            nspec = int(float(this_line.split()[0]))
+            pfile_dict['species info'] = lines[i]
+            for j in range(nspec):
+                pfile_dict['species info'] += '\n'+lines[i+j+1]
+            break
+        else:
+            if count == 1:
+                np.append(pfile_dict[psiname],ltemp[0])
+            np.append(pfile_dict[this_psinorm],ltemp[0])
+            np.append(pfile_dict[this_name1],ltemp[1])
+            np.append(pfile_dict[this_name2],ltemp[2])
+
+    return pfile_dict
+
+
+
