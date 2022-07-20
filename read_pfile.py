@@ -10,6 +10,32 @@ from read_EFIT import read_EFIT
 #Last edited by Max Curie 11/02/2020
 #Supported by scripts in IFS
 
+
+#ne -- Electron density
+#te -- Electron temperature
+#ni -- Ion density
+#ti -- Ion temperature
+#nb -- Fast ion density
+#pb -- Fast ion pressure
+#ptot -- Total pressure
+#omeg -- Toroidal rotation: VTOR/R
+#omegp -- Poloidal rotation: Bt * VPOL / (RBp)
+#omgvb -- VxB rotation term in the ExB rotation frequency: OMEG + OMEGP
+#omgpp -- Diamagnetic term in the ExB rotation frequency: (P_Carbon)/dpsi / (6*n_Carbon)
+#omgeb -- ExB rotation frequency: OMGPP + OMGVB = Er/(RBp)
+#er -- Radial electric field from force balance: OMGEB * RBp
+#ommvb -- Main ion VXB term of Er/RBp, considered a flux function
+#ommpp -- Main ion pressure term of Er/RBp, considered a flux function
+#omevb -- Electron VXB term of Er/RBp, considered a flux function
+#omepp -- Electron pressure term of Er/RBp, considered a flux function
+#kpol -- KPOL=VPOL/Bp : V_vector = KPOL*B_vector + OMGEB * PHI_Vector
+#omghb -- Han-Burrell form for the ExB velocity shearing rate: OMGHB = (RBp)**2/Bt * d (Er/RBp)/dpsi
+#nz1 -- Density of the 1st impurity species
+#vtor1 -- Toroidal velocity of the 1st impurity species
+#vpol1 -- Poloidal velocity of the 1st impurity species
+#N Z A -- N Z A of ION SPECIES
+
+
 def read_pfile(p_file_name,Z,add_impurity=False):
 
     impurity_charge = float(Z)
@@ -328,11 +354,14 @@ def read_pfile_direct(file_name):
     print('Entry length',entry_length)
 
     pfile_dict = {}
+    pfile_dict['file_name'] = file_name
+    pfile_dict['entry_length'] = entry_length
     count = 0
     for i in range(len(lines)):
         this_line = lines[i]
         ltemp = this_line.split()
         if int(float(ltemp[0])) == entry_length:
+            k=0
             print(count)
             count += 1
             this_psinorm = ltemp[1]+'_'+ltemp[2]
@@ -352,10 +381,11 @@ def read_pfile_direct(file_name):
             break
         else:
             if count == 1:
-                np.append(pfile_dict[psiname],ltemp[0])
-            np.append(pfile_dict[this_psinorm],ltemp[0])
-            np.append(pfile_dict[this_name1],ltemp[1])
-            np.append(pfile_dict[this_name2],ltemp[2])
+                pfile_dict[psiname][k]=float(ltemp[0])
+            pfile_dict[this_psinorm][k]=float(ltemp[0])
+            pfile_dict[this_name1][k]=float(ltemp[1])
+            pfile_dict[this_name2][k]=float(ltemp[2])
+            k+=1
 
     return pfile_dict
 
