@@ -53,7 +53,7 @@ parser.add_argument(
 parser.add_argument(
     "--kylist",
     "-k",
-    dest="ky_list",
+    dest="iky_list",
     action="store",
     default=0,
     nargs="+",
@@ -103,11 +103,11 @@ print("Analyzing for times: ", times)
 kx_cent = args.kx_cent
 print("kx_cent = ", kx_cent)
 
-if args.ky_list == 0:
-    ky_list = list(range(0, field.ny))
+if args.iky_list == 0:
+    iky_list = list(range(0, field.ny))
 else:
-    ky_list = args.ky_list
-print("ky modes to analyze: ", ky_list)
+    iky_list = args.iky_list
+print("ky modes to analyze: ", iky_list)
 
 if args.pod:
     pods = np.arange(1, min(args.pod, times.size) + 1)
@@ -117,7 +117,7 @@ else:
 gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 
 # print("Loading data for fields" + str(fields) + "...", end="")
-# ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in ky_list]
+# ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in iky_list]
 # print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
 
 # if args.debug:
@@ -125,11 +125,12 @@ gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
 #         bl.plot_vars(mode, fields, times, show=show_figs, save=save_figs)
 
 if not np.any(pods):
-    spec = np.empty((len(ky_list), times.size))
+    spec = np.empty((len(iky_list), times.size))
 
 scale_dict = {}
+ky_list = []
 
-for i, iky in enumerate(ky_list):
+for i, iky in enumerate(iky_list):
     print(
         "Loading data for ky=" + str(iky) + " and fields" + str(fields) + "...", end=""
     )
@@ -138,6 +139,7 @@ for i, iky in enumerate(ky_list):
     print("Done: ", str("{:6.3f}").format(time.time() - start), "s")
     ky = mode.ky
     kx = mode.kx_cent
+    ky_list.append(ky)
     print("Working on :")
     print("ky = ", ky, "...", end="")
     print("connected kx modes = ", mode.kx_modes)
