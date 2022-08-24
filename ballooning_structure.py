@@ -194,11 +194,11 @@ for i, iky in enumerate(iky_list):
         end = time.time()
     else:
         phi = mode.fields["phi"]
-        w1 = np.expand_dims(mode.geometry["gjacobian"], 0)
+        w1 = np.expand_dims(mode.geometry["gjacobian"], (0, 2))
         w2 = mode.geometry["gjacobian"]
         if args.corr:
-            dphi = phi[:, :, 0]  # average over x
-            doms, corr = bl.autocorrelate_tz(dphi, (times, mode.zgrid), w1)
+            # doms, corr = bl.autocorrelate_tz(phi, (times, mode.zgrid), w1)
+            doms, corr = bl.autocorrelate_tz(phi, (times, mode.zgrid))
             corr_time = bl.corr_len(doms[0], corr, axis=0)
             corr_len = bl.corr_len(doms[1], corr, 1, w2)
             if args.debug:

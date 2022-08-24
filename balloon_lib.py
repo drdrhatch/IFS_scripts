@@ -836,8 +836,14 @@ def autocorrelate_tz(var, domains, weights=None):
         center = dom.size // 2
         dom -= dom[center]  # shift to zero
         new_domains.insert(i, dom)
+
+    corr_sum = np.zeros([f.shape[0], f.shape[1]], dtype=np.complex128)
+    for ix in range(f.shape[2]):
+        f1 = f[:, :, ix]
+        g1 = g[:, :, ix]
+        corr_sum += signal.correlate(f1, g1, mode="same", method="auto")
     norm = f.size * np.std(f) * np.std(g)
-    corr = signal.correlate(f, g, mode="same", method="auto") / norm
+    corr = corr_sum / norm
 
     return new_domains, corr
 
