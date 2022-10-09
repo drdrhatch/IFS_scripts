@@ -29,10 +29,12 @@ Bfile = np.genfromtxt('Binfo_'+gfile)
 
 psi0 = Bfile[:,1]
 press0 = Bfile[:,5]
+Bpol0 = Bfile[:,2]
 
 entry_length = 300
 psi = np.linspace(0,1,entry_length)
 press = interp(psi0,press0,psi)
+Bpol = interp(psi0,Bpol0,psi)
 
 def setup_constant_T(psiN,T0kev,P_pasc):
     e = 1.602e-19
@@ -63,6 +65,23 @@ nz[:] = 1.0e15
 ni = ne - 6*nz
 TiJ = TeJ
 Tikev = Tekev
+
+########Calculate beta_pol (RFP style)
+#psi = np.linspace(0,1,entry_length)
+#press = interp(psi0,press0,psi)
+
+isep = np.argmin(abs(psi-1))
+Bpol_sep = Bpol[isep]
+print("Bpol_sep",Bpol_sep)
+pint = np.sum(press)/len(press)
+mu0 = 1.2566e-6
+beta_pol = pint/(Bpol_sep**2/mu0/2.0)
+print("beta_pol",beta_pol)
+
+
+
+
+
 
 pdict = {}
 
@@ -101,6 +120,7 @@ plt.ylabel(r'$q$')
 #ymax = max(ax[3],
 #plt.axis([0,1,ax[2],1.1*Bfile[iq95,4]])
 plt.subplot2grid((3,2),(0,1))
+plt.title(r'$\beta_{pol}$'+'(RFP) = '+str(beta_pol)[0:5])
 plt.plot(Bfile[:,1],Bfile[:,5],label='P from efit')
 plt.plot(pdict_in['psinorm_'+nstring],2*pdict_in[nstring]*1e20*pdict_in[Tstring]*1000*e,label='P from pfile (2x ne*Te)')
 plt.xlabel(r'$\Psi_N$')
