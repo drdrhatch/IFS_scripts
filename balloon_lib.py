@@ -37,7 +37,7 @@ HEADER_NAMES = {
 class KyMode:
     """Class for organizing ballooning structure for each ky mode"""
 
-    def __init__(self, ky, times, fields, gene_files):
+    def __init__(self, ky, kx_cent, times, fields, gene_files):
         pars = gene_files["pars"]
         field_file = gene_files["field"]
         mom_file = gene_files["mom"]
@@ -45,6 +45,7 @@ class KyMode:
         self.iky = ky
         self.ky = ky * pars["kymin"]
         self.nx = field_file.nx
+        self.kx_cent = kx_cent
         self.nz = field_file.nz
         self.T0 = pars["temp1"]
         self.n0 = pars["dens1"]
@@ -65,7 +66,7 @@ class KyMode:
             step = pars["nexc"] * self.iky
         hmodes = np.arange(0, self.nx / 2, step, dtype=np.intc)
         lmodes = np.arange(0, -self.nx / 2, -step, dtype=np.intc)
-        self.kx_modes = np.union1d(lmodes, hmodes)
+        self.kx_modes = self.kx_cent + np.union1d(lmodes, hmodes)
 
     def zrange(self):
         nxmodes = self.kx_modes.size
@@ -136,7 +137,7 @@ class KyMode:
 def plot_pod(mode, var, pods, varn, extend=True):
     varname = get_varname(varn)
     for ipod in pods:
-        title = "$k_y=$" + str(mode.ky) + ", POD mode # " + str(ipod + 1)
+        title = "$k_y=$" + str(mode.ky) + ", POD mode # " + str(ipod)
         pvar, zgrid = get_plot_variable(mode, var[ipod], extend)
         plot(zgrid, np.conj(pvar), varname, title)
         plt.show()
@@ -147,7 +148,7 @@ def plot_time_dependence(mode, u, times, pods):
     plt.xlabel("Time")
     plt.ylabel(r"$|\Phi_s|$")
     for ipod in pods:
-        plt.plot(times, np.abs(u[:, ipod]), label=r"$s_" + str(ipod + 1) + "$")
+        plt.plot(times, np.abs(u[:, ipod]), label=r"$s_" + str(ipod) + "$")
     plt.grid(True)
     plt.legend()
     plt.show()
@@ -162,7 +163,15 @@ def output_pod(mode, u, sv, vh, fields, pods, times):
 
 def output_cum_sum(mode, var, varname):
     """Output variable and its cumulative sum"""
-    filename = "./" + varname + "_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+    filename = (
+        "./"
+        + varname
+        + "_ky"
+        + str("{:03d}").format(int(mode.ky))
+        + "_kx"
+        + str("{:03d}").format(int(mode.kx_cent))
+        + ".dat"
+    )
     header = HEADER_NAMES[varname]
     var_sum = np.cumsum(var) / var.sum()
     data = np.vstack((var, var_sum)).T
@@ -172,18 +181,43 @@ def output_cum_sum(mode, var, varname):
 def output_pod_modes(mode, r_vec, fields, pods, norm):
     """Output right pod modes (spatial variation)"""
     if norm:
-        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + "_norm.dat"
+        filename = (
+            "./pod_ky"
+            + str("{:03d}").format(int(mode.ky))
+            + "_kx"
+            + str("{:03d}").format(int(mode.kx_cent))
+            + "_norm.dat"
+        )
     else:
-        filename = "./pod_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
+        filename = (
+            "./pod_ky"
+            + str("{:03d}").format(int(mode.ky))
+            + "_kx"
+            + str("{:03d}").format(int(mode.kx_cent))
+            + ".dat"
+        )
+    sqrjac = np.sqrt(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size))
     fp = open(filename, "w")
     fp.write("# theta Re Im\n")
     for ipod in pods:
         for field in fields:
-            header = field + " POD " + str(ipod + 1)
+            header = field + " POD " + str(ipod)
             pvar, zgrid = get_plot_variable(mode, r_vec[field][ipod], extend=True)
+            pvar_sqrjac = pvar / sqrjac
             if norm:
                 pvar /= pvar[mode.zero_ind]
-            data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
+                pvar /= np.max(np.abs(pvar))
+                pvar_sqrjac /= pvar_sqrjac[mode.zero_ind]
+                pvar_sqrjac /= np.max(np.abs(pvar_sqrjac))
+            data = np.vstack(
+                (
+                    mode.zgrid_ext,
+                    np.real(pvar),
+                    np.imag(pvar),
+                    np.real(pvar_sqrjac),
+                    np.imag(pvar_sqrjac),
+                )
+            ).T
             np.savetxt(
                 fp,
                 data,
@@ -197,19 +231,28 @@ def output_pod_modes(mode, r_vec, fields, pods, norm):
 
 def output_time_modes(mode, l_vec, pods, times):
     """Output left pod modes (time variation)"""
-    filename = "./pod_time_ky" + str("{:03d}").format(int(mode.ky)) + ".dat"
-    head = ["time"]
-    for ipod in pods:
-        head.append(str(ipod + 1))
-    header = " ".join(head)
-    data = np.hstack((times.reshape(-1, 1), np.abs(l_vec[:, : pods.stop])))
-    np.savetxt(
-        filename,
-        data,
-        fmt="% E",
-        header=header,
-        encoding="UTF-8",
+    filename = (
+        "./pod_time_ky"
+        + str("{:03d}").format(int(mode.ky))
+        + "_kx"
+        + str("{:03d}").format(int(mode.kx_cent))
+        + ".dat"
     )
+    fp = open(filename, "w")
+    for ipod in pods:
+        header = "time POD " + str(ipod)
+        # data = np.vstack((mode.zgrid_ext, np.real(pvar), np.imag(pvar))).T
+        tdat = l_vec[:, ipod].reshape(-1, 1)
+        data = np.hstack((times.reshape(-1, 1), np.real(tdat), np.imag(tdat)))
+        np.savetxt(
+            fp,
+            data,
+            fmt="% E",
+            header=header,
+            encoding="UTF-8",
+        )
+        fp.write("\n\n")
+    fp.close()
 
 
 def plot(zgrid, var, varname, title):
@@ -243,7 +286,9 @@ def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
     shows plot
     Can also save plot"""
     if save:
-        pdf_figs = PdfPages("mode_" + str(mode.ky) + ".pdf")
+        pdf_figs = PdfPages(
+            "mode_ky" + str(mode.ky) + "_kx" + str(mode.kx_cent) + ".pdf"
+        )
         output = pdf_figs
     else:
         output = False
@@ -251,7 +296,13 @@ def plot_vars(mode, varnames, times, extend=True, show=True, save=False):
         varlabel = get_varname(varname)
         for var, time in zip(mode.fields[varname], times):
             title = (
-                r"$k_y=" + str(mode.ky) + ", t = " + str("{:6.3f}").format(time) + "$"
+                r"$k_y="
+                + str(mode.ky)
+                + "$k_x="
+                + str(mode.kx_cent)
+                + ", t = "
+                + str("{:6.3f}").format(time)
+                + "$"
             )
             plot_var(mode, var, varlabel, title, extend, show, output)
     if save:
@@ -363,23 +414,20 @@ def pod(mode, var):
 
 
 # collective is (slightly, usually) different because it includes all kx modes
-def collective_pod(mode, fields, extend=True):
+def collective_pod(mode, ldata, fields, extend=True):
     ntimes = mode.fields[fields[0]].shape[0]
     if extend:
         nx = len(mode.kx_modes)
-        all_fields = np.concatenate(
-            (
-                [
-                    mode.fields[field][:, :, mode.kx_modes].reshape(ntimes, -1)
-                    for field in fields
-                ]
-            ),
-            axis=1,
-        )
+        sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
+        tmp = [
+            (ldata[field][:, :, mode.kx_modes] * sqrjac).reshape(ntimes, -1)
+            for field in fields
+        ]
+        all_fields = np.concatenate(tmp, axis=1)
     else:
         nx = mode.nx
         all_fields = np.concatenate(
-            ([mode.fields[field].reshape(ntimes, -1) for field in fields]), axis=1
+            ([ldata[field].reshape(ntimes, -1) for field in fields]), axis=1
         )
     nxnz = nx * mode.nz
     u, sv, vh = la.svd(all_fields, full_matrices=False)
@@ -387,6 +435,13 @@ def collective_pod(mode, fields, extend=True):
     for i, field in enumerate(fields):
         VH[field] = vh[:, i * nxnz : (i + 1) * nxnz].reshape((-1, mode.nz, nx))
     return u, sv, VH
+
+
+def resample_time(mode, fields, times):
+    ldata = {}
+    for i, field in enumerate(fields):
+        ltime, ldata[field] = linear_resample(times, mode.fields[field], 0)
+    return ltime, ldata
 
 
 def calc_heat_flux(mode, fields, weights=None):
@@ -459,15 +514,21 @@ def fft_nonuniform(times, f, axis=0, samplerate=2):
     """Calculates fft of nonuniform data by first interpolating to uniform grid"""
     times_lin, f_lin = linear_resample(times, f, axis, samplerate)
     f_hat = np.fft.fft(f_lin, axis=axis)
+    test_energy(f, f_lin, f_hat, axis)
     return f_hat, times_lin
+
+
+def test_energy(f, f_lin, f_hat, axis):
+    N = f_lin.shape[axis]
+    f_sum = np.sum(np.abs(f) ** 2, axis=axis)
+    flin_sum = np.sum(np.abs(f_lin) ** 2, axis=axis)
+    fhat_sum = np.sum(np.abs(f_hat) ** 2, axis=axis) / N
 
 
 def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     """Returns the dominant frequency from field"""
     ntimes = times.size
-    dt = np.diff(times)
-    even_dt = np.all(dt == dt[0])
-    if not even_dt:
+    if not is_even(times):
         samples = samplerate * ntimes
         f_hat, times_lin = fft_nonuniform(times, f)
     else:
@@ -489,19 +550,18 @@ def avg_freq(times, f, axis=0, samplerate=2, norm_out=False):
     return freq
 
 
-def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False):
+def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False, spec_out=False):
     """Returns the rms frequency from field"""
     ntimes = times.size
-    dt = np.diff(times)
-    even_dt = np.all(dt == dt[0])
-    if not even_dt:
+    if not is_even(times):
         samples = samplerate * ntimes
-        f_hat, times_lin = fft_nonuniform(times, f)
+        f_hat_tmp, times_lin = fft_nonuniform(times, f)
     else:
         samples = ntimes
-        f_hat = np.fft.fft(f, axis=axis)
+        f_hat_tmp = np.fft.fft(f, axis=axis)
+    f_hat = np.fft.fftshift(f_hat_tmp, axis)
     timestep = (times[-1] - times[0]) / samples
-    omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
+    omegas = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(samples, d=timestep))
     if f.ndim > 1:
         if axis == 0:
             num = np.sum(abs(np.expand_dims(omegas, -1) * f_hat) ** 2, axis=0)
@@ -513,12 +573,19 @@ def avg_freq2(times, f, axis=0, samplerate=2, norm_out=False):
     freq = np.sqrt(num / denom)
     if norm_out:
         return freq, denom
+    if spec_out:
+        spec = np.abs(f_hat) ** 2
+        return freq, spec, omegas
     return freq
 
 
 def get_extended_var(mode, var):
     """Flattens array over last two dimensions to return z-extended variable"""
-    evar = var[:, :, mode.kx_modes]
+    if var.shape[2] < mode.nx:
+        # we have previously selected the modes
+        evar = var
+    else:
+        evar = var[:, :, mode.kx_modes]
     phase = np.expand_dims(mode.phase, axis=0)
     newshape = (var.shape[0], -1)
     ext_var = np.reshape(evar * phase, newshape, order="F")
@@ -539,22 +606,24 @@ def avg_kz(mode, var, outspect=False, norm_out=False):
         field = np.expand_dims(var, axis=-1)
 
     zgrid = mode.zgrid_ext
-    dfielddz = fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
+    field2 = np.abs(field) ** 2
+    dfielddz = -1j * fd.fd_d1_o4(field, zgrid) / jacxBpi_ext
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
-    dfdz1 = dfielddz[zstart:zend]
-    dfdz2 = dfielddz[zstart + 1 : zend + 1]
-    jac = jacxBpi_ext[zstart:zend]
-    f1 = field[zstart:zend]
-    f2 = field[zstart + 1 : zend + 1]
+    dfdz = dfielddz[zstart:zend]
+    f = field[zstart:zend]
+    f2 = field2[zstart:zend]
+    jac = np.expand_dims(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1)[
+        zstart:zend
+    ]
+    zg = zgrid[zstart:zend]
 
-    ddz = dfdz1 * np.conj(f1) + dfdz2 * np.conj(f1)
-    num = np.sum(2 * np.real(ddz) * jac, axis=0)
-    denom = np.sum((abs(dfdz1) ** 2 + abs(dfdz2)) ** 2 * jac, axis=0)
-    akz = (num / denom).T
+    num = np.trapz(dfdz * f2 * jac, zg, axis=0)
+    denom = np.trapz(f2 * jac, zg, axis=0)
+    akz = np.real(num / denom).T
     if outspect:
-        return akz, ddz
+        return akz, dfdz
     if norm_out:
         return akz, denom
     return akz
@@ -578,38 +647,164 @@ def avg_kz2(mode, var, outspect=False, norm_out=False):
 
     # Select range, cutting off extreme ends of z domain
     zstart, zend = 5, len(zgrid) - 5
-    dfdz1 = dfielddz[zstart:zend]
-    dfdz2 = dfielddz[zstart + 1 : zend + 1]
-    jac = jacxBpi_ext[zstart:zend]
-    f1 = field[zstart:zend]
-    f2 = field[zstart + 1 : zend + 1]
+    dfdz = dfielddz[zstart:zend]
+    f = field[zstart:zend]
+    jac = np.expand_dims(np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1)[
+        zstart:zend
+    ]
+    zg = zgrid[zstart:zend]
 
-    ddz = (abs(dfdz1) ** 2 + abs(dfdz2) ** 2) * jac
-    sum_ddz = np.sum(ddz, axis=0)
-    denom = np.sum((abs(f1) ** 2 + abs(f2) ** 2) * jac, axis=0)
+    num = np.trapz(np.abs(dfdz) ** 2 * jac, zg, axis=0)
+    denom = np.trapz(np.abs(f) ** 2 * jac, zg, axis=0)
     akz = np.sqrt(num / denom).T
     if outspect:
-        return akz, ddz
+        return akz, dfdz
     if norm_out:
         return akz, denom
     return akz
 
 
-def output_scales(modes, scales, varname, intype="POD"):
+def avg_kz_pod(mode, var, sv, outspect=False, norm_out=False):
+    """Calculate the kz mode weighted by given field for POD
+    modes constructed for orthoganality w.r.t. a jacobian weight"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
+    # setup fields
+    field2 = np.abs(field) ** 2
+    zgrid = mode.zgrid_ext
+    jacobian = np.expand_dims(
+        np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1
+    )
+
+    # differentiate
+    dfield_dz = -1j * fd.fd_d1_o4(field, zgrid)
+    djacobian_dz = fd.fd_d1_o4(jacobian, zgrid)
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    f = field[zstart:zend]
+    f2 = field2[zstart:zend]
+    df_dz = dfield_dz[zstart:zend]
+    jac = jacobian[zstart:zend]
+    djac_dz = djacobian_dz[zstart:zend]
+    jacBpi = jacxBpi_ext[zstart:zend]
+    zg = zgrid[zstart:zend]
+
+    integrand = np.conj(f) * (df_dz - 0.5 * djac_dz / jac * f) / jacBpi
+
+    if is_even(zg):
+        # zg is just a scale to factored out, and I don't know if trapz is worth it
+        num = np.sum(integrand, axis=0)
+        denom = np.sum(f2, axis=0)
+    else:
+        num = np.trapz(integrand, zg, axis=0)
+        denom = np.trapz(f2, zg, axis=0)
+
+    akz = np.imag(num / denom).T
+    if outspect:
+        return akz, integrand
+    if norm_out:
+        return akz, denom
+    return akz
+
+
+def avg_kz2_pod(mode, var, sv, outspect=False, norm_out=False):
+    """Calculate the rms kz mode weighted by given field for POD
+    modes constructed for orthoganality w.r.t. a jacobian weight"""
+    jacxBpi = mode.geometry["gjacobian"] * mode.geometry["gBfield"] * np.pi
+    jacxBpi_ext = np.expand_dims(np.tile(jacxBpi, mode.kx_modes.size), -1)
+    if var.ndim > 2:
+        var_ext = get_extended_var(mode, var)
+    else:
+        var_ext = var
+    if var.ndim > 1:
+        field = var_ext.T
+    else:
+        field = np.expand_dims(var, axis=-1)
+
+    # setup fields
+    field2 = np.abs(field) ** 2
+    zgrid = mode.zgrid_ext
+    jacobian = np.expand_dims(
+        np.tile(mode.geometry["gjacobian"], mode.kx_modes.size), -1
+    )
+
+    # differentiate
+    dfield_dz = fd.fd_d1_o4(field, zgrid)
+    dfield2_dz = fd.fd_d1_o4(field2, zgrid)
+    djacobian_dz = fd.fd_d1_o4(jacobian, zgrid)
+
+    # Select range, cutting off extreme ends of z domain
+    zstart, zend = 5, len(zgrid) - 5
+    f = field[zstart:zend]
+    f2 = field2[zstart:zend]
+    df_dz = dfield_dz[zstart:zend]
+    df2_dz = dfield2_dz[zstart:zend]
+    jac = jacobian[zstart:zend]
+    djac_dz = djacobian_dz[zstart:zend]
+    jacBpi = jacxBpi_ext[zstart:zend]
+    zg = zgrid[zstart:zend]
+    sv2 = sv[zstart:zend] ** 2
+
+    integrand = (
+        np.abs(df_dz) ** 2
+        - 0.5 * djac_dz / jac * df2_dz
+        + 0.25 * (djac_dz / jac) ** 2 * f2
+    ) / jacBpi**2
+
+    if is_even(zg):
+        # zg is just a scale to factored out, and I don't know if trapz is worth it
+        num = np.sum(integrand, axis=0)
+        denom = np.sum(f2, axis=0)
+    else:
+        num = np.trapz(integrand, zg, axis=0)
+        denom = np.trapz(f2, zg, axis=0)
+
+    akz = np.sqrt(num / denom).T
+    if outspect:
+        return akz, integrand
+    if norm_out:
+        return akz, denom
+    return akz
+
+
+def output_scales(ky_list, kx_cent, scale_dict, varname, intype="POD"):
     """Output a list of scales for a mode, e.g. frequencies or correlation lengths"""
     if intype == "POD":
-        ky = str("{:03d}").format(int(modes.ky)) + "_pod"
-        header = "POD # " + varname
-    else:
-        ky = "_all"
-        header = "ky avg_omega avg_kz corr_time corr_len"
-    filename = "./" + varname + "_ky" + ky + ".dat"
-    if scales.ndim == 1:
-        pods = np.arange(1, scales.size + 1)
+        ky = str("{:03d}").format(int(ky_list))
+        header = "POD".ljust(13, " ")
+        kx = str("{:03d}").format(int(kx_cent))
+        filename = "./" + varname + "_ky" + ky + "_kx" + kx + "_pod" + ".dat"
+
+        scales = np.array(list(scale_dict.values()))
+        key = list(scale_dict.keys())[0]
+        pods = np.arange(1, scale_dict[key].size + 1)
         data = np.vstack((pods, scales)).T
+    elif intype == "ev":
+        header = "EV #" + varname
+        filename = "./" + varname + "_ev.dat"
     else:
-        kylist = np.expand_dims(np.array([mode.ky for mode in modes]).T, -1)
-        data = np.hstack((kylist, scales))
+        header = "ky".ljust(13, " ")
+        kx = str("{:03d}").format(int(kx_cent))
+        filename = "./" + varname + "_ky_all_kx" + kx + ".dat"
+
+        kys = np.expand_dims(np.array(ky_list), 0)
+        scales = np.array(list(scale_dict.values()))
+        data = np.vstack((kys, scales)).T
+
+    var_list = list(scale_dict.keys())  # build header
+    for var in var_list:
+        header += var.ljust(14, " ")
+
     np.savetxt(
         filename,
         data,
@@ -641,8 +836,14 @@ def autocorrelate_tz(var, domains, weights=None):
         center = dom.size // 2
         dom -= dom[center]  # shift to zero
         new_domains.insert(i, dom)
+
+    corr_sum = np.zeros([f.shape[0], f.shape[1]], dtype=np.complex128)
+    for ix in range(f.shape[2]):
+        f1 = f[:, :, ix]
+        g1 = g[:, :, ix]
+        corr_sum += signal.correlate(f1, g1, mode="same", method="auto")
     norm = f.size * np.std(f) * np.std(g)
-    corr = signal.correlate(f, g, mode="same", method="auto") / norm
+    corr = corr_sum / norm
 
     return new_domains, corr
 
@@ -664,12 +865,12 @@ def corr_len(x, corr, axis=-1, weights=None):
     return clen
 
 
-def linear_resample(domain, data, axis, samplerate=2):
+def linear_resample(domain, data, axis, samplerate=1):
     """Resamples data onto spaced data onto a linear grid"""
     npts = domain.size
     samples = samplerate * npts
     dom_lin = np.linspace(domain[0], domain[-1], samples)
-    data_interp = interpolate.interp1d(domain, data, axis=axis)
+    data_interp = interpolate.interp1d(domain, data, kind="cubic", axis=axis)
     data_lin = data_interp(dom_lin)
     return dom_lin, data_lin
 
@@ -700,7 +901,7 @@ def test_corr(mode, doms, corr):
     plt.show()
 
 
-def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e-6):
+def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2):
     """Calculate correlation length/time for given input field"""
     datatype = var.dtype
     if var.ndim > 2:
@@ -709,10 +910,7 @@ def autocorrelate(mode, var, domain, weights=None, axis=-1, samplerate=2, tol=1e
     else:
         fvar = var
 
-    dt = np.diff(domain)
-    test_dt = np.floor(dt / tol)
-    even_dt = np.all(test_dt == test_dt[0])
-    if not even_dt:
+    if not is_even(domain):
         npts = domain.size
         samples = samplerate * npts
         dom_lin = np.linspace(domain[0], domain[-1], samples)
@@ -787,9 +985,10 @@ def avg_kz_tz(mode, var):
 
 
 def avg_kz2_tz(mode, var):
-    evar = get_extended_var(mode, var)
-    kz, norm = avg_kz(mode, evar, norm_out=True)
-    mean_kz = np.sqrt(np.average(kz ** 2, weights=norm))
+    # evar = get_extended_var(mode, var)
+    # kz, norm = avg_kz2(mode, evar, norm_out=True)
+    kz, norm = avg_kz2(mode, var, norm_out=True)
+    mean_kz = np.sqrt(np.average(kz**2, weights=norm))
     return mean_kz
 
 
@@ -804,10 +1003,10 @@ def avg_freq_tz(mode, times, var):
 
 def avg_freq2_tz(mode, times, var):
     evar = get_extended_var(mode, var)
-    omega, norm = avg_freq(times, evar, norm_out=True)
+    omega, norm = avg_freq2(times, evar, norm_out=True)
     jac_ext = np.tile(mode.geometry["gjacobian"], mode.kx_modes.size)
     jac_norm = jac_ext * norm
-    avg_omega = np.sqrt(np.average(omega ** 2, weights=jac_norm))
+    avg_omega = np.sqrt(np.average(omega**2, weights=jac_norm))
     return avg_omega
 
 
@@ -821,24 +1020,24 @@ def mean_tzx(mode, var, pars):
     return mean_var
 
 
-def freq_spec(mode, times, varname, axis=0, samplerate=2, output=False):
-    var = mode.fields[varname]
+def freq_spec(mode, times, var, varname, axis=0, weights=None, output=False):
     f = var
     ntimes = times.size
-    dt = np.diff(times)
-    even_dt = np.all(dt == dt[0])
-    if not even_dt:
-        samples = samplerate * ntimes
-        f_hat, times_lin = fft_nonuniform(times, f)
+    if not is_even(times):
+        samples = ntimes
+        f_hat, times_lin = fft_nonuniform(times, f, samplerate=1)
     else:
         samples = ntimes
         f_hat = np.fft.fft(f, axis=axis)
     timestep = (times[-1] - times[0]) / samples
     omegas = 2 * np.pi * np.fft.fftfreq(samples, d=timestep)
 
-    jac = mode.geometry["gjacobian"]
-    kx_avg = np.mean(np.abs(f_hat) ** 2, axis=2)
-    z_avg = np.average(kx_avg, weights=jac, axis=1)
+    if var.ndim > 2:
+        # average over only connected modes
+        kx_avg = np.mean(np.abs(f_hat[:, :, mode.kx_modes]) ** 2, axis=2)
+        z_avg = np.average(kx_avg, weights=weights, axis=1)
+    else:
+        z_avg = np.average(np.abs(f_hat) ** 2, weights=weights, axis=1)
 
     om = np.real_if_close(np.fft.fftshift(omegas))
     spec = np.real_if_close(np.fft.fftshift(z_avg))
@@ -852,7 +1051,8 @@ def output_spec(mode, omegas, spec, varname):
     """Output a frequency spectrum for a mode"""
     header = "omega " + varname + "^2"
     ky = str("{:03d}").format(int(mode.ky))
-    filename = "./" + varname + "_ky" + ky + "_spec.dat"
+    kx = str("{:03d}").format(int(mode.kx_cent))
+    filename = "./" + varname + "_ky" + ky + "_kx" + kx + "_spec.dat"
     data = np.vstack((omegas, spec)).T
     np.savetxt(
         filename,
@@ -863,18 +1063,57 @@ def output_spec(mode, omegas, spec, varname):
     )
 
 
-def output_spec_all(ky_list, spec, omegas, varname):
+def freq_spec_pod_plot(mode, omegas, spec, pods, output=False):
+
+    fig, ax = plt.subplots()
+    plt.contourf(pods, omegas, np.abs(spec[:, : pods[-1]]), cmap="magma")
+    plt.colorbar(label=r"$\sigma |\hat{u}|$")
+    plt.title("POD frequency spectrum")
+    plt.xlabel("POD #")
+    plt.ylabel(r"$\omega$")
+    ymax = max(omegas) / 2
+    ymin = -ymax
+    ax.set(ylim=(ymin, ymax))
+    if output:
+        ky = mode.ky
+        kx = mode.kx_cent
+        pdf_figs = PdfPages(
+            "mode_ky" + str(int(ky)) + "_kx" + str(int(kx)) + "_pod_freq_spec.pdf"
+        )
+        output = pdf_figs
+        output.savefig(fig)
+        pdf_figs.close()
+    return
+
+
+def output_spec_all_ky(ky_list, omegas, spec, varname):
+    """Output a frequency spectrum for multiple ky"""
+    xvar = {"name": "ky", "vlist": np.array(ky_list)}
+    yvar = {"name": "omega", "vlist": omegas}
+    output_spec_all(xvar, yvar, spec, varname)
+
+
+def output_spec_all_pod(pods, omegas, spec, varname):
+    """Output a frequency spectrum for multiple ky"""
+    xvar = {"name": "pod #", "vlist": pods}
+    yvar = {"name": "omega", "vlist": omegas}
+    output_spec_all(xvar, yvar, spec.T, varname)
+
+
+def output_spec_all(xvar, yvar, spec, varname):
     """Output a frequency spectrum for multiple ky"""
     header = (
-        "omega "
-        + varname
-        + "^2"
+        varname
         + "\t"
-        + "first row is frequencies and first column  is kys"
+        + "first row is "
+        + yvar["name"]
+        + " and first column is "
+        + xvar["name"]
     )
-    ky_list.insert(0, omegas.size)
-    kys = np.array(ky_list)[np.newaxis, :].T
-    data = np.hstack((kys, np.vstack((omegas, spec))))
+    tmp = np.insert(xvar["vlist"], 0, yvar["vlist"].size)
+    nrows = tmp.size - 1
+    column = np.array(tmp)[np.newaxis, :].T
+    data = np.hstack((column, np.vstack((yvar["vlist"], spec[:nrows, :]))))
     filename = "./" + varname + "_spec_all.dat"
     np.savetxt(
         filename,
@@ -897,27 +1136,59 @@ def check_suffix(run_number):
     return suffix
 
 
+def rebuild_from_pod(mode, u, sv, vh, field):
+    npods = u.shape[0]
+    nx = mode.kx_modes.size
+    nz = mode.nz
+    temp1 = vh[field].reshape((npods, -1))
+    temp2 = np.zeros((npods, nx * nz), dtype=np.complex128)
+    for i in range(npods):
+        temp2 += sv[i] * np.outer(u[:, i], temp1[i])
+    sqrjac = np.sqrt(np.expand_dims(mode.geometry["gjacobian"], -1))
+    new = temp2.reshape((-1, nz, nx)) / sqrjac
+    return new
+
+
 def test_pod(mode, u, sv, vh, fields):
     """testing that pod behaved in the expected way"""
-    npods = u.shape[0]
-    nx = mode.nx
-    nz = mode.nz
+    nx = mode.kx_modes.size
     print("Shapes")
     print("------------")
     print("u : ", u.shape)
     print("sv : ", sv.shape)
     print("vh['phi'] : ", vh["phi"].shape)
     for field in fields:
-        original = mode.fields[field]
-        new = np.empty(original.shape, dtype=original.dtype)
-        temp2 = np.zeros((npods, nx * nz), dtype=original.dtype)
-        for i in range(npods):
-            temp1 = vh[field].reshape((npods, -1))
-            temp2 += sv[i] * np.outer(u[:, i], temp1[i])
-        new = temp2.reshape((-1, nz, nx))
+        if nx == mode.nx:
+            original = mode.fields[field]
+        else:
+            original = mode.fields[field][:, :, mode.kx_modes]
+        new = rebuild_from_pod(mode, u, sv, vh, field)
         print("Are the arrays close?....", np.allclose(original, new, atol=1e-6))
-    Q = calc_heat_flux(mode, vh, sv ** 2)
+        if field == "phi":
+            phi = new
+    Q = calc_heat_flux(mode, vh, sv**2)
     Q_sum = np.mean(
         np.average(Q.sum(axis=2), axis=1, weights=mode.geometry["gjacobian"]), axis=0
     )
     print("Q_sum(ky = %d) = ", mode.ky, Q_sum)
+
+
+def pod_kz_test(mode, u, sv, vh):
+    phi = rebuild_from_pod(mode, u, sv, vh, "phi")
+    avg_kz = avg_kz2_tz(mode, phi)
+    print("pod_kz_test :: avg_kz = ", avg_kz)
+    return avg_kz
+
+
+def pod_orthog_test(mode, u, vh):
+    u2 = np.abs(u) ** 2
+    v2 = np.abs(vh["phi"]) ** 2
+
+    su2 = np.sum(u2, axis=0)
+    sv2 = np.sum(v2, axis=1)
+
+    print("u modes integrated over t :")
+    print(su2)
+    print("phi modes integrated over z :")
+    print(sv2)
+    pass
