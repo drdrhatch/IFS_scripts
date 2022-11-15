@@ -40,7 +40,7 @@ class KyMode:
     def __init__(self, ky, kx_cent, times, fields, gene_files):
         pars = gene_files["pars"]
         field_file = gene_files["field"]
-        mom_file = gene_files["mom"]
+        mom_file_list = gene_files["mom_list"]
         geom_file = gene_files["geometry"]
         self.iky = ky
         self.ky = ky * pars["kymin"]
@@ -51,9 +51,9 @@ class KyMode:
         self.n0 = pars["dens1"]
         self.construct_ranges(pars)
         self.define_phase(pars)
-        self.define_dictionary(field_file, mom_file)
+        self.define_dictionary(field_file, mom_file_list)
         self.geometry = geom_file
-        self.read_fields(times, fields, field_file, mom_file, pars)
+        self.read_fields(times, fields, field_file, mom_file_list, pars)
 
     def construct_ranges(self, pars):
         self.kxrange(pars)
@@ -84,18 +84,18 @@ class KyMode:
         step = max(1, max(self.kx_modes))
         self.phase = phase ** (self.kx_modes / step)
 
-    def define_dictionary(self, field_file, mom_file=None):
+    def define_dictionary(self, field_file, mom_file_list=None):
         self.field_vars = {
             "phi": field_file.phi,
             "apar": field_file.apar,
             "bpar": field_file.bpar,
         }
-        if mom_file:
+        if mom_file_list:
             self.field_vars.update(
                 {
-                    "dens": mom_file.dens,
-                    "tpar": mom_file.tpar,
-                    "tperp": mom_file.tperp,
+                    "dens": mom_file_list[0].dens,
+                    "tpar": mom_file_list[0].tpar,
+                    "tperp": mom_file_list[0].tperp,
                 }
             )
             fields = ("phi", "apar", "bpar", "dens", "tpar", "tperp", "q")
@@ -113,7 +113,7 @@ class KyMode:
         tmp = var[:, indy, :]
         return tmp
 
-    def read_fields(self, times, fields, field_file, mom_file, pars):
+    def read_fields(self, times, fields, field_file, mom_file_list, pars):
         """Read given fields data for the given times"""
         self.fields_read = set(fields)
         if pars["PRECISION"] == "DOUBLE":
@@ -126,8 +126,9 @@ class KyMode:
             )
         for j, time in enumerate(times):
             field_file.set_time(time)
-            if mom_file:
-                mom_file.set_time(time)
+            if mom_file_list:
+                for mom_file in mom_file_list:
+                    mom_file.set_time(time)
             for i, var in enumerate(fields):
                 tmp[i, j, :, :] = self.read_field(var)
         for i, var in enumerate(fields):
