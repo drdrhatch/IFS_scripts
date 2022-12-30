@@ -15,6 +15,9 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument("suffix", help="run number or .dat suffix of output data")
 parser.add_argument(
+    "species_list", nargs="+", metavar="SPECIES", help="list of species to load"
+)
+parser.add_argument(
     "--geom", "-g", action="store", metavar="GEOMETRY_FILE", help="geometry file"
 )
 parser.add_argument(
@@ -81,7 +84,11 @@ par.Read_Pars("parameters" + suffix)
 pars = par.pardict
 
 field = fieldlib.fieldfile("field" + suffix, pars)
-mom_e = momlib.momfile("mom_e" + suffix, pars)
+mom_list = []
+for species in args.species_list:
+    momfile = "mom_" + species + suffix
+    mom_list.append(momlib.momfile(momfile, pars))
+
 parameters, geometry = rwg.read_geometry_local(args.geom)
 
 min_time, max_time = field.get_minmaxtime()
@@ -89,13 +96,13 @@ stime = max(args.stime, min_time)
 etime = min(args.etime, max_time)
 
 ftimes = bl.get_times(field, stime, etime)
-mtimes = bl.get_times(mom_e, stime, etime)
+mtimes = bl.get_times(mom_list[0], stime, etime)  # momtimes from first species
 if args.heat:  # moment values needed for heat flux calc
     times = np.intersect1d(ftimes, mtimes)
     fields = ("phi", "tpar", "tperp", "dens")
 else:  # otherwise, default to phi
     times = ftimes
-    mom_e = None
+    mom_list = None
     fields = ("phi",)
 times = times[:: args.step]
 print("Analyzing for times: ", times)
@@ -114,7 +121,7 @@ if args.pod:
 else:
     pods = None
 
-gene_files = {"pars": pars, "field": field, "mom": mom_e, "geometry": geometry}
+gene_files = {"pars": pars, "field": field, "mom_list": mom_list, "geometry": geometry}
 
 # print("Loading data for fields" + str(fields) + "...", end="")
 # ky_modes = [bl.KyMode(ky, kx_cent, times, fields, gene_files) for ky in iky_list]
