@@ -113,6 +113,8 @@ def read_instate(filename):
             rmajor = float(ds[i].split()[2])
         if 'Z_IMP' in ds[i]:
             zimp = float(ds[i].split()[2])
+        if 'R0' in ds[i]:
+            R0 = float(ds[i].split()[2])
         if 'RHO' in ds[i] and 'NRHO' not in ds[i]:
             temp = ds[i].split()
             for k in range(len(temp)):
@@ -323,6 +325,7 @@ def read_instate(filename):
     is_data['p_eq'] = p_eq
     is_data['q0'] = q0
     is_data['zimp'] = zimp
+    is_data['R0'] = R0
     is_data['aminor'] = aminor
     is_data['rmajor'] = rmajor
     is_data['zlim'] = zlim
