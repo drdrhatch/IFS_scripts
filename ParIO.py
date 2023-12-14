@@ -104,9 +104,13 @@ class Parameters(object):
                 self.pardict[item] = True
             elif self.pardict[item] in self.boolstr_f:
                 self.pardict[item] = False
-        # generate class attributes from all valid parameters
-        # for k,v in self.pardict.iteritems():
-        #    if len(k.split())==1 and k[0]!='!':vars(self)[k]=v
+            # generate class attributes from all valid parameters
+            # for k,v in self.pardict.iteritems():
+            #    if len(k.split())==1 and k[0]!='!':vars(self)[k]=v
+            if isinstance(self.pardict[item], str):
+                strip_value = self.pardict[item].strip("'")
+                strip_value = strip_value.strip('"')
+                self.pardict[item] = strip_value
 
     def Write_Pars(self, path):
         """Take the dict and write a GENE parameters file"""
