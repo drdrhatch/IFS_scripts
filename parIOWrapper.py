@@ -93,3 +93,35 @@ def read_species_tempdens(q_charge, pars):
                         "No species with charge = " + str(q_charge) + " iis found."
                         "temp = 0, dens = 0"
                     )
+
+
+def create_parameters_dict(parameters_filepath: str):
+    # Create a parameter dictionary using the Parameters class
+    par = Parameters()
+    par.Read_Pars(parameters_filepath)  # Read the parameter file
+    parameter_dict = par.pardict
+
+    # Add the filepath and parameter keys to the parameter dictionary
+    parameter_dict["filepath"] = parameters_filepath
+    parameter_dict["key_list"] = list(parameter_dict.keys())
+
+    return parameter_dict
+
+
+def check_suffix(run_number):
+    """Check that given suffix matches typical GENE output"""
+    if re.search("dat$", run_number):
+        suffix = ".dat"
+    elif re.search("[0-9]{1,4}$", run_number):
+        match = re.search(r"([0-9]{1,4})$", run_number)
+        suffix = "_" + match.group(0).zfill(2)
+    else:
+        print("Please enter a valid run number, e.g. .dat or 0123")
+        return None
+    return suffix
+
+
+def read_parameters_files(runlist):
+    """Given a list of GENE runs as numbers,
+    return a generator containing the parameters files for each run in list"""
+    return (init_read_parameters_file(check_suffix(suffix)) for suffix in runlist)
